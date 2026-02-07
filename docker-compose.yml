@@ -23,6 +23,27 @@ services:
     networks:
       - adapt-network
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: adapt-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/adapt
+      KC_DB_USERNAME: adapt
+      KC_DB_PASSWORD: adapt
+      KC_DB_SCHEMA: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    depends_on:
+      - postgres
+    networks:
+      - adapt-network
+
 volumes:
   postgres_data:
   redis_data:
