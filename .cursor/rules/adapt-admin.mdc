@@ -34,7 +34,7 @@ adapt/
 │   │   │   │   └── new/
 │   │   │   │       └── page.tsx  # スタッフ追加 (API-077)
 │   │   │   └── users/
-│   │   │       └── page.tsx      # ユーザー管理一覧 (API-073)
+│   │   │       └── page.tsx      # ユーザー管理一覧 (API-074)
 │   │   ├── tailwind.config.ts    # ← Phase 0 成果物
 │   │   └── globals.css           # ← Phase 0 成果物
 │   │
@@ -234,7 +234,7 @@ export type PlatformRole = (typeof PlatformRole)[keyof typeof PlatformRole];
 5. `/login` ページ（メール/PW のみ、Google OAuth なし）
 6. `/operators` 一覧ページ (API-076)
 7. `/operators/new` 追加フォーム (API-077)
-8. `/users` 一覧ページ (API-073)
+8. `/users` 一覧ページ (API-074)
 
 ---
 
@@ -307,6 +307,13 @@ cp adapt-design-files/openapi_{admin,app}.yaml docs/api/
 cp adapt-design-files/adapt_基本設計_最終版.xlsx docs/design/
 cd apps/api && npx prisma generate
 ```
+
+## Git ルール
+- タスク完了後は必ず `git add -A && git commit` する
+- コミットメッセージ形式: `<type>: <日本語で要約>`
+  - type: feat / fix / refactor / docs / chore
+- SoT ファイルの変更は必ず独立したコミットにする
+- WIP コミットは禁止（ビルド成功を確認してからコミット）
 
 ### 禁止事項
 - 同期先ファイルの直接編集
