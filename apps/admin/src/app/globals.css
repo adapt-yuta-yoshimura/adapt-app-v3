@@ -1,0 +1,128 @@
+/*
+ * Adapt Admin - Global Styles (Phase 0 + shadcn/ui 互換)
+ *
+ * 【トークンソース】Figma adapt-Design (hIWNItIPSUj2AGZdJu4q3F)
+ * 【フォント】Noto Sans JP (Figma 準拠)
+ * 【CSS Variables】Tailwind config と同期。shadcn/ui の HSL 変数は共存（既存クラス用）。
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Google Fonts: Noto Sans JP ===== */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap");
+
+@layer base {
+  /* ----- Phase 0: Figma トークン（hex / 非 Tailwind コンテキスト用） ----- */
+  :root {
+    /* Primary */
+    --color-iris-100: #5d5fef;
+    --color-iris-80: #7b7df3;
+    --color-iris-60: #a5a6f6;
+    --color-iris-20: #ececfc;
+    --color-iris-10: #f8f8ff;
+
+    /* Accent */
+    --color-fuschia-100: #ef5da8;
+
+    /* Surfaces */
+    --color-surface-page: #fcfcfc;
+    --color-surface-card: #fdfdfd;
+    --color-surface-white: #ffffff;
+
+    /* Borders */
+    --color-border: #eaeaea;
+    --color-border-input: #ececfc;
+
+    /* Text */
+    --color-text-primary: #1a1a2e;
+    --color-text-secondary: #6b7280;
+    --color-text-placeholder: #a1a1a1;
+    --color-text-link: #5d97e1;
+
+    /* Semantic */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+
+    /* Layout */
+    --sidebar-width: 240px;
+    --header-height: 64px;
+
+    /* Typography */
+    --font-sans: "Noto Sans JP", sans-serif;
+  }
+
+  /* ----- shadcn/ui 互換: HSL 変数（bg-background, text-foreground 等で使用中） ----- */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 199 89% 48%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 199 89% 48%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: var(--color-surface-page);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* shadcn クラス互換（既存の bg-background / text-foreground 用） */
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ===== Focus (Accessibility) ===== */
+*:focus-visible {
+  outline: 2px solid var(--color-iris-100);
+  outline-offset: 2px;
+}
+
+/* ===== Selection ===== */
+::selection {
+  background: var(--color-iris-20);
+  color: var(--color-text-primary);
+}

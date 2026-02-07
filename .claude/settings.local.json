@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(pnpm install:*)",
+      "Bash(timeout 30 pnpm dev:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx prisma:*)",
+      "Bash(node:*)",
+      "Bash(pnpm ls:*)",
+      "Bash(npx nest build)",
+      "Bash(npx nest build:*)",
+      "Bash(echo:*)",
+      "Bash(timeout 15 npx nest start:*)",
+      "Bash(pnpm add:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(pnpm --filter @adapt/api add:*)",
+      "Bash(pnpm --filter @adapt/web add:*)",
+      "Bash(pnpm --filter @adapt/admin add:*)",
+      "Bash(pnpm --filter @adapt/api exec vitest:*)",
+      "Bash(npx vitest run)",
+      "Bash(npm show:*)",
+      "Bash(pnpm why:*)",
+      "Bash(pnpm:*)",
+      "Bash(npx turbo run test)",
+      "Bash(timeout 30 npx turbo run dev:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(PGPASSWORD=adapt psql:*)",
+      "Bash(/usr/local/Cellar/libpq/16.3/bin/psql:*)",
+      "Bash(PGPASSWORD=adapt /usr/local/Cellar/libpq/16.3/bin/psql:*)"
+    ]
+  }
+}

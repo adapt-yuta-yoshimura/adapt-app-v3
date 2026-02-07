@@ -1,0 +1,38 @@
+{
+  "name": "adapt",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "test:e2e:web": "playwright test --project=web-chromium",
+    "test:e2e:admin": "playwright test --project=admin-chromium",
+    "test:coverage": "turbo run test -- --coverage",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "generate:types": "npm-run-all generate:types:*",
+    "generate:types:app": "openapi-typescript docs/api/openapi_app.yaml -o packages/types/src/openapi-app.d.ts",
+    "generate:types:admin": "openapi-typescript docs/api/openapi_admin.yaml -o packages/types/src/openapi-admin.d.ts",
+    "db:migrate": "cd apps/api && pnpm prisma migrate dev",
+    "db:generate": "cd apps/api && pnpm prisma generate",
+    "db:studio": "cd apps/api && pnpm prisma studio",
+    "db:seed": "cd apps/api && pnpm prisma db seed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.1",
+    "@turbo/gen": "^1.11.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "npm-run-all": "^4.1.5",
+    "openapi-typescript": "^6.7.0",
+    "prettier": "^3.1.1",
+    "turbo": "^1.11.0",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

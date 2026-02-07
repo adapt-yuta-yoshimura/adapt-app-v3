@@ -1,0 +1,4547 @@
+openapi: 3.1.0
+info:
+  title: adapt App API (V1 - 基本設計書完全準拠)
+  version: v19-integrated
+  description: |
+    adapt オンライン学習プラットフォーム App API
+
+    ## 概要
+    - **対象**: 受講者・講師向けアプリケーションAPI
+    - **認証**: OIDC（auth.adapt-co.io）+ Bearer Token
+    - **エンドポイント数**: 64個
+    - **基本設計書**: 06_API一覧 完全準拠（100%）
+
+    ## 機能グループ
+
+    ### ユーザー管理
+    - プロフィール管理（取得・更新）
+    - パスワード変更
+    - 通知設定
+
+    ### コース閲覧・受講
+    - ストアトップ（講座一覧）
+    - 講座詳細・申込
+    - マイ講座一覧
+    - 学習進捗管理
+
+    ### チャット・コミュニケーション
+    - チャンネル管理
+    - スレッド・メッセージ投稿
+    - 既読管理
+    - リアルタイム通知
+
+    ### 課題・提出
+    - 課題一覧・詳細
+    - 課題提出
+    - 採点・フィードバック閲覧
+
+    ### 決済
+    - Stripe決済
+    - クーポン適用
+    - 購入履歴
+
+    ### 講師機能
+    - コース作成・編集
+    - レッスン管理
+    - 受講者管理
+    - 売上確認
+
+    ## 認証・認可
+
+    ### 認証方式
+    - **OIDC**: auth.adapt-co.ioでの認証
+    - **Bearer Token**: JWTトークンをAuthorizationヘッダーに設定
+    - **例外**: /api/v1/health（ヘルスチェック）は認証不要
+
+    ### ロール
+    - `guest`: 未ログイン（閲覧のみ）
+    - `learner`: 受講者
+    - `instructor`: 講師
+    - `assistant`: アシスタント/TA
+    - `operator`: 運営（通常）
+    - `root`: 運営（特権）
+
+    ### x-roles 拡張プロパティ
+    各エンドポイントには`x-roles`で必要なロールを指定：
+    ```yaml
+    x-roles:
+      - learner
+      - instructor
+    ```
+
+    ## 設計原則
+
+    ### アーキテクチャ
+    - **Repository Pattern**: Service層はORM非依存
+    - **DTO分離**: Prisma ModelはDTOとして公開しない
+    - **契約の正**: packages/sharedのDTOが正
+
+    ### エラーハンドリング
+    - 4xx: クライアントエラー（バリデーション等）
+    - 5xx: サーバーエラー
+    - 詳細はErrorResponseスキーマ参照
+
+    ### バージョニング
+    - URLパスに`/api/v1/`を含む
+    - 破壊的変更は新バージョンで対応
+
+    ## 技術スタック
+    - **フレームワーク**: NestJS
+    - **DB**: PostgreSQL
+    - **ORM**: Prisma
+    - **認証**: OIDC + Google OAuth
+    - **リアルタイム**: Socket.IO（チャット用）
+servers:
+- url: https://app.adapt-co.io
+tags:
+- name: Auth/Identity
+- name: Store/Public Access
+- name: Learner Dashboard/Progress
+- name: Course Management
+- name: Syllabus/Content
+- name: Submission Management
+- name: Communication
+- name: ' Infrastructure'
+- name: System
+paths:
+  /api/v1/users/me:
+    get:
+      tags:
+      - Auth/Identity
+      summary: プロフィール取得
+      description: ログイン中ユーザー自身の基本情報（名前、アイコン、全体ロール、所属組織等）を取得する。
+      operationId: API_007
+      x-api-id: API-007
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMeView'
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Auth/Identity
+      summary: プロフィール更新
+      description: 名前、アイコン画像URL、自己紹介等のプロフィール情報を更新する（image_33b70dのデザインを反映）。
+      operationId: API_008
+      x-api-id: API-008
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+  /api/v1/users/me/password:
+    put:
+      tags:
+      - Auth/Identity
+      summary: PW変更
+      description: 現在のパスワードを検証した上で、新しいパスワードへ直接変更する。セキュリティ上、即時反映される。
+      operationId: API_009
+      x-api-id: API-009
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/notifications:
+    get:
+      tags:
+      - Auth/Identity
+      summary: 通知一覧取得
+      description: 自分宛の通知（返信、採点完了、ライブ予約、運営案内）を最新順に取得する（image_32dc7bのリスト用）。
+      operationId: API_010
+      x-api-id: API-010
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/notifications/{notificationId}/read:
+    post:
+      tags:
+      - Auth/Identity
+      summary: 通知既読化
+      description: 指定されたIDの通知を既読状態にする。UI上のバッジカウントを減らすトリガーとなる。
+      operationId: API_011
+      x-api-id: API-011
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/notifications/read-all:
+    post:
+      tags:
+      - Auth/Identity
+      summary: 通知一括既読
+      description: 全ての未読通知を一括で既読状態にする。
+      operationId: API_012
+      x-api-id: API-012
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/users/me/settings/notifications:
+    get:
+      tags:
+      - Auth/Identity
+      summary: 通知設定取得
+      description: メール通知、プッシュ通知のON/OFF、およびカテゴリ別の受け取り設定を取得する。
+      operationId: API_013
+      x-api-id: API-013
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+    put:
+      tags:
+      - Auth/Identity
+      summary: 通知設定更新
+      description: 通知設定をユーザーの好みに合わせて更新する。
+      operationId: API_014
+      x-api-id: API-014
+      x-roles: all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/store/courses:
+    get:
+      tags:
+      - Store/Public Access
+      summary: 講座一覧取得
+      description: 公開中(active)の講座を検索・取得。1on1、セミナー、ブートキャンプのスタイルやカテゴリでフィルタが可能。
+      operationId: API_015
+      x-api-id: API-015
+      x-roles: guest, all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseListResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/store/courses/{courseId}:
+    get:
+      tags:
+      - Store/Public Access
+      summary: 講座詳細取得
+      description: 未受講者向けLPデータ。アウトカム、前提条件、おすすめ、FAQ、日程スケジュールをすべて取得。
+      operationId: API_016
+      x-api-id: API-016
+      x-roles: guest, all
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/store/courses/{courseId}/apply:
+    post:
+      tags:
+      - Store/Public Access
+      summary: 講座申込(開始)
+      description: 講座への受講を申し込む。有料時はpending、無料時はactiveでEnrollmentを生成する。
+      operationId: API_017
+      x-api-id: API-017
+      x-roles: learner
+      x-policy: Enrollment(pending)
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/payments/stripe/checkout:
+    post:
+      tags:
+      - Learner Dashboard/Progress
+      summary: Stripeセッション生成
+      description: 有料講座の決済を開始するためのStripe URLを発行。コースがfrozen時は423でブロック。
+      operationId: API_018
+      x-api-id: API-018
+      x-roles: learner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+  /api/v1/learner/courses:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: マイ講座一覧
+      description: 自身が受講中、または過去に受講したすべての講座をリスト取得する。
+      operationId: API_019
+      x-api-id: API-019
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/learner/courses/{courseId}:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: 受講中講座詳細
+      description: 受講者用学習画面。最新の進捗、シラバス、受講者専用の連絡事項、解禁済み教材等を取得。
+      operationId: API_020
+      x-api-id: API-020
+      x-roles: learner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/learner/enrollments/{enrollmentId}:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: 決済/申込状況確認
+      description: pending状態（決済確認中）からactiveになったかをポーリング/確認するためのAPI。
+      operationId: API_021
+      x-api-id: API-021
+      x-roles: learner
+      x-policy: pending対応
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: enrollmentId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/learner/courses/{courseId}/side-menu:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: サイドメニュー取得
+      description: チャットチャンネルと解禁済み課題レッスンを階層構造化して取得（image_3345d2を完全再現）。
+      operationId: API_022
+      x-api-id: API-022
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/learner/assignments:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: 自分の課題一覧
+      description: 自分が提出すべき、または提出済みのすべての課題を全講座横断で一覧取得する。
+      operationId: API_023
+      x-api-id: API-023
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentListResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/learner/assignments/{lessonId}:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: 課題詳細取得
+      description: 課題の設問内容、配布資料、現在の提出状況と講師からの最新フィードバックを取得する。
+      operationId: API_024
+      x-api-id: API-024
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: lessonId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/learner/lessons/{lessonId}/submissions:
+    post:
+      tags:
+      - Learner Dashboard/Progress
+      summary: 課題提出
+      description: 回答を提出。自動的にassignmentチャンネル内に講師との返信用スレッドを生成する。
+      operationId: API_025
+      x-api-id: API-025
+      x-roles: learner
+      x-policy: 423_ON_FROZEN, threads_only
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: lessonId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/learner/records:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: 学習実績取得
+      description: 獲得した証明書、バッジ、修了した講座の最終成績や学習時間統計を一覧取得する。
+      operationId: API_026
+      x-api-id: API-026
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/learner/calendar:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: カレンダー取得
+      description: 受講している全講座のライブ予定、提出期限、面談予定をカレンダー形式(JSON)で取得。
+      operationId: API_027
+      x-api-id: API-027
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/learner/courses/{courseId}/complete:
+    post:
+      tags:
+      - Learner Dashboard/Progress
+      summary: コース修了処理
+      description: 全レッスン完了時の最終修了申請。講師による最終確認が必要な場合、評価待ちへ遷移。
+      operationId: API_028
+      x-api-id: API-028
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/surveys/{surveyId}:
+    get:
+      tags:
+      - Learner Dashboard/Progress
+      summary: アンケート取得
+      description: 講座内アンケートの設問（選択式、記述式）を取得する。
+      operationId: API_029
+      x-api-id: API-029
+      x-roles: learner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: surveyId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/surveys/{surveyId}/responses:
+    post:
+      tags:
+      - Learner Dashboard/Progress
+      summary: アンケート回答
+      description: アンケート回答を送信。423チェック対象。回答により教材解禁が連動する場合がある。
+      operationId: API_030
+      x-api-id: API-030
+      x-roles: learner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: surveyId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/courses:
+    get:
+      tags:
+      - Course Management
+      summary: 自講座一覧
+      description: 自分が管理、または講師として参加（担当）している全講座を一覧取得する。
+      operationId: API_031
+      x-api-id: API-031
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseListResponse'
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Course Management
+      summary: 講座新規作成（講師）
+      description: |-
+        講師がコースを新規作成。ownerUserId=作成者（サーバー側で自動設定、リクエストでの指定不可）。初期status=draft。CourseMember(role=instructor_owner)が自動作成される。公開にはrequest-approval→approve が必要。
+      operationId: API_032
+      x-api-id: API-032
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructorCourseCreateRequest'
+  /api/v1/instructor/courses/{courseId}:
+    get:
+      tags:
+      - Course Management
+      summary: 講座詳細取得(管理)
+      description: 講師用管理画面。売上概況、受講者推移、下書き情報を含む管理用詳細データ。
+      operationId: API_033
+      x-api-id: API-033
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      tags:
+      - Course Management
+      summary: 講座情報更新
+      description: 講座のタイトル、LP、価格、募集期間、マーケティング項目を更新（image_33637a反映）。
+      operationId: API_034
+      x-api-id: API-034
+      x-roles: instructor_owner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseUpdateRequest'
+    delete:
+      tags:
+      - Course Management
+      summary: 講座削除(論理)
+      description: 講座を論理削除(archived)状態にする。既存の受講生には閲覧権限のみ残存させる。
+      operationId: API_035
+      x-api-id: API-035
+      x-roles: instructor_owner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/instructor/courses/{courseId}/request-approval:
+    post:
+      tags:
+      - Course Management
+      summary: 承認申請
+      description: 運営へ公開審査を依頼。statusがpending_approvalとなり、以降承認まで423 Locked。
+      operationId: API_036
+      x-api-id: API-036
+      x-roles: instructor_owner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/courses/{courseId}/publish:
+    post:
+      tags:
+      - Course Management
+      summary: コース公開（講師）
+      description: |-
+        ownerUserId一致の講師がコースを公開する。statusをactiveに変更。operator作成コースの場合、CourseMember.roleをinstructor→instructor_ownerへ昇格（委譲完了）。
+      operationId: API_036B
+      x-api-id: API-036B
+      x-roles: instructor_owner
+      x-policy: AUDIT_LOG
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '403':
+          description: Forbidden (ownerUserId不一致)
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/instructor/analytics/overview:
+    get:
+      tags:
+      - Course Management
+      summary: 売上分析サマリ
+      description: 期間別の収益、成約率、受講生離脱ポイント等の分析サマリーを取得。
+      operationId: API_037
+      x-api-id: API-037
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/instructor/settings/payout:
+    put:
+      tags:
+      - Course Management
+      summary: 振込先銀行設定
+      description: 講師への報酬振込先口座情報をStripe Connect等と連携して設定・更新。
+      operationId: API_038
+      x-api-id: API-038
+      x-roles: instructor_owner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/courses/{courseId}/syllabus:
+    get:
+      tags:
+      - Syllabus/Content
+      summary: シラバス構造取得
+      description: 編集中の章立てとレッスン構成をツリー形式で取得（image_32dd18の構成用）。
+      operationId: API_039
+      x-api-id: API-039
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/instructor/courses/{courseId}/sections:
+    post:
+      tags:
+      - Syllabus/Content
+      summary: セクション追加
+      description: カリキュラム内に新しい「章」を追加。423チェック対象。
+      operationId: API_040
+      x-api-id: API-040
+      x-roles: instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/sections/{sectionId}:
+    put:
+      tags:
+      - Syllabus/Content
+      summary: セクション編集
+      description: セクション名の変更、表示順の並び替え、および削除。
+      operationId: API_041
+      x-api-id: API-041
+      x-roles: instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+    delete:
+      tags:
+      - Syllabus/Content
+      summary: セクション削除
+      description: 指定されたセクションと、配下のレッスン紐付けを削除（論理/物理）。
+      operationId: API_042
+      x-api-id: API-042
+      x-roles: instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/instructor/sections/{sectionId}/lessons:
+    post:
+      tags:
+      - Syllabus/Content
+      summary: レッスン作成
+      description: 指定セクションに新規レッスンを追加（座学/動画/課題/ライブ）（image_32dcf8反映）。
+      operationId: API_043
+      x-api-id: API-043
+      x-roles: instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/lessons/{lessonId}:
+    get:
+      tags:
+      - Syllabus/Content
+      summary: レッスン詳細取得
+      description: 編集画面用。動画URL、リッチテキスト本文、課題要件、Drip設定の詳細。
+      operationId: API_044
+      x-api-id: API-044
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: lessonId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      tags:
+      - Syllabus/Content
+      summary: レッスン編集
+      description: コンテンツの修正、Drip(解禁日)、先行ロック条件の保存。423チェック対象。
+      operationId: API_045
+      x-api-id: API-045
+      x-roles: instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: lessonId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+    delete:
+      tags:
+      - Syllabus/Content
+      summary: レッスン削除
+      description: レッスンをカリキュラムから削除。
+      operationId: API_046
+      x-api-id: API-046
+      x-roles: instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: lessonId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/instructor/lessons/{lessonId}/live:
+    put:
+      tags:
+      - Syllabus/Content
+      summary: ライブ配信設定
+      description: ZoomやYouTube LiveのURL、および配信日時の設定（カレンダー連動）。
+      operationId: API_047
+      x-api-id: API-047
+      x-roles: instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: lessonId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/courses/{courseId}/submissions:
+    get:
+      tags:
+      - Submission Management
+      summary: 提出一覧取得
+      description: 受講者別の課題進捗、未確認提出物、最終提出日時の一覧（image_32dcd7反映）。
+      operationId: API_048
+      x-api-id: API-048
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/instructor/submissions/{submissionId}/evaluation:
+    patch:
+      tags:
+      - Submission Management
+      summary: 評価・採点実行
+      description: 提出物への合否、講評を送信。合格時は自動で次の教材を解禁。フィードバックはスレッドへ。
+      operationId: API_049
+      x-api-id: API-049
+      x-roles: instructor, assistant
+      x-policy: THREAD_REPLY(AUTO)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/courses/{courseId}/members:
+    get:
+      tags:
+      - Submission Management
+      summary: 受講者名簿取得
+      description: 全参加ユーザーの属性、現在の進捗状況、メールアドレス等の名簿取得。
+      operationId: API_050
+      x-api-id: API-050
+      x-roles: instructor
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/instructor/courses/{courseId}/members/{userId}/role:
+    patch:
+      tags:
+      - Submission Management
+      summary: 講座内ロール変更
+      description: 特定ユーザーの役割（講師、アシスタント、受講生）を動的に切り替え。
+      operationId: API_051
+      x-api-id: API-051
+      x-roles: instructor_owner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/courses/{courseId}/members/{userId}/revoke:
+    post:
+      tags:
+      - Submission Management
+      summary: 受講権限剥奪
+      description: 特定ユーザーの受講権限を剥奪（revoked）し、コンテンツへのアクセスを遮断。
+      operationId: API_052
+      x-api-id: API-052
+      x-roles: instructor_owner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/instructor/courses/{courseId}/export:
+    get:
+      tags:
+      - Submission Management
+      summary: 受講者CSV出力
+      description: 受講者名簿と学習進捗データをCSV形式でエクスポートする。
+      operationId: API_053
+      x-api-id: API-053
+      x-roles: instructor_owner
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/courses/{courseId}/channels:
+    get:
+      tags:
+      - Communication
+      summary: チャンネル一覧取得
+      description: サイドメニュー構築用。general, announcement等のチャンネル種別を含む。
+      operationId: API_054
+      x-api-id: API-054
+      x-roles: all_in_course
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseChannelListResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags:
+      - Communication
+      summary: チャンネル作成
+      description: コース内に新しいカスタムチャンネルを追加。
+      operationId: API_055
+      x-api-id: API-055
+      x-roles: instructor_owner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseChannelCreateRequest'
+  /api/v1/channels/{channelId}:
+    put:
+      tags:
+      - Communication
+      summary: チャンネル編集
+      description: チャンネル名、説明文、閲覧制限、アーカイブ状態の更新。
+      operationId: API_056
+      x-api-id: API-056
+      x-roles: instructor_owner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseChannelDetailView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+    delete:
+      tags:
+      - Communication
+      summary: チャンネル削除
+      description: チャンネルを論理削除。過去ログは監査用に保持。
+      operationId: API_057
+      x-api-id: API-057
+      x-roles: instructor_owner
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/channels/{channelId}/messages:
+    get:
+      tags:
+      - Communication
+      summary: メッセージ履歴取得
+      description: スレッド親（ルート）メッセージの一覧取得。課題の相互閲覧可（image_32d9b1反映）。
+      operationId: API_058
+      x-api-id: API-058
+      x-roles: all_in_course
+      x-policy: 閲覧のみ可
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags:
+      - Communication
+      summary: メッセージ投稿
+      description: チャンネルへの新規投稿。親メッセージとして保存。threads_onlyを強制適用。
+      operationId: API_059
+      x-api-id: API-059
+      x-roles: all_in_course
+      x-policy: threads_only(AUTO)
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseChannelDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseMessageCreateRequest'
+  /api/v1/messages/{messageId}/thread:
+    get:
+      tags:
+      - Communication
+      summary: スレッド詳細取得
+      description: 特定メッセージに紐づく返信メッセージ一覧（スレッドビュー）を全件取得。
+      operationId: API_060
+      x-api-id: API-060
+      x-roles: all_in_course
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/messages/{messageId}/replies:
+    post:
+      tags:
+      - Communication
+      summary: スレッド返信投稿
+      description: 返信投稿(image_32d9b1)。announcementタイプは講師以外返信不可。
+      operationId: API_061
+      x-api-id: API-061
+      x-roles: all_in_course
+      x-policy: THREAD_REPLY
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseMessageView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/messages/{messageId}:
+    patch:
+      tags:
+      - Communication
+      summary: メッセージ編集
+      description: 自分の投稿内容を修正。編集履歴を保持。423チェック対象。
+      operationId: API_062
+      x-api-id: API-062
+      x-roles: owner_only
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseMessageView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+    delete:
+      tags:
+      - Communication
+      summary: メッセージ削除
+      description: 投稿の論理削除。返信がある場合は「削除されました」と表示。
+      operationId: API_063
+      x-api-id: API-063
+      x-roles: owner_only, instructor
+      x-policy: 423_ON_FROZEN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/messages/{messageId}/reactions:
+    post:
+      tags:
+      - Communication
+      summary: リアクション追加
+      description: メッセージに対する絵文字リアクションの付与。423チェック対象。
+      operationId: API_064
+      x-api-id: API-064
+      x-roles: all_in_course
+      x-policy: 423_ON_FROZEN
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseMessageView'
+        '423':
+          description: Locked (Course is frozen)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/courses/{courseId}/channels/{channelId}/threads:
+    get:
+      tags:
+      - Communication
+      summary: スレッド一覧取得（ルートメッセージのみ）
+      description: threads_only対応
+      operationId: API_065
+      x-api-id: API-065
+      x-roles: all_in_course
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadListResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags:
+      - Communication
+      summary: スレッド作成（ルート投稿）
+      description: threadId=NULLで作成
+      operationId: API_066
+      x-api-id: API-066
+      x-roles: all_in_course
+      x-policy: '-'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/courses/{courseId}/channels/{channelId}/threads/{threadId}/messages:
+    get:
+      tags:
+      - Communication
+      summary: スレッド内メッセージ一覧（ルート+返信）
+      description: threadId指定で返信も取得
+      operationId: API_067
+      x-api-id: API-067
+      x-roles: all_in_course
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: threadId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags:
+      - Communication
+      summary: スレッド返信
+      description: threadId必須
+      operationId: API_068
+      x-api-id: API-068
+      x-roles: all_in_course
+      x-policy: '-'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: threadId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseMessageCreateRequest'
+  /api/v1/payments/webhook:
+    post:
+      tags:
+      - ' Infrastructure'
+      summary: Stripe Webhook
+      description: 外部決済完了通知を受け取り、Enrollmentを自動的にactive化する。
+      operationId: API_083
+      x-api-id: API-083
+      x-roles: public(Stripe)
+      x-policy: Webhook専用
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/health:
+    get:
+      tags:
+      - System
+      summary: ヘルスチェック
+      description: サーバーの死活監視用。DB、Redis、外部サービスの接続確認。
+      operationId: API_084
+      x-api-id: API-084
+      x-roles: public
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericListResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        globalRole:
+          $ref: '#/components/schemas/GlobalRole'
+          enum:
+          - guest
+          - learner
+          - instructor
+          - assistant
+          - operator
+          - root_operator
+      additionalProperties: false
+      required:
+      - createdAt
+      - id
+      - isActive
+      - updatedAt
+      - globalRole
+    UserCreateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        isActive:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    UserUpdateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        isActive:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    PlatformMembership:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        role:
+          type: string
+          enum: &id001
+          - operator
+          - root_operator
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - createdAt
+      - id
+      - role
+      - updatedAt
+      - userId
+    PlatformMembershipCreateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: *id001
+      additionalProperties: false
+      required:
+      - role
+      - userId
+    PlatformMembershipUpdateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: *id001
+      additionalProperties: false
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        ownerUserId:
+          type: string
+        catalogVisibility:
+          type: string
+          enum: &id002
+          - public_listed
+          - public_unlisted
+          - private
+        visibility:
+          type: string
+          enum: &id003
+          - public
+          - instructors_only
+        isFrozen:
+          type: boolean
+        frozenAt:
+          type: string
+          format: date-time
+          nullable: true
+        frozenByUserId:
+          type: string
+          nullable: true
+        freezeReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        createdByUserId:
+          type: string
+          description: 作成者ユーザーID（instructor 作成 or operator/root 作成）
+        status:
+          type: string
+          enum:
+          - draft
+          - pending_approval
+          - active
+          - archived
+          description: 講座ステータス
+        approvalRequestedAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvedByUserId:
+          type: string
+          nullable: true
+      additionalProperties: false
+      required:
+      - visibility
+      - updatedAt
+      - createdByUserId
+      - createdAt
+      - title
+      - isFrozen
+      - ownerUserId
+      - catalogVisibility
+      - id
+      - status
+    CourseCreateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        ownerUserId:
+          type: string
+          deprecated: true
+        catalogVisibility:
+          type: string
+          enum: *id002
+        visibility:
+          type: string
+          enum: *id003
+        isFrozen:
+          type: boolean
+        frozenAt:
+          type: string
+          format: date-time
+        frozenByUserId:
+          type: string
+        freezeReason:
+          type: string
+      additionalProperties: false
+      required:
+      - title
+    CourseUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        ownerUserId:
+          type: string
+        catalogVisibility:
+          type: string
+          enum: *id002
+        visibility:
+          type: string
+          enum: *id003
+        isFrozen:
+          type: boolean
+        frozenAt:
+          type: string
+          format: date-time
+        frozenByUserId:
+          type: string
+        freezeReason:
+          type: string
+      additionalProperties: false
+    CourseMember:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        userId:
+          type: string
+        role:
+          type: string
+          enum: &id004
+          - instructor_owner
+          - learner
+          - instructor
+          - assistant
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - courseId
+      - createdAt
+      - id
+      - role
+      - updatedAt
+      - userId
+    CourseMemberCreateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        userId:
+          type: string
+        role:
+          type: string
+          enum: *id004
+      additionalProperties: false
+      required:
+      - courseId
+      - role
+      - userId
+    CourseMemberUpdateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        userId:
+          type: string
+        role:
+          type: string
+          enum: *id004
+      additionalProperties: false
+    Lesson:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        type:
+          type: string
+          enum: &id005
+          - text
+          - video
+          - live
+          - assignment
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - courseId
+      - createdAt
+      - id
+      - title
+      - type
+      - updatedAt
+    LessonCreateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        type:
+          type: string
+          enum: *id005
+        title:
+          type: string
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - type
+    LessonUpdateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        type:
+          type: string
+          enum: *id005
+        title:
+          type: string
+      additionalProperties: false
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        dueAt:
+          type: string
+          format: date-time
+          nullable: true
+        allowResubmission:
+          type: boolean
+        isPublished:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - allowResubmission
+      - courseId
+      - createdAt
+      - id
+      - isPublished
+      - title
+      - updatedAt
+    AssignmentCreateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        dueAt:
+          type: string
+          format: date-time
+        allowResubmission:
+          type: boolean
+        isPublished:
+          type: boolean
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+    AssignmentUpdateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        dueAt:
+          type: string
+          format: date-time
+        allowResubmission:
+          type: boolean
+        isPublished:
+          type: boolean
+      additionalProperties: false
+    CourseChannel:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        type:
+          type: string
+          enum: &id006
+          - assignment
+          - one_on_one
+          - announcement
+          - general
+        postingMode:
+          type: string
+          enum: &id007
+          - mixed
+          - threads_only
+        visibility:
+          type: string
+          enum: *id003
+        isFrozen:
+          type: boolean
+        frozenAt:
+          type: string
+          format: date-time
+          nullable: true
+        frozenByUserId:
+          type: string
+          nullable: true
+        freezeReason:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        isManual:
+          type: boolean
+        systemKey:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - courseId
+      - createdAt
+      - id
+      - isFrozen
+      - isManual
+      - postingMode
+      - type
+      - updatedAt
+      - visibility
+    CourseChannelCreateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        type:
+          type: string
+          enum: *id006
+        postingMode:
+          type: string
+          enum: *id007
+        visibility:
+          type: string
+          enum: *id003
+        isFrozen:
+          type: boolean
+        frozenAt:
+          type: string
+          format: date-time
+        frozenByUserId:
+          type: string
+        freezeReason:
+          type: string
+        name:
+          type: string
+        isManual:
+          type: boolean
+        systemKey:
+          type: string
+      additionalProperties: false
+      required:
+      - courseId
+      - type
+    CourseChannelUpdateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        type:
+          type: string
+          enum: *id006
+        postingMode:
+          type: string
+          enum: *id007
+        visibility:
+          type: string
+          enum: *id003
+        isFrozen:
+          type: boolean
+        frozenAt:
+          type: string
+          format: date-time
+        frozenByUserId:
+          type: string
+        freezeReason:
+          type: string
+        name:
+          type: string
+        isManual:
+          type: boolean
+        systemKey:
+          type: string
+      additionalProperties: false
+    CourseChannelMember:
+      type: object
+      properties:
+        id:
+          type: string
+        channelId:
+          type: string
+        courseMemberId:
+          type: string
+        status:
+          type: string
+          enum: &id008
+          - invited
+          - joined
+          - declined
+        invitedAt:
+          type: string
+          format: date-time
+          nullable: true
+        joinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        declinedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastReadMessageId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - channelId
+      - courseMemberId
+      - createdAt
+      - id
+      - status
+      - updatedAt
+    CourseChannelMemberCreateRequest:
+      type: object
+      properties:
+        channelId:
+          type: string
+        courseMemberId:
+          type: string
+        status:
+          type: string
+          enum: *id008
+        invitedAt:
+          type: string
+          format: date-time
+        joinedAt:
+          type: string
+          format: date-time
+        declinedAt:
+          type: string
+          format: date-time
+        lastReadMessageId:
+          type: string
+      additionalProperties: false
+      required:
+      - channelId
+      - courseMemberId
+    CourseChannelMemberUpdateRequest:
+      type: object
+      properties:
+        channelId:
+          type: string
+        courseMemberId:
+          type: string
+        status:
+          type: string
+          enum: *id008
+        invitedAt:
+          type: string
+          format: date-time
+        joinedAt:
+          type: string
+          format: date-time
+        declinedAt:
+          type: string
+          format: date-time
+        lastReadMessageId:
+          type: string
+      additionalProperties: false
+    CourseThread:
+      type: object
+      properties:
+        id:
+          type: string
+        channelId:
+          type: string
+        type:
+          type: string
+          enum: &id009
+          - submission
+          - message_thread
+        rootMessageId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - channelId
+      - createdAt
+      - id
+      - type
+      - updatedAt
+    CourseThreadCreateRequest:
+      type: object
+      properties:
+        channelId:
+          type: string
+        type:
+          type: string
+          enum: *id009
+        rootMessageId:
+          type: string
+      additionalProperties: false
+      required:
+      - channelId
+      - type
+    CourseThreadUpdateRequest:
+      type: object
+      properties:
+        channelId:
+          type: string
+        type:
+          type: string
+          enum: *id009
+        rootMessageId:
+          type: string
+      additionalProperties: false
+    CourseThreadReadState:
+      type: object
+      properties:
+        id:
+          type: string
+        threadId:
+          type: string
+        courseMemberId:
+          type: string
+        lastReadMessageId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - courseMemberId
+      - createdAt
+      - id
+      - threadId
+      - updatedAt
+    CourseThreadReadStateCreateRequest:
+      type: object
+      properties:
+        threadId:
+          type: string
+        courseMemberId:
+          type: string
+        lastReadMessageId:
+          type: string
+      additionalProperties: false
+      required:
+      - courseMemberId
+      - threadId
+    CourseThreadReadStateUpdateRequest:
+      type: object
+      properties:
+        threadId:
+          type: string
+        courseMemberId:
+          type: string
+        lastReadMessageId:
+          type: string
+      additionalProperties: false
+    CourseMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        channelId:
+          type: string
+        threadId:
+          type: string
+          nullable: true
+        authorCourseMemberId:
+          type: string
+          nullable: true
+        text:
+          type: string
+        isEmergency:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - channelId
+      - createdAt
+      - id
+      - isEmergency
+      - text
+      - updatedAt
+    CourseMessageCreateRequest:
+      type: object
+      properties:
+        channelId:
+          type: string
+        threadId:
+          type: string
+        authorCourseMemberId:
+          type: string
+        text:
+          type: string
+        isEmergency:
+          type: boolean
+      additionalProperties: false
+      required:
+      - channelId
+      - text
+    CourseMessageUpdateRequest:
+      type: object
+      properties:
+        channelId:
+          type: string
+        threadId:
+          type: string
+        authorCourseMemberId:
+          type: string
+        text:
+          type: string
+        isEmergency:
+          type: boolean
+      additionalProperties: false
+    CourseMessageAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+        courseMessageId:
+          type: string
+        type:
+          type: string
+        storageKey:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - courseMessageId
+      - createdAt
+      - fileName
+      - id
+      - mimeType
+      - size
+      - storageKey
+      - type
+    CourseMessageAttachmentCreateRequest:
+      type: object
+      properties:
+        courseMessageId:
+          type: string
+        type:
+          type: string
+        storageKey:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int32
+      additionalProperties: false
+      required:
+      - courseMessageId
+      - fileName
+      - mimeType
+      - size
+      - storageKey
+      - type
+    CourseMessageAttachmentUpdateRequest:
+      type: object
+      properties:
+        courseMessageId:
+          type: string
+        type:
+          type: string
+        storageKey:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int32
+      additionalProperties: false
+    CourseNotificationPreference:
+      type: object
+      properties:
+        id:
+          type: string
+        courseMemberId:
+          type: string
+        announcementNormalEnabled:
+          type: boolean
+        submissionEnabled:
+          type: boolean
+        submissionCommentEnabled:
+          type: boolean
+        threadReplyEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - announcementNormalEnabled
+      - courseMemberId
+      - createdAt
+      - id
+      - submissionCommentEnabled
+      - submissionEnabled
+      - threadReplyEnabled
+      - updatedAt
+    CourseNotificationPreferenceCreateRequest:
+      type: object
+      properties:
+        courseMemberId:
+          type: string
+        announcementNormalEnabled:
+          type: boolean
+        submissionEnabled:
+          type: boolean
+        submissionCommentEnabled:
+          type: boolean
+        threadReplyEnabled:
+          type: boolean
+      additionalProperties: false
+      required:
+      - courseMemberId
+    CourseNotificationPreferenceUpdateRequest:
+      type: object
+      properties:
+        courseMemberId:
+          type: string
+        announcementNormalEnabled:
+          type: boolean
+        submissionEnabled:
+          type: boolean
+        submissionCommentEnabled:
+          type: boolean
+        threadReplyEnabled:
+          type: boolean
+      additionalProperties: false
+    CourseChannelNotificationPreference:
+      type: object
+      properties:
+        id:
+          type: string
+        courseMemberId:
+          type: string
+        channelId:
+          type: string
+        muted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - channelId
+      - courseMemberId
+      - createdAt
+      - id
+      - muted
+      - updatedAt
+    CourseChannelNotificationPreferenceCreateRequest:
+      type: object
+      properties:
+        courseMemberId:
+          type: string
+        channelId:
+          type: string
+        muted:
+          type: boolean
+      additionalProperties: false
+      required:
+      - channelId
+      - courseMemberId
+    CourseChannelNotificationPreferenceUpdateRequest:
+      type: object
+      properties:
+        courseMemberId:
+          type: string
+        channelId:
+          type: string
+        muted:
+          type: boolean
+      additionalProperties: false
+    CourseEnrollment:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        userId:
+          type: string
+        status:
+          type: string
+          enum: &id010
+          - applied
+          - active
+          - revoked
+        grantedAt:
+          type: string
+          format: date-time
+          nullable: true
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        source:
+          type: string
+          enum: &id011
+          - stripe
+          - manual
+        paymentId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - courseId
+      - createdAt
+      - id
+      - source
+      - status
+      - updatedAt
+      - userId
+    CourseEnrollmentCreateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        userId:
+          type: string
+        status:
+          type: string
+          enum: *id010
+        grantedAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+          enum: *id011
+        paymentId:
+          type: string
+      additionalProperties: false
+      required:
+      - courseId
+      - userId
+    CourseEnrollmentUpdateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        userId:
+          type: string
+        status:
+          type: string
+          enum: *id010
+        grantedAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+          enum: *id011
+        paymentId:
+          type: string
+      additionalProperties: false
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        provider:
+          type: string
+          enum: *id011
+        providerRef:
+          type: string
+          nullable: true
+        userId:
+          type: string
+        courseId:
+          type: string
+          nullable: true
+        amount:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        status:
+          type: string
+          enum: &id012
+          - pending
+          - succeeded
+          - failed
+          - canceled
+          - refunded
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - amount
+      - createdAt
+      - currency
+      - id
+      - provider
+      - status
+      - updatedAt
+      - userId
+    PaymentCreateRequest:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: *id011
+        providerRef:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+        amount:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        status:
+          type: string
+          enum: *id012
+        paidAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - amount
+      - userId
+    PaymentUpdateRequest:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: *id011
+        providerRef:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+        amount:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        status:
+          type: string
+          enum: *id012
+        paidAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    Refund:
+      type: object
+      properties:
+        id:
+          type: string
+        paymentId:
+          type: string
+        providerRef:
+          type: string
+          nullable: true
+        amount:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum: &id013
+          - pending
+          - succeeded
+          - failed
+          - canceled
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - amount
+      - createdAt
+      - id
+      - paymentId
+      - status
+      - updatedAt
+    RefundCreateRequest:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        providerRef:
+          type: string
+        amount:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum: *id013
+      additionalProperties: false
+      required:
+      - amount
+      - paymentId
+    RefundUpdateRequest:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        providerRef:
+          type: string
+        amount:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum: *id013
+      additionalProperties: false
+    Coupon:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        discountType:
+          type: string
+          enum: &id014
+          - amount_fixed
+          - amount_percent
+        discountValue:
+          type: integer
+          format: int32
+        currency:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        usageLimit:
+          type: integer
+          format: int32
+          nullable: true
+        usedCount:
+          type: integer
+          format: int32
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - code
+      - createdAt
+      - discountType
+      - discountValue
+      - id
+      - isActive
+      - updatedAt
+      - usedCount
+    CouponCreateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        discountType:
+          type: string
+          enum: *id014
+        discountValue:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        usageLimit:
+          type: integer
+          format: int32
+        usedCount:
+          type: integer
+          format: int32
+        isActive:
+          type: boolean
+      additionalProperties: false
+      required:
+      - code
+      - discountType
+      - discountValue
+    CouponUpdateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        discountType:
+          type: string
+          enum: *id014
+        discountValue:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        usageLimit:
+          type: integer
+          format: int32
+        usedCount:
+          type: integer
+          format: int32
+        isActive:
+          type: boolean
+      additionalProperties: false
+    CouponRedemption:
+      type: object
+      properties:
+        id:
+          type: string
+        couponId:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+          nullable: true
+        paymentId:
+          type: string
+          nullable: true
+        redeemedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - couponId
+      - createdAt
+      - id
+      - redeemedAt
+      - updatedAt
+      - userId
+    CouponRedemptionCreateRequest:
+      type: object
+      properties:
+        couponId:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+        paymentId:
+          type: string
+        redeemedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - couponId
+      - userId
+    CouponRedemptionUpdateRequest:
+      type: object
+      properties:
+        couponId:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+        paymentId:
+          type: string
+        redeemedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        actorUserId:
+          type: string
+        actorGlobalRole:
+          type: string
+          enum: &id015
+          - guest
+          - learner
+          - instructor
+          - assistant
+          - operator
+          - root_operator
+        eventType:
+          $ref: '#/components/schemas/AuditEventType'
+          enum: &id016
+          - announcement_emergency_posted
+          - course_frozen
+          - course_unfrozen
+          - channel_frozen
+          - channel_unfrozen
+          - dm_viewed_by_root_operator
+          - course_created
+          - course_approval_requested
+          - course_approved
+          - course_published
+          - course_member_role_promoted
+          type: string
+        courseId:
+          type: string
+          nullable: true
+        channelId:
+          type: string
+          nullable: true
+        messageId:
+          type: string
+          nullable: true
+        reason:
+          type: string
+        metaJson:
+          type: object
+          nullable: true
+        requestId:
+          type: string
+          nullable: true
+        ipHash:
+          type: string
+          nullable: true
+        userAgentHash:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - actorGlobalRole
+      - actorUserId
+      - createdAt
+      - eventType
+      - id
+      - occurredAt
+      - reason
+      - updatedAt
+    AuditEventCreateRequest:
+      type: object
+      properties:
+        occurredAt:
+          type: string
+          format: date-time
+        actorUserId:
+          type: string
+        actorGlobalRole:
+          type: string
+          enum: *id015
+        eventType:
+          type: string
+          enum: *id016
+        courseId:
+          type: string
+        channelId:
+          type: string
+        messageId:
+          type: string
+        reason:
+          type: string
+        metaJson:
+          type: object
+        requestId:
+          type: string
+        ipHash:
+          type: string
+        userAgentHash:
+          type: string
+      additionalProperties: false
+      required:
+      - actorGlobalRole
+      - actorUserId
+      - eventType
+      - reason
+    AuditEventUpdateRequest:
+      type: object
+      properties:
+        occurredAt:
+          type: string
+          format: date-time
+        actorUserId:
+          type: string
+        actorGlobalRole:
+          type: string
+          enum: *id015
+        eventType:
+          type: string
+          enum: *id016
+        courseId:
+          type: string
+        channelId:
+          type: string
+        messageId:
+          type: string
+        reason:
+          type: string
+        metaJson:
+          type: object
+        requestId:
+          type: string
+        ipHash:
+          type: string
+        userAgentHash:
+          type: string
+      additionalProperties: false
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+        amount:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+          enum: &id017
+          - pending
+          - paid
+          - cancelled
+          - failed
+          - refunded
+        paymentProvider:
+          type: string
+        paymentIntentId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - amount
+      - courseId
+      - createdAt
+      - currency
+      - id
+      - paymentProvider
+      - status
+      - userId
+    OrderCreateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        courseId:
+          type: string
+        amount:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        status:
+          type: string
+          enum: *id017
+        paymentProvider:
+          type: string
+        paymentIntentId:
+          type: string
+      additionalProperties: false
+      required:
+      - amount
+      - courseId
+      - currency
+      - paymentProvider
+      - status
+      - userId
+    OrderUpdateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        courseId:
+          type: string
+        amount:
+          type: integer
+          format: int32
+        currency:
+          type: string
+        status:
+          type: string
+          enum: *id017
+        paymentProvider:
+          type: string
+        paymentIntentId:
+          type: string
+      additionalProperties: false
+    OAuthIdentity:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        provider:
+          type: string
+        providerUserId:
+          type: string
+        email:
+          type: string
+          nullable: true
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - createdAt
+      - id
+      - provider
+      - providerUserId
+      - userId
+    OAuthIdentityCreateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        provider:
+          type: string
+        providerUserId:
+          type: string
+        email:
+          type: string
+        lastLoginAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - provider
+      - providerUserId
+      - userId
+    OAuthIdentityUpdateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        provider:
+          type: string
+        providerUserId:
+          type: string
+        email:
+          type: string
+        lastLoginAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    PasswordCredential:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        passwordHash:
+          type: string
+        algorithm:
+          type: string
+        passwordUpdatedAt:
+          type: string
+          format: date-time
+        isDisabled:
+          type: boolean
+        failedCount:
+          type: integer
+          format: int32
+        lastFailedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - algorithm
+      - createdAt
+      - failedCount
+      - id
+      - isDisabled
+      - passwordHash
+      - passwordUpdatedAt
+      - updatedAt
+      - userId
+    PasswordCredentialCreateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        passwordHash:
+          type: string
+        algorithm:
+          type: string
+        passwordUpdatedAt:
+          type: string
+          format: date-time
+        isDisabled:
+          type: boolean
+        failedCount:
+          type: integer
+          format: int32
+        lastFailedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - algorithm
+      - passwordHash
+      - passwordUpdatedAt
+      - userId
+    PasswordCredentialUpdateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        passwordHash:
+          type: string
+        algorithm:
+          type: string
+        passwordUpdatedAt:
+          type: string
+          format: date-time
+        isDisabled:
+          type: boolean
+        failedCount:
+          type: integer
+          format: int32
+        lastFailedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    FileObject:
+      type: object
+      properties:
+        id:
+          type: string
+        storageKey:
+          type: string
+        bucket:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int32
+        checksum:
+          type: string
+          nullable: true
+        isScanned:
+          type: boolean
+        isMalicious:
+          type: boolean
+        createdByUserId:
+          type: string
+          nullable: true
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - bucket
+      - createdAt
+      - fileName
+      - id
+      - isMalicious
+      - isScanned
+      - mimeType
+      - size
+      - storageKey
+    FileObjectCreateRequest:
+      type: object
+      properties:
+        storageKey:
+          type: string
+        bucket:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int32
+        checksum:
+          type: string
+        isScanned:
+          type: boolean
+        isMalicious:
+          type: boolean
+        createdByUserId:
+          type: string
+        deletedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - bucket
+      - fileName
+      - mimeType
+      - size
+      - storageKey
+    FileObjectUpdateRequest:
+      type: object
+      properties:
+        storageKey:
+          type: string
+        bucket:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int32
+        checksum:
+          type: string
+        isScanned:
+          type: boolean
+        isMalicious:
+          type: boolean
+        createdByUserId:
+          type: string
+        deletedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+        assignmentId:
+          type: string
+        courseId:
+          type: string
+        userId:
+          type: string
+        threadId:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/SubmissionStatus'
+          enum: &id018
+          - draft
+          - submitted
+          - returned
+          - graded
+        gradedAt:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+      required:
+      - assignmentId
+      - courseId
+      - id
+      - status
+      - submittedAt
+      - threadId
+      - userId
+    SubmissionCreateRequest:
+      type: object
+      properties:
+        assignmentId:
+          type: string
+        courseId:
+          type: string
+        userId:
+          type: string
+        threadId:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: *id018
+        gradedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - assignmentId
+      - courseId
+      - status
+      - threadId
+      - userId
+    SubmissionUpdateRequest:
+      type: object
+      properties:
+        assignmentId:
+          type: string
+        courseId:
+          type: string
+        userId:
+          type: string
+        threadId:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: *id018
+        gradedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        displayName:
+          type: string
+        avatarFileObjectId:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        isPublic:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - createdAt
+      - displayName
+      - id
+      - isPublic
+      - updatedAt
+      - userId
+    UserProfileCreateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        avatarFileObjectId:
+          type: string
+        bio:
+          type: string
+        isPublic:
+          type: boolean
+      additionalProperties: false
+      required:
+      - displayName
+      - userId
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        avatarFileObjectId:
+          type: string
+        bio:
+          type: string
+        isPublic:
+          type: boolean
+      additionalProperties: false
+    GradingComment:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        threadId:
+          type: string
+        authorUserId:
+          type: string
+        targetUserId:
+          type: string
+        body:
+          type: string
+        score:
+          type: integer
+          format: int32
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - authorUserId
+      - body
+      - courseId
+      - createdAt
+      - id
+      - targetUserId
+      - threadId
+      - updatedAt
+    GradingCommentCreateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        threadId:
+          type: string
+        authorUserId:
+          type: string
+        targetUserId:
+          type: string
+        body:
+          type: string
+        score:
+          type: integer
+          format: int32
+      additionalProperties: false
+      required:
+      - authorUserId
+      - body
+      - courseId
+      - targetUserId
+      - threadId
+    GradingCommentUpdateRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        threadId:
+          type: string
+        authorUserId:
+          type: string
+        targetUserId:
+          type: string
+        body:
+          type: string
+        score:
+          type: integer
+          format: int32
+      additionalProperties: false
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+      - success
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+      required:
+      - message
+      additionalProperties: false
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+      - email
+      - password
+      additionalProperties: false
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+      required:
+      - accessToken
+      - refreshToken
+      additionalProperties: false
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        name:
+          type: string
+      required:
+      - email
+      - password
+      - name
+      additionalProperties: false
+    RegisterResponse:
+      $ref: '#/components/schemas/User'
+    RefreshResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+      required:
+      - accessToken
+      additionalProperties: false
+    CheckoutRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+        couponCode:
+          type: string
+      required:
+      - courseId
+      additionalProperties: false
+    CheckoutResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        url:
+          type: string
+          format: uri
+      required:
+      - sessionId
+      - url
+      additionalProperties: false
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+      - id
+      - type
+      - title
+      - isRead
+      - createdAt
+      additionalProperties: false
+    NotificationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+      required:
+      - items
+      additionalProperties: false
+    CourseSideMenuResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+      required:
+      - items
+      additionalProperties: false
+    CursorPageInfo:
+      type: object
+      properties:
+        nextCursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+      required:
+      - hasMore
+      additionalProperties: false
+    OffsetPageInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+          nullable: true
+      required:
+      - page
+      - pageSize
+      additionalProperties: false
+    ListMeta:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/OffsetPageInfo'
+        cursor:
+          $ref: '#/components/schemas/CursorPageInfo'
+      additionalProperties: false
+    UserPublicView:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+      required:
+      - id
+      - displayName
+      additionalProperties: false
+    FileObjectView:
+      type: object
+      properties:
+        file:
+          $ref: '#/components/schemas/FileObject'
+        url:
+          type: string
+        mimeType:
+          type: string
+          nullable: true
+        size:
+          type: integer
+          minimum: 0
+          nullable: true
+      required:
+      - file
+      - url
+      additionalProperties: false
+    MessageReactionView:
+      type: object
+      properties:
+        emoji:
+          type: string
+        count:
+          type: integer
+          minimum: 0
+        reactedByMe:
+          type: boolean
+      required:
+      - emoji
+      - count
+      - reactedByMe
+      additionalProperties: false
+    CourseMessageView:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/CourseMessage'
+        sender:
+          $ref: '#/components/schemas/UserPublicView'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileObjectView'
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageReactionView'
+      required:
+      - message
+      - sender
+      - attachments
+      - reactions
+      additionalProperties: false
+    CourseChannelSummaryView:
+      type: object
+      properties:
+        channel:
+          $ref: '#/components/schemas/CourseChannel'
+        lastMessageAt:
+          type: string
+          format: date-time
+          nullable: true
+        unreadCount:
+          type: integer
+          minimum: 0
+      required:
+      - channel
+      - unreadCount
+      additionalProperties: false
+    CourseStatsView:
+      type: object
+      properties:
+        learnerCount:
+          type: integer
+          minimum: 0
+        assignmentCount:
+          type: integer
+          minimum: 0
+        lessonCount:
+          type: integer
+          minimum: 0
+        activeChannelCount:
+          type: integer
+          minimum: 0
+      required:
+      - learnerCount
+      - assignmentCount
+      - lessonCount
+      - activeChannelCount
+      additionalProperties: false
+    CourseSummaryView:
+      type: object
+      properties:
+        course:
+          $ref: '#/components/schemas/Course'
+        channelCount:
+          type: integer
+          minimum: 0
+        memberCount:
+          type: integer
+          minimum: 0
+        isFrozen:
+          type: boolean
+      required:
+      - course
+      - channelCount
+      - memberCount
+      - isFrozen
+      additionalProperties: false
+    CourseDetailView:
+      type: object
+      properties:
+        course:
+          $ref: '#/components/schemas/Course'
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseChannelSummaryView'
+        stats:
+          $ref: '#/components/schemas/CourseStatsView'
+      required:
+      - course
+      - channels
+      - stats
+      additionalProperties: false
+    ThreadSummaryView:
+      type: object
+      properties:
+        threadId:
+          type: string
+        rootMessage:
+          $ref: '#/components/schemas/CourseMessageView'
+        replyCount:
+          type: integer
+          minimum: 0
+        lastReplyAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - threadId
+      - rootMessage
+      - replyCount
+      additionalProperties: false
+    AssignmentSummaryView:
+      type: object
+      properties:
+        assignment:
+          $ref: '#/components/schemas/Assignment'
+        dueAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+      required:
+      - assignment
+      - status
+      additionalProperties: false
+    AssignmentDetailView:
+      type: object
+      properties:
+        assignment:
+          $ref: '#/components/schemas/Assignment'
+        mySubmission:
+          $ref: '#/components/schemas/Submission'
+        rubric:
+          type: object
+          additionalProperties: true
+          nullable: true
+      required:
+      - assignment
+      additionalProperties: false
+    SubmissionView:
+      type: object
+      properties:
+        submission:
+          $ref: '#/components/schemas/Submission'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileObjectView'
+      required:
+      - submission
+      - attachments
+      additionalProperties: false
+    PaymentSummaryView:
+      type: object
+      properties:
+        payment:
+          $ref: '#/components/schemas/Payment'
+        course:
+          $ref: '#/components/schemas/Course'
+        buyer:
+          $ref: '#/components/schemas/UserPublicView'
+      required:
+      - payment
+      - course
+      - buyer
+      additionalProperties: false
+    CourseListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseSummaryView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    CourseChannelListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseChannelSummaryView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    ThreadListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThreadSummaryView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    MessageListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseMessageView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    AssignmentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignmentSummaryView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    PaymentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentSummaryView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    GenericWriteRequest:
+      type: object
+      additionalProperties: true
+    GenericDetailView:
+      type: object
+      additionalProperties: true
+    GenericListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+    OperatorAdminView:
+      type: object
+      additionalProperties: true
+    OperatorListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperatorAdminView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+    UserMeView:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/User'
+    CourseChannelDetailView:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CourseChannel'
+    InstructorCourseCreateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        catalogVisibility:
+          type: string
+          enum:
+          - public_listed
+          - public_unlisted
+          - private
+        visibility:
+          type: string
+          enum:
+          - public
+          - instructors_only
+      additionalProperties: false
+      required:
+      - title
+    GlobalRole:
+      type: string
+      enum:
+      - guest
+      - learner
+      - instructor
+      - assistant
+      - operator
+      - root_operator
+    OrderStatus:
+      type: string
+      enum:
+      - pending
+      - paid
+      - cancelled
+      - failed
+      - refunded
+    SubmissionStatus:
+      type: string
+      enum:
+      - draft
+      - submitted
+      - returned
+      - graded
+    AuditEventType:
+      type: string
+      enum:
+      - announcement_emergency_posted
+      - course_frozen
+      - course_unfrozen
+      - channel_frozen
+      - channel_unfrozen
+      - dm_viewed_by_root_operator
+      - course_created
+      - course_approval_requested
+      - course_approved
+      - course_published
+      - course_member_role_promoted

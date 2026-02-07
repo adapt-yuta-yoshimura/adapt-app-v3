@@ -1,0 +1,52 @@
+{
+  "name": "@adapt/admin",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001 --turbo",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "next lint",
+    "test": "vitest"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "dependencies": {
+    "@adapt/shared": "workspace:*",
+    "@adapt/types": "workspace:*",
+    "@adapt/ui": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
+    "@tanstack/react-query-devtools": "^5.62.0",
+    "@tanstack/react-table": "^8.20.0",
+    "axios": "^1.7.0",
+    "date-fns": "^3.6.0",
+    "lucide-react": "^0.563.0",
+    "next": "15.5.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.49.3",
+    "recharts": "^2.12.0",
+    "zod": "^3.22.4",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@adapt/typescript-config": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^20.11.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^2.1.9",
+    "autoprefixer": "^10.4.17",
+    "eslint-config-next": "^15.1.0",
+    "jsdom": "^24.1.3",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.9"
+  }
+}
