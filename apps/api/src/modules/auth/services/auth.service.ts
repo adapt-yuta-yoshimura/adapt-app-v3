@@ -1,273 +1,58 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { Injectable, Logger } from '@nestjs/common';
+import { User } from '@prisma/client';
 
 import { UserRepository } from '../repositories/user.repository';
-import { OAuthIdentityRepository } from '../repositories/oauth-identity.repository';
-import { PasswordCredentialRepository } from '../repositories/password-credential.repository';
-import { JwtTokenService, TokenPair } from './jwt.service';
-
-/** Google OAuthプロファイル */
-export interface GoogleProfile {
-  id: string;
-  email: string;
-  displayName?: string;
-}
-
-/** ログインレスポンス */
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: {
-    id: string;
-    email: string | null;
-    name: string | null;
-  };
-}
-
-/** bcrypt のラウンド数 */
-const BCRYPT_ROUNDS = 10;
+import { ValidatedUser } from '../strategies/jwt.strategy';
 
 /**
- * 認証サービス
- * ログイン・ログアウト・トークンリフレッシュ・OAuthコールバックのビジネスロジックを担当
+ * 認証サービス（OIDC 対応版）
+ *
+ * 認証は Keycloak が担当するため、このサービスの役割は:
+ * - Keycloak ユーザーと DB ユーザーの同期（プロビジョニング）
+ * - ユーザー情報の取得
+ *
+ * 自前の JWT 発行、パスワード検証、Google OAuth 処理は Keycloak に移譲。
  */
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly oauthIdentityRepository: OAuthIdentityRepository,
-    private readonly passwordCredentialRepository: PasswordCredentialRepository,
-    private readonly jwtTokenService: JwtTokenService,
-  ) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   /**
-   * メールアドレスとパスワードでログインする
-   * @param email メールアドレス
-   * @param password パスワード
-   * @returns 認証レスポンス（トークン + ユーザー情報）
-   * @throws {UnauthorizedException} 認証失敗時
-   */
-  async login(email: string, password: string): Promise<AuthResponse> {
-    // 1. ユーザー検索
-    const user = await this.userRepository.findByEmail(email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    // 2. アカウント有効性チェック
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
-    }
-
-    // 3. パスワード認証情報取得
-    const credential = await this.passwordCredentialRepository.findByUserId(user.id);
-    if (!credential) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    // 4. パスワード無効化チェック
-    if (credential.isDisabled) {
-      throw new UnauthorizedException('Password authentication is disabled');
-    }
-
-    // 5. パスワード検証
-    const isPasswordValid = await bcrypt.compare(password, credential.passwordHash);
-    if (!isPasswordValid) {
-      await this.passwordCredentialRepository.incrementFailedCount(user.id);
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    // 6. 失敗回数リセット
-    await this.passwordCredentialRepository.resetFailedCount(user.id);
-
-    // 7. トークン生成
-    const tokens = await this.jwtTokenService.generateTokenPair(
-      user.id,
-      user.email ?? '',
-    );
-
-    this.logger.log(`User logged in: ${user.id}`);
-
-    return {
-      ...tokens,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    };
-  }
-
-  /**
-   * ログアウト処理
-   * 現在はステートレスJWTのため、クライアント側でトークンを破棄する
-   * 将来的にはRefresh tokenのブラックリスト管理を追加予定
+   * Keycloak ユーザーと DB ユーザーを同期する
+   * JWT 検証後に呼び出し、DB にユーザーが存在しない場合は作成する
    *
-   * @param userId ユーザーID
+   * @param validatedUser Keycloak JWT から取得したユーザー情報
+   * @returns DB 上のユーザー、未プロビジョニングの場合は null
    */
-  async logout(userId: string): Promise<void> {
-    // TODO(ADAPT-AUTH): Refresh tokenのブラックリスト管理（Redis）
-    this.logger.log(`User logged out: ${userId}`);
-  }
+  async syncUser(validatedUser: ValidatedUser): Promise<User | null> {
+    // Keycloak ID で DB ユーザーを検索
+    // TODO: User モデルに keycloakId カラムが追加されたら findByKeycloakId に変更
+    let user = await this.userRepository.findByEmail(validatedUser.email ?? '');
 
-  /**
-   * Refresh token を使ってトークンペアを再発行する
-   * @param refreshToken リフレッシュトークン
-   * @returns 新しい認証レスポンス
-   * @throws {UnauthorizedException} トークンが無効な場合
-   */
-  async refreshTokens(refreshToken: string): Promise<AuthResponse> {
-    // 1. Refresh token 検証
-    const payload = await this.jwtTokenService.verifyToken(refreshToken);
-    if (!payload) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-
-    // 2. トークン種別チェック
-    if (payload.type !== 'refresh') {
-      throw new UnauthorizedException('Invalid token type');
-    }
-
-    // 3. ユーザー存在チェック
-    const user = await this.userRepository.findById(payload.sub);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    // 4. アカウント有効性チェック
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
-    }
-
-    // 5. 新しいトークンペア生成
-    const tokens = await this.jwtTokenService.generateTokenPair(
-      user.id,
-      user.email ?? '',
-    );
-
-    return {
-      ...tokens,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    };
-  }
-
-  /**
-   * Google OAuth認証コールバック処理
-   * ユーザーが存在しない場合は新規作成し、OAuthIdentityを紐付ける
-   *
-   * @param profile Googleプロファイル情報
-   * @returns 認証レスポンス
-   */
-  async handleGoogleCallback(profile: GoogleProfile): Promise<AuthResponse> {
-    // 1. 既存のOAuthIdentityを検索
-    const existingIdentity =
-      await this.oauthIdentityRepository.findByProviderAndProviderUserId(
-        'google',
-        profile.id,
-      );
-
-    if (existingIdentity) {
-      // 既存ユーザー：最終ログイン更新
-      await this.oauthIdentityRepository.updateLastLogin(existingIdentity.id);
-
-      const user = await this.userRepository.findById(existingIdentity.userId);
-      if (!user) {
-        throw new NotFoundException('User not found for OAuth identity');
-      }
-
-      if (!user.isActive) {
-        throw new UnauthorizedException('Account is deactivated');
-      }
-
-      const tokens = await this.jwtTokenService.generateTokenPair(
-        user.id,
-        user.email ?? '',
-      );
-
-      this.logger.log(`Google OAuth login: ${user.id}`);
-
-      return {
-        ...tokens,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        },
-      };
-    }
-
-    // 2. 新規ユーザー作成
-    // メールアドレスで既存ユーザーを検索（メール統合）
-    let user = await this.userRepository.findByEmail(profile.email);
-
-    if (!user) {
+    if (!user && validatedUser.email) {
+      // 初回ログイン時: DB にユーザーを作成
       user = await this.userRepository.create({
-        email: profile.email,
-        name: profile.displayName,
+        email: validatedUser.email,
+        name: validatedUser.name ?? undefined,
       });
-      this.logger.log(`New user created via Google OAuth: ${user.id}`);
+      this.logger.log(`New user synced from Keycloak: ${user.id} (${validatedUser.email})`);
     }
 
-    // 3. OAuthIdentity作成
-    await this.oauthIdentityRepository.create({
-      userId: user.id,
-      provider: 'google',
-      providerUserId: profile.id,
-      email: profile.email,
-    });
-
-    // 4. トークン生成
-    const tokens = await this.jwtTokenService.generateTokenPair(
-      user.id,
-      user.email ?? '',
-    );
-
-    return {
-      ...tokens,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    };
+    return user;
   }
 
   /**
-   * パスワードをハッシュ化する
-   * @param password 平文パスワード
-   * @returns ハッシュ化されたパスワード
+   * ユーザーの有効性を確認する
+   * @param userId DB ユーザーID
+   * @returns ユーザー情報、無効な場合は null
    */
-  async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, BCRYPT_ROUNDS);
-  }
-
-  /**
-   * ユーザーIDからユーザー情報を取得する（トークン検証後のユーザー取得用）
-   * @param userId ユーザーID
-   * @returns ユーザー情報、見つからない場合はnull
-   */
-  async validateUser(userId: string): Promise<{ id: string; email: string | null; name: string | null; isActive: boolean } | null> {
+  async validateUser(userId: string) {
     const user = await this.userRepository.findById(userId);
     if (!user || !user.isActive) {
       return null;
     }
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      isActive: user.isActive,
-    };
+    return user;
   }
 }

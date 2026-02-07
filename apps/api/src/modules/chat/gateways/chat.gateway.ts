@@ -11,7 +11,8 @@ import { Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
 import { MessageService } from '../services/message.service';
-import { JwtTokenService } from '../../auth/services/jwt.service';
+import * as jwt from 'jsonwebtoken';
+import jwksRsa from 'jwks-rsa';
 
 /** Socket.IO認証済みクライアント */
 interface AuthenticatedSocket extends Socket {
@@ -75,10 +76,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
 
-  constructor(
-    private readonly messageService: MessageService,
-    private readonly jwtTokenService: JwtTokenService,
-  ) {}
+  private readonly jwksClient: jwksRsa.JwksClient;
+  private readonly oidcIssuer: string;
+
+  constructor(private readonly messageService: MessageService) {
+    this.oidcIssuer = process.env.OIDC_ISSUER_URL ?? 'http://localhost:8080/realms/adapt';
+    this.jwksClient = jwksRsa({
+      jwksUri: `${this.oidcIssuer}/protocol/openid-connect/certs`,
+      cache: true,
+      rateLimit: true,
+    });
+  }
 
   /**
    * WebSocket接続時のハンドシェイク認証
@@ -96,18 +104,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const payload = await this.jwtTokenService.verifyToken(token);
-      if (!payload || payload.type !== 'access') {
+      const decoded = await this.verifyOidcToken(token);
+      if (!decoded) {
         this.logger.warn(`Connection rejected: Invalid token (${client.id})`);
         client.disconnect();
         return;
       }
 
       // 認証情報をソケットに保存
-      client.data.userId = payload.sub;
-      client.data.email = payload.email;
+      client.data.userId = decoded.sub as string;
+      client.data.email = (decoded as any).email as string;
 
-      this.logger.log(`Client connected: ${client.id} (user: ${payload.sub})`);
+      this.logger.log(`Client connected: ${client.id} (user: ${decoded.sub})`);
     } catch (error) {
       this.logger.warn(`Connection error: ${(error as Error).message}`);
       client.disconnect();
@@ -131,20 +139,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: MessageSendPayload,
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      const result = await this.messageService.sendMessage(
-        client.data.userId,
-        payload.channelId,
-        {
-          text: payload.text,
-          threadId: payload.threadId,
-          isEmergency: payload.isEmergency,
-        },
-      );
+      const result = await this.messageService.sendMessage(client.data.userId, payload.channelId, {
+        text: payload.text,
+        threadId: payload.threadId,
+        isEmergency: payload.isEmergency,
+      });
 
       // チャンネルルームに新着メッセージをブロードキャスト
-      this.server
-        .to(`channel:${payload.channelId}`)
-        .emit('message:new', result.message);
+      this.server.to(`channel:${payload.channelId}`).emit('message:new', result.message);
 
       return { success: true, messageId: result.message.id };
     } catch (error) {
@@ -167,9 +169,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const roomName = `channel:${payload.channelId}`;
       await client.join(roomName);
 
-      this.logger.log(
-        `Client ${client.id} joined channel ${payload.channelId}`,
-      );
+      this.logger.log(`Client ${client.id} joined channel ${payload.channelId}`);
 
       return { success: true };
     } catch (error) {
@@ -191,9 +191,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const roomName = `channel:${payload.channelId}`;
     await client.leave(roomName);
 
-    this.logger.log(
-      `Client ${client.id} left channel ${payload.channelId}`,
-    );
+    this.logger.log(`Client ${client.id} left channel ${payload.channelId}`);
 
     return { success: true };
   }
@@ -207,13 +205,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() payload: TypingPayload,
   ): void {
-    client
-      .to(`channel:${payload.channelId}`)
-      .emit('typing:update', {
-        userId: client.data.userId,
-        channelId: payload.channelId,
-        isTyping: true,
-      });
+    client.to(`channel:${payload.channelId}`).emit('typing:update', {
+      userId: client.data.userId,
+      channelId: payload.channelId,
+      isTyping: true,
+    });
   }
 
   /**
@@ -225,12 +221,41 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() payload: TypingPayload,
   ): void {
-    client
-      .to(`channel:${payload.channelId}`)
-      .emit('typing:update', {
-        userId: client.data.userId,
-        channelId: payload.channelId,
-        isTyping: false,
-      });
+    client.to(`channel:${payload.channelId}`).emit('typing:update', {
+      userId: client.data.userId,
+      channelId: payload.channelId,
+      isTyping: false,
+    });
+  }
+
+  /**
+   * Keycloak JWKS でアクセストークンを検証する
+   */
+  private verifyOidcToken(token: string): Promise<jwt.JwtPayload | null> {
+    return new Promise((resolve) => {
+      const getKey = (header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) => {
+        this.jwksClient.getSigningKey(header.kid, (err, key) => {
+          if (err) return callback(err);
+          callback(null, key?.getPublicKey());
+        });
+      };
+
+      jwt.verify(
+        token,
+        getKey,
+        {
+          issuer: this.oidcIssuer,
+          algorithms: ['RS256'],
+        },
+        (err, decoded) => {
+          if (err) {
+            this.logger.warn(`OIDC token verification failed: ${err.message}`);
+            resolve(null);
+          } else {
+            resolve(decoded as jwt.JwtPayload);
+          }
+        },
+      );
+    });
   }
 }

@@ -7,8 +7,8 @@ import { Request } from 'express';
  * @example
  * ```typescript
  * @Get('me')
- * async getMe(@CurrentUser() user: JwtPayload): Promise<UserDto> {
- *   return this.userService.findById(user.sub);
+ * async getMe(@CurrentUser() user: ValidatedUser): Promise<UserDto> {
+ *   return this.userService.findById(user.keycloakId);
  * }
  * ```
  */

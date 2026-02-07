@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { CourseService } from '../services/course.service';
@@ -20,7 +21,8 @@ import { UpdateCourseDto, UpdateCourseDtoSchema } from '../dtos/update-course.dt
 import { JwtAuthGuard } from '../../auth/guards/auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { JwtPayload } from '../../auth/services/jwt.service';
+import { ValidatedUser } from '../../auth/strategies/jwt.strategy';
+import { AuthService } from '../../auth/services/auth.service';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 
 /**
@@ -38,7 +40,10 @@ import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 export class InstructorCourseController {
   private readonly logger = new Logger(InstructorCourseController.name);
 
-  constructor(private readonly courseService: CourseService) {}
+  constructor(
+    private readonly courseService: CourseService,
+    private readonly authService: AuthService,
+  ) {}
 
   /**
    * GET /api/v1/instructor/courses
@@ -49,9 +54,13 @@ export class InstructorCourseController {
    */
   @Get()
   async listMyCourses(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
   ): Promise<CourseListResponseDto> {
-    return this.courseService.getMyCourses(user.sub);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.courseService.getMyCourses(dbUser.id);
   }
 
   /**
@@ -63,10 +72,14 @@ export class InstructorCourseController {
    */
   @Post()
   async createCourse(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Body(new ZodValidationPipe(CreateCourseDtoSchema)) dto: CreateCourseDto,
   ): Promise<CourseDetailResponseDto> {
-    return this.courseService.createCourse(user.sub, dto);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.courseService.createCourse(dbUser.id, dto);
   }
 
   /**
@@ -78,10 +91,14 @@ export class InstructorCourseController {
    */
   @Get(':courseId')
   async getCourse(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('courseId') courseId: string,
   ): Promise<CourseDetailResponseDto> {
-    return this.courseService.getCourse(user.sub, courseId);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.courseService.getCourse(dbUser.id, courseId);
   }
 
   /**
@@ -93,11 +110,15 @@ export class InstructorCourseController {
    */
   @Put(':courseId')
   async updateCourse(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('courseId') courseId: string,
     @Body(new ZodValidationPipe(UpdateCourseDtoSchema)) dto: UpdateCourseDto,
   ): Promise<CourseDetailResponseDto> {
-    return this.courseService.updateCourse(user.sub, courseId, dto);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.courseService.updateCourse(dbUser.id, courseId, dto);
   }
 
   /**
@@ -109,10 +130,14 @@ export class InstructorCourseController {
    */
   @Delete(':courseId')
   async deleteCourse(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('courseId') courseId: string,
   ): Promise<{ message: string }> {
-    await this.courseService.deleteCourse(user.sub, courseId);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    await this.courseService.deleteCourse(dbUser.id, courseId);
     return { message: 'Course deleted successfully' };
   }
 }

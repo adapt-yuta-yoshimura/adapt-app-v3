@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
  * ```typescript
  * @UseGuards(JwtAuthGuard)
  * @Get('me')
- * async getMe(@CurrentUser() user: JwtPayload): Promise<UserDto> { ... }
+ * async getMe(@CurrentUser() user: ValidatedUser): Promise<UserDto> { ... }
  * ```
  */
 @Injectable()

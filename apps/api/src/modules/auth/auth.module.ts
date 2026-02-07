@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -18,53 +17,37 @@ import { PasswordCredentialRepository } from './repositories/password-credential
 
 // Strategies
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { GoogleStrategy } from './strategies/google.strategy';
 
 // Guards
 import { JwtAuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 
 /**
- * 認証モジュール
+ * 認証モジュール（OIDC 対応版）
  *
- * 提供する機能:
- * - JWT認証（access token / refresh token）
- * - Google OAuth 2.0 / OIDC
- * - ロールベース認可
+ * 認証フロー:
+ * 1. ユーザーは Keycloak ログイン画面で認証（メール/PW or Google）
+ * 2. Keycloak が JWT（access token）を発行
+ * 3. クライアントが Authorization: Bearer <token> で API を呼び出し
+ * 4. JwtStrategy が Keycloak の JWKS で JWT を検証
+ * 5. RolesGuard が JWT 内の realm_roles でロールチェック
  *
- * エクスポート:
- * - JwtAuthGuard: 他モジュールで認証チェックに使用
- * - RolesGuard: 他モジュールでロールチェックに使用
- * - AuthService: 他モジュールでユーザー検証に使用
- * - JwtTokenService: 他モジュールでトークン操作に使用
- * - UserRepository: 他モジュールでユーザー取得に使用
+ * NestJS は JWT の発行を行わない。検証のみ。
  */
 @Module({
-  imports: [
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'default-secret-change-me',
-      signOptions: {
-        algorithm: 'HS256',
-      },
-    }),
-  ],
+  imports: [PassportModule.register({ defaultStrategy: 'jwt' })],
   controllers: [AuthController],
   providers: [
     // Services
     AuthService,
     JwtTokenService,
-
     // Repositories
     PrismaService,
     UserRepository,
     OAuthIdentityRepository,
     PasswordCredentialRepository,
-
     // Strategies
     JwtStrategy,
-    GoogleStrategy,
-
     // Guards
     JwtAuthGuard,
     RolesGuard,

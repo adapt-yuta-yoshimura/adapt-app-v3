@@ -1,44 +1,30 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { JwtPayload } from '../services/jwt.service';
-import { UserRepository } from '../repositories/user.repository';
-
-/**
- * PlatformMembershipからロールを取得するためのリポジトリインターフェース
- * 将来的にPlatformMembershipRepositoryとして分離可能
- */
-import { PrismaService } from '../../../common/prisma/prisma.service';
+import { ValidatedUser } from '../strategies/jwt.strategy';
 
 /**
  * ロールベース認可ガード
- * @Roles() デコレータで指定されたロールを持つユーザーのみアクセスを許可する
+ * Keycloak JWT 内の realm_roles を使ってロールチェックする
  *
- * GlobalRole（グローバルロール）とPlatformRole（運営ロール）の両方をチェックする
- *
- * @example
- * ```typescript
- * @UseGuards(JwtAuthGuard, RolesGuard)
- * @Roles('operator', 'root_operator')
- * @Get('admin/users')
- * async listUsers(): Promise<UserDto[]> { ... }
- * ```
+ * root_operator は operator を包含する（上位互換）
+ * 例: @Roles('operator') → operator と root_operator の両方がアクセス可能
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(
-    private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    // @Roles() デコレータからロール一覧を取得
-    const requiredRoles = this.reflector.getAllAndOverride<string[] | undefined>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<
+      string[] | undefined
+    >(ROLES_KEY, [context.getHandler(), context.getClass()]);
 
     // @Roles() が指定されていない場合はアクセス許可
     if (!requiredRoles || requiredRoles.length === 0) {
@@ -46,26 +32,22 @@ export class RolesGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
-    const jwtPayload = request.user as JwtPayload | undefined;
+    const user = request.user as ValidatedUser | undefined;
 
-    if (!jwtPayload) {
+    if (!user) {
       throw new ForbiddenException('No user context found');
     }
 
-    // ユーザーのPlatformMembershipからロールを取得
-    const platformMembership = await this.prisma.platformMembership.findFirst({
-      where: { userId: jwtPayload.sub },
-    });
-
-    // ユーザーが持つロール一覧を構築
-    const userRoles: string[] = [];
-
-    if (platformMembership) {
-      userRoles.push(platformMembership.role);
+    // ロール包含ルール: root_operator は operator の権限も持つ
+    const effectiveRoles = [...user.realmRoles];
+    if (
+      effectiveRoles.includes('root_operator') &&
+      !effectiveRoles.includes('operator')
+    ) {
+      effectiveRoles.push('operator');
     }
 
-    // 必要なロールのいずれかを持っているかチェック
-    const hasRole = requiredRoles.some((role) => userRoles.includes(role));
+    const hasRole = requiredRoles.some((role) => effectiveRoles.includes(role));
 
     if (!hasRole) {
       throw new ForbiddenException(

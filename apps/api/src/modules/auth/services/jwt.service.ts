@@ -1,99 +1,40 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { JwtService as NestJwtService } from '@nestjs/jwt';
-
-/** JWTペイロード型 */
-export interface JwtPayload {
-  /** ユーザーID（subject） */
-  sub: string;
-  /** メールアドレス */
-  email: string;
-  /** トークン種別 */
-  type: 'access' | 'refresh';
-  /** 発行日時（秒） */
-  iat?: number;
-  /** 有効期限（秒） */
-  exp?: number;
-}
-
-/** トークンペア */
-export interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
-}
 
 /**
- * JWT トークン管理サービス
- * Access token / Refresh token の生成・検証を担当
+ * JWT ユーティリティサービス
+ *
+ * Keycloak 移行後は JWT の発行は行わない。
+ * JWT の検証は Passport + jwks-rsa が担当する。
+ * このサービスは将来的な拡張用（トークンのブラックリスト管理等）として残す。
  */
 @Injectable()
 export class JwtTokenService {
   private readonly logger = new Logger(JwtTokenService.name);
 
-  constructor(private readonly jwtService: NestJwtService) {}
-
   /**
-   * Access token と Refresh token のペアを生成する
-   * @param userId ユーザーID
-   * @param email メールアドレス
-   * @returns トークンペア
+   * 将来用: Refresh token のブラックリスト管理
+   * Keycloak が refresh token を管理するため、基本的には不要
    */
-  async generateTokenPair(userId: string, email: string): Promise<TokenPair> {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.generateAccessToken(userId, email),
-      this.generateRefreshToken(userId, email),
-    ]);
-
-    return { accessToken, refreshToken };
+  async revokeToken(tokenId: string): Promise<void> {
+    this.logger.log(`Token revocation requested: ${tokenId}`);
+    // TODO: Redis ベースのブラックリスト管理（必要に応じて）
   }
+}
 
-  /**
-   * Access token を生成する（有効期限: 15分）
-   * @param userId ユーザーID
-   * @param email メールアドレス
-   * @returns Access token
-   */
-  async generateAccessToken(userId: string, email: string): Promise<string> {
-    const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
-      sub: userId,
-      email,
-      type: 'access',
-    };
+/**
+ * JWT ペイロード型（後方互換用）
+ * 新しいコードでは ValidatedUser（jwt.strategy.ts）を使用すること
+ */
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  type: 'access' | 'refresh';
+  iat?: number;
+  exp?: number;
+}
 
-    return this.jwtService.signAsync(payload, {
-      expiresIn: process.env.JWT_EXPIRES_IN ?? '15m',
-    });
-  }
-
-  /**
-   * Refresh token を生成する（有効期限: 7日）
-   * @param userId ユーザーID
-   * @param email メールアドレス
-   * @returns Refresh token
-   */
-  async generateRefreshToken(userId: string, email: string): Promise<string> {
-    const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
-      sub: userId,
-      email,
-      type: 'refresh',
-    };
-
-    return this.jwtService.signAsync(payload, {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN ?? '7d',
-    });
-  }
-
-  /**
-   * トークンを検証してペイロードを返す
-   * @param token JWT トークン
-   * @returns 検証済みペイロード、無効な場合はnull
-   */
-  async verifyToken(token: string): Promise<JwtPayload | null> {
-    try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
-      return payload;
-    } catch (error) {
-      this.logger.warn(`Token verification failed: ${(error as Error).message}`);
-      return null;
-    }
-  }
+/** トークンペア型（後方互換用） */
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
 }

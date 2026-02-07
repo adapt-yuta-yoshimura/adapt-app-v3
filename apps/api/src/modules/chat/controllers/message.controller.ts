@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { DEFAULT_PAGE_SIZE } from '@adapt/shared';
 
@@ -21,7 +22,8 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { JwtPayload } from '../../auth/services/jwt.service';
+import { ValidatedUser } from '../../auth/strategies/jwt.strategy';
+import { AuthService } from '../../auth/services/auth.service';
 
 /**
  * メッセージコントローラー
@@ -37,7 +39,10 @@ import { JwtPayload } from '../../auth/services/jwt.service';
 export class MessageController {
   private readonly logger = new Logger(MessageController.name);
 
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly authService: AuthService,
+  ) {}
 
   /**
    * GET /api/v1/channels/:channelId/messages
@@ -45,13 +50,17 @@ export class MessageController {
    */
   @Get('api/v1/channels/:channelId/messages')
   async getMessages(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('channelId') channelId: string,
     @Query('limit') limitStr?: string,
     @Query('cursor') cursor?: string,
   ): Promise<MessageListResponseDto> {
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
     const limit = limitStr ? parseInt(limitStr, 10) : DEFAULT_PAGE_SIZE;
-    return this.messageService.getMessages(user.sub, channelId, limit, cursor);
+    return this.messageService.getMessages(dbUser.id, channelId, limit, cursor);
   }
 
   /**
@@ -60,11 +69,15 @@ export class MessageController {
    */
   @Post('api/v1/channels/:channelId/messages')
   async sendMessage(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('channelId') channelId: string,
     @Body() dto: SendMessageData,
   ): Promise<MessageDetailResponseDto> {
-    return this.messageService.sendMessage(user.sub, channelId, dto);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.messageService.sendMessage(dbUser.id, channelId, dto);
   }
 
   /**
@@ -73,11 +86,15 @@ export class MessageController {
    */
   @Patch('api/v1/messages/:messageId')
   async updateMessage(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('messageId') messageId: string,
     @Body() dto: { text: string },
   ): Promise<MessageDetailResponseDto> {
-    return this.messageService.updateMessage(user.sub, messageId, dto.text);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.messageService.updateMessage(dbUser.id, messageId, dto.text);
   }
 
   /**
@@ -86,10 +103,14 @@ export class MessageController {
    */
   @Delete('api/v1/messages/:messageId')
   async deleteMessage(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('messageId') messageId: string,
   ): Promise<{ message: string }> {
-    await this.messageService.deleteMessage(user.sub, messageId);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    await this.messageService.deleteMessage(dbUser.id, messageId);
     return { message: 'Message deleted successfully' };
   }
 }

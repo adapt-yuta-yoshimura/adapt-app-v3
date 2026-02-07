@@ -8,13 +8,15 @@ import {
   Body,
   UseGuards,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { ChannelService, ChannelListResponseDto, ChannelDetailResponseDto } from '../services/channel.service';
 import { JwtAuthGuard } from '../../auth/guards/auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { JwtPayload } from '../../auth/services/jwt.service';
+import { ValidatedUser } from '../../auth/strategies/jwt.strategy';
+import { AuthService } from '../../auth/services/auth.service';
 import { CreateChannelData, UpdateChannelData } from '../repositories/channel.repository';
 
 /**
@@ -31,7 +33,10 @@ import { CreateChannelData, UpdateChannelData } from '../repositories/channel.re
 export class ChannelController {
   private readonly logger = new Logger(ChannelController.name);
 
-  constructor(private readonly channelService: ChannelService) {}
+  constructor(
+    private readonly channelService: ChannelService,
+    private readonly authService: AuthService,
+  ) {}
 
   /**
    * GET /api/v1/courses/:courseId/channels
@@ -39,10 +44,14 @@ export class ChannelController {
    */
   @Get('api/v1/courses/:courseId/channels')
   async getChannels(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('courseId') courseId: string,
   ): Promise<ChannelListResponseDto> {
-    return this.channelService.getChannels(user.sub, courseId);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.channelService.getChannels(dbUser.id, courseId);
   }
 
   /**
@@ -51,11 +60,15 @@ export class ChannelController {
    */
   @Post('api/v1/courses/:courseId/channels')
   async createChannel(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('courseId') courseId: string,
     @Body() dto: Omit<CreateChannelData, 'courseId'>,
   ): Promise<ChannelDetailResponseDto> {
-    return this.channelService.createChannel(user.sub, courseId, dto);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.channelService.createChannel(dbUser.id, courseId, dto);
   }
 
   /**
@@ -64,11 +77,15 @@ export class ChannelController {
    */
   @Put('api/v1/channels/:channelId')
   async updateChannel(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('channelId') channelId: string,
     @Body() dto: UpdateChannelData,
   ): Promise<ChannelDetailResponseDto> {
-    return this.channelService.updateChannel(user.sub, channelId, dto);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    return this.channelService.updateChannel(dbUser.id, channelId, dto);
   }
 
   /**
@@ -77,10 +94,14 @@ export class ChannelController {
    */
   @Delete('api/v1/channels/:channelId')
   async deleteChannel(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: ValidatedUser,
     @Param('channelId') channelId: string,
   ): Promise<{ message: string }> {
-    await this.channelService.deleteChannel(user.sub, channelId);
+    const dbUser = await this.authService.syncUser(user);
+    if (!dbUser) {
+      throw new ForbiddenException('User not provisioned');
+    }
+    await this.channelService.deleteChannel(dbUser.id, channelId);
     return { message: 'Channel deleted successfully' };
   }
 }
