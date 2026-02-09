@@ -6,12 +6,12 @@
  * 【CSS Variables】Tailwind config と同期。shadcn/ui の HSL 変数は共存（既存クラス用）。
  */
 
+/* @import は他のルールより前に記述する必要がある */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ===== Google Fonts: Noto Sans JP ===== */
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap");
 
 @layer base {
   /* ----- Phase 0: Figma トークン（hex / 非 Tailwind コンテキスト用） ----- */

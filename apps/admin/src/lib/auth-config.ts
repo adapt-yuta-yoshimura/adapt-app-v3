@@ -60,11 +60,20 @@ export function generateCodeVerifier(): string {
 
 /**
  * PKCE code_challenge = base64url(sha256(code_verifier))
+ * crypto.subtle はセキュアコンテキスト（HTTPS または localhost）でのみ利用可能
  */
 export async function generateCodeChallenge(verifier: string): Promise<string> {
+  const cryptoApi =
+    typeof window !== 'undefined' ? window.crypto : (globalThis as { crypto?: Crypto }).crypto;
+  const subtle = cryptoApi?.subtle;
+  if (!subtle || typeof subtle.digest !== 'function') {
+    throw new Error(
+      'PKCE に必要な crypto.subtle が利用できません。HTTPS または http://localhost:3001 でアクセスしてください。',
+    );
+  }
   const encoder = new TextEncoder();
   const data = encoder.encode(verifier);
-  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hash = await subtle.digest('SHA-256', data);
   return base64UrlEncode(new Uint8Array(hash));
 }
 
