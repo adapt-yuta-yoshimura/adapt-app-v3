@@ -10,14 +10,17 @@ import {
   CreditCard,
   Key,
   ClipboardList,
+  LogOut,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@adapt/ui';
 import { PlatformRole } from '@adapt/shared';
 
+import { useAdminAuth } from '@/hooks/use-admin-auth';
+
 /**
- * ナビ項目（§3.2 準拠）
- * roles は PlatformRole に準拠。root_operator のみの項目は非該当時に非表示。
+ * ナビ項目（§2-A-1 / Figma デザイン準拠）
+ * 幅 240px、背景 #1E1E2D、テキスト #A2A3B7、アクティブ #4F46E5
  */
 interface NavItemConfig {
   href: string;
@@ -46,10 +49,10 @@ const adminNavGroups: NavGroup[] = [
   {
     group: '管理',
     items: [
-      { href: '/courses', label: 'コース管理', icon: BookOpen, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
       { href: '/users', label: 'ユーザー管理', icon: Users, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
-      { href: '/channels', label: 'チャンネル管理', icon: MessageSquare, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
+      { href: '/courses', label: 'コース管理', icon: BookOpen, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
       { href: '/payments', label: '決済管理', icon: CreditCard, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
+      { href: '/channels', label: 'チャンネル管理', icon: MessageSquare, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
     ],
   },
   {
@@ -61,9 +64,6 @@ const adminNavGroups: NavGroup[] = [
   },
 ];
 
-/**
- * 現在の運営ロール（認証連携前はハードコード。後日 useAdminAuth 等で差し替え）
- */
 const CURRENT_ADMIN_ROLE: PlatformRole = PlatformRole.ROOT_OPERATOR;
 
 function canShowItem(roles: readonly PlatformRole[]): boolean {
@@ -72,24 +72,23 @@ function canShowItem(roles: readonly PlatformRole[]): boolean {
 
 export function AdminSidebar(): React.ReactNode {
   const pathname = usePathname();
+  const { logout } = useAdminAuth();
 
   return (
     <aside
-      className="fixed left-0 top-0 z-40 flex h-screen w-sidebar flex-col border-r border-border bg-surface-card"
+      className="fixed left-0 top-0 z-40 flex h-screen w-sidebar flex-col bg-sidebar-bg"
       role="navigation"
       aria-label="管理メニュー"
     >
-      {/* ロゴ・アプリ名 */}
-      <div className="flex h-header shrink-0 items-center border-b border-border px-6">
+      <div className="flex h-header shrink-0 items-center border-b border-white/10 px-6">
         <Link
           href="/dashboard"
-          className="text-heading font-bold text-text-primary transition-colors hover:text-iris-100"
+          className="text-heading font-bold text-white transition-colors hover:opacity-90"
         >
-          adapt Admin
+          adapt
         </Link>
       </div>
 
-      {/* ナビグループ */}
       <nav className="flex-1 overflow-y-auto p-4">
         <ul className="space-y-6">
           {adminNavGroups.map(({ group, items }) => {
@@ -99,7 +98,7 @@ export function AdminSidebar(): React.ReactNode {
             return (
               <li key={group}>
                 <p
-                  className="mb-2 px-3 text-nav-group font-bold uppercase tracking-wider text-text-secondary"
+                  className="mb-2 px-3 text-nav-group font-bold uppercase tracking-wider text-sidebar-text"
                   aria-hidden
                 >
                   {group}
@@ -116,8 +115,8 @@ export function AdminSidebar(): React.ReactNode {
                           className={cn(
                             'flex items-center gap-3 rounded-input px-3 py-2.5 text-body-sm font-medium transition-colors',
                             isActive
-                              ? 'bg-iris-100/10 text-iris-100'
-                              : 'text-text-secondary hover:bg-iris-10 hover:text-text-primary',
+                              ? 'bg-sidebar-active text-white'
+                              : 'text-sidebar-text hover:bg-white/5 hover:text-white',
                           )}
                           aria-current={isActive ? 'page' : undefined}
                         >
@@ -134,9 +133,15 @@ export function AdminSidebar(): React.ReactNode {
         </ul>
       </nav>
 
-      {/* フッター */}
-      <div className="shrink-0 border-t border-border p-4">
-        <p className="text-caption text-text-secondary">adapt Admin v1.0</p>
+      <div className="shrink-0 border-t border-white/10 p-4">
+        <button
+          type="button"
+          onClick={() => void logout()}
+          className="flex w-full items-center gap-3 rounded-input px-3 py-2.5 text-body-sm font-medium text-sidebar-text transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <LogOut className="h-5 w-5 shrink-0" aria-hidden />
+          ログアウト
+        </button>
       </div>
     </aside>
   );

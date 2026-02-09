@@ -1,0 +1,152 @@
+{
+  "realm": "adapt",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      { "name": "guest", "description": "未ログイン/ゲスト" },
+      { "name": "learner", "description": "受講者" },
+      { "name": "instructor", "description": "講師" },
+      { "name": "assistant", "description": "アシスタント/TA" },
+      { "name": "operator", "description": "運営（通常）" },
+      { "name": "root_operator", "description": "運営（特権）" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "adapt-admin",
+      "name": "Adapt Admin App",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:3001/*", "http://admin.localhost.adapt:3001/*"],
+      "webOrigins": ["http://localhost:3001", "http://admin.localhost.adapt:3001"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "defaultClientScopes": ["openid", "profile", "email", "roles"]
+    },
+    {
+      "clientId": "adapt-app",
+      "name": "Adapt App",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:3000/*", "http://app.localhost.adapt:3000/*"],
+      "webOrigins": ["http://localhost:3000", "http://app.localhost.adapt:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "defaultClientScopes": ["openid", "profile", "email", "roles"]
+    },
+    {
+      "clientId": "adapt-api",
+      "name": "Adapt API (Backend)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "adapt-api-secret-dev",
+      "bearerOnly": true,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "root@adapt-co.io",
+      "email": "root@adapt-co.io",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Root",
+      "lastName": "Operator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "root1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["root_operator"]
+    },
+    {
+      "username": "operator@adapt-co.io",
+      "email": "operator@adapt-co.io",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Normal",
+      "lastName": "Operator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "oper1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["operator"]
+    },
+    {
+      "username": "instructor@adapt-co.io",
+      "email": "instructor@adapt-co.io",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "Instructor",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "inst1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["instructor"]
+    },
+    {
+      "username": "learner@adapt-co.io",
+      "email": "learner@adapt-co.io",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "Learner",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "learn1234",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["learner"]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

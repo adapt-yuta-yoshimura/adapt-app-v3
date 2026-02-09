@@ -1,14 +1,1 @@
-{
-  "extends": "@adapt/typescript-config/nest.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "test"]
-}
+{"extends":"@adapt/typescript-config/nest.json","compilerOptions":{"rootDir":"src","outDir":"dist","baseUrl":".","paths":{"@/*":["src/*"]},"types":["node"]},"include":["src/**/*.ts"],"exclude":["node_modules","dist","test"]}

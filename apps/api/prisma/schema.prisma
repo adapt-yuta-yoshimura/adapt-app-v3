@@ -126,6 +126,8 @@ enum AuditEventType {
   course_unfrozen // コース凍結解除
   channel_frozen // チャンネル凍結
   channel_unfrozen // チャンネル凍結解除
+  user_frozen // ユーザー凍結(BAN)
+  user_unfrozen // ユーザー凍結解除
   dm_viewed_by_root_operator // root_operatorによるDM閲覧（監査対象）
   course_created // コース新規作成
   course_approval_requested // コース承認申請

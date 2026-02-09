@@ -39,7 +39,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * Keycloak JWT の主要フィールド:
    * - sub: Keycloak ユーザーID
    * - email: メールアドレス
-   * - realm_access.roles: Realm ロール配列
+   * - realm_roles: Realm ロール配列（カスタムクレーム）
    * - preferred_username: ユーザー名
    */
   async validate(payload: KeycloakJwtPayload): Promise<ValidatedUser> {
@@ -47,8 +47,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Invalid token: missing subject');
     }
 
-    // Keycloak の realm_access.roles から GlobalRole に該当するロールを抽出
-    const realmRoles = payload.realm_access?.roles ?? [];
+    // Keycloak の realm_roles（カスタムクレーム）から GlobalRole に該当するロールを抽出
+    const realmRoles = payload.realm_roles ?? [];
 
     // GlobalRole に該当するもののみ抽出（schema.prisma の GlobalRole enum 準拠）
     const validGlobalRoles = [
@@ -81,9 +81,7 @@ export interface KeycloakJwtPayload {
   preferred_username?: string;
   given_name?: string;
   family_name?: string;
-  realm_access?: {
-    roles: string[];
-  };
+  realm_roles?: string[];
   resource_access?: Record<string, { roles: string[] }>;
   iss?: string;
   aud?: string | string[];

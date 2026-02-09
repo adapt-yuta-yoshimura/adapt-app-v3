@@ -1,12 +1,11 @@
 'use client';
 
-import { Button } from '@adapt/ui';
-
+import { Button } from '@/components/ui/Button';
 import { useAdminAuth } from '@/hooks/use-admin-auth';
 
 /**
- * Admin ログインページ（Keycloak OIDC）
- * - 「ログイン」ボタン1つのみ → Keycloak 認可画面へリダイレクト
+ * Admin ログインページ（§2-B / Keycloak OIDC）
+ * 中央寄せログインカード、adapt ロゴ、「ログイン」ボタン（primary, large）
  */
 export default function AdminLoginPage(): React.ReactNode {
   const { login } = useAdminAuth();
@@ -18,15 +17,8 @@ export default function AdminLoginPage(): React.ReactNode {
         background: 'linear-gradient(135deg, #F8F8FF 0%, #FCFCFC 100%)',
       }}
     >
-      <span
-        className="mb-8 inline-block rounded-full border border-iris-100/30 bg-iris-100/10 px-4 py-1.5 text-badge font-semibold text-iris-100"
-        aria-hidden
-      >
-        管理コンソール
-      </span>
-
       <div className="mb-8 text-center">
-        <h1 className="text-heading-lg font-bold text-text-primary">adapt Admin</h1>
+        <h1 className="text-heading-lg font-bold text-text-primary">adapt</h1>
         <p className="mt-2 text-body-sm text-text-secondary">運営管理画面</p>
       </div>
 

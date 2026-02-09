@@ -2,18 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import type { UserAdminView } from '@adapt/shared';
-
 import { adminApiClient } from '@/lib/api-client';
-
-/** API-074 GET /api/v1/admin/users レスポンス型（UserListResponse） */
-export interface UserListResponse {
-  items: UserAdminView[];
-  meta?: {
-    total: number;
-    page: { currentPage: number; totalPages: number; perPage: number };
-  };
-}
+import type { UserListResponse } from '@/types';
 
 export function useAdminUsers(
   page: number = 1,

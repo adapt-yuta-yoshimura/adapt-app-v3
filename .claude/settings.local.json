@@ -29,7 +29,21 @@
       "Bash(xargs kill:*)",
       "Bash(PGPASSWORD=adapt psql:*)",
       "Bash(/usr/local/Cellar/libpq/16.3/bin/psql:*)",
-      "Bash(PGPASSWORD=adapt /usr/local/Cellar/libpq/16.3/bin/psql:*)"
+      "Bash(PGPASSWORD=adapt /usr/local/Cellar/libpq/16.3/bin/psql:*)",
+      "Bash(docker compose down:*)",
+      "Bash(docker volume rm:*)",
+      "Bash(docker compose:*)",
+      "Bash(until curl -sf http://localhost:8080/health/ready)",
+      "Bash(do echo \"Still waiting...\")",
+      "Bash(done)",
+      "Bash(docker logs:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(bash:*)",
+      "Bash(docker volume:*)",
+      "Bash(until curl -sf http://localhost:8080/realms/adapt/.well-known/openid-configuration)",
+      "Bash(do echo \"Waiting for Keycloak...\")",
+      "Bash(docker exec:*)"
     ]
   }
 }

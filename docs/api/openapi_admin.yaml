@@ -220,6 +220,37 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericWriteRequest'
+  /api/v1/admin/users/{userId}/unfreeze:
+    post:
+      tags:
+      - Admin
+      summary: ユーザー凍結解除
+      description: ユーザーの凍結(BAN)を解除し、システムアクセスを復帰させる。
+      operationId: API_075B
+      x-api-id: API-075B
+      x-roles: operator, root_operator
+      x-policy: AUDIT_LOG
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
   /api/v1/admin/operators:
     get:
       tags:
@@ -2995,7 +3026,40 @@ components:
       - items
     OperatorAdminView:
       type: object
-      additionalProperties: true
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        role:
+          $ref: '#/components/schemas/PlatformRole'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          nullable: true
+          properties:
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            isActive:
+              type: boolean
+          required:
+            - isActive
+      required:
+        - id
+        - userId
+        - role
+        - createdAt
+        - updatedAt
+      additionalProperties: false
     OperatorListResponse:
       type: object
       properties:
@@ -3047,6 +3111,11 @@ components:
       - learner
       - instructor
       - assistant
+      - operator
+      - root_operator
+    PlatformRole:
+      type: string
+      enum:
       - operator
       - root_operator
     OrderStatus:

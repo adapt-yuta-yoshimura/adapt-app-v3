@@ -1256,18 +1256,7 @@ export interface components {
       meta?: components["schemas"]["ListMeta"];
     };
     OperatorAdminView: {
-      id: string;
-      userId: string;
-      role: components["schemas"]["PlatformRole"];
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      user?: ({
-        name?: string | null;
-        email?: string | null;
-        isActive: boolean;
-      }) | null;
+      [key: string]: unknown;
     };
     OperatorListResponse: {
       items: components["schemas"]["OperatorAdminView"][];
@@ -1287,8 +1276,6 @@ export interface components {
     };
     /** @enum {string} */
     GlobalRole: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
-    /** @enum {string} */
-    PlatformRole: "operator" | "root_operator";
     /** @enum {string} */
     OrderStatus: "pending" | "paid" | "cancelled" | "failed" | "refunded";
     /** @enum {string} */

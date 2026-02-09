@@ -57,6 +57,16 @@ const config: Config = {
           warning: '#F59E0B',
           danger: '#EF4444',
         },
+        // Admin Sidebar (Figma デザイン)
+        sidebar: {
+          bg: '#1E1E2D',
+          text: '#A2A3B7',
+          active: '#4F46E5',
+        },
+        // Primary (Figma: ボタン・アクセント)
+        primary: '#4F46E5',
+        // Table (Figma)
+        'table-header': '#F8F8FF',
       },
 
       // ===== FONT FAMILY =====
