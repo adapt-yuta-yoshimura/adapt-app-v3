@@ -1,4 +1,9 @@
-import axios from 'axios';
+'use client';
+
+import axios, { type AxiosError } from 'axios';
+
+import { refreshAccessToken } from '@/lib/auth-config';
+import { useAdminAuthStore } from '@/stores/auth.store';
 
 export const adminApiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://app.localhost.adapt:4000',
@@ -8,55 +13,60 @@ export const adminApiClient = axios.create({
   },
 });
 
-/** リクエストインターセプター: JWTトークンを付与 */
+/** リクエストインターセプター: in-memory トークンを付与 */
 adminApiClient.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('admin_access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    if (typeof window === 'undefined') return config;
+    const token = useAdminAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-/** レスポンスインターセプター: 401時にリフレッシュトークンで再試行 */
+/** レスポンスインターセプター: 401 時に Keycloak token endpoint で refresh（single-flight）。invalid_grant 時は即ログアウト */
 adminApiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  async (error: AxiosError) => {
     const originalRequest = error.config;
+    if (!originalRequest || error.response?.status !== 401 || (originalRequest as { _retry?: boolean })._retry) {
+      return Promise.reject(error);
+    }
 
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      typeof window !== 'undefined'
-    ) {
-      originalRequest._retry = true;
+    if (typeof window === 'undefined') {
+      return Promise.reject(error);
+    }
 
-      try {
-        const refreshToken = localStorage.getItem('admin_refresh_token');
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
+    (originalRequest as { _retry?: boolean })._retry = true;
 
-        const { data } = await axios.post<{ accessToken: string }>(
-          `${process.env.NEXT_PUBLIC_API_URL ?? 'http://app.localhost.adapt:4000'}/api/v1/auth/refresh`,
-          { refreshToken },
-        );
+    const { refreshToken, setTokens, clearAuth } = useAdminAuthStore.getState();
+    if (!refreshToken) {
+      clearAuth();
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
 
-        localStorage.setItem('admin_access_token', data.accessToken);
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
-        return adminApiClient(originalRequest);
-      } catch {
-        localStorage.removeItem('admin_access_token');
-        localStorage.removeItem('admin_refresh_token');
+    try {
+      const tokens = await refreshAccessToken(refreshToken);
+      if (tokens === null) {
+        clearAuth();
         window.location.href = '/login';
         return Promise.reject(error);
       }
+      const current = useAdminAuthStore.getState();
+      setTokens({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token ?? current.refreshToken ?? null,
+        idToken: tokens.id_token ?? current.idToken ?? null,
+      });
+      originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
+      return adminApiClient(originalRequest);
+    } catch {
+      clearAuth();
+      window.location.href = '/login';
+      return Promise.reject(error);
     }
-
-    return Promise.reject(error);
   },
 );

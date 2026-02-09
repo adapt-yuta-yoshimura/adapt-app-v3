@@ -25,8 +25,11 @@
       "enabled": true,
       "publicClient": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:3001/*"],
-      "webOrigins": ["http://localhost:3001"],
+      "redirectUris": ["http://localhost:3001/*", "http://admin.localhost.adapt:3001/*"],
+      "webOrigins": ["http://localhost:3001", "http://admin.localhost.adapt:3001"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
       "defaultClientScopes": ["openid", "profile", "email", "roles"]
@@ -37,8 +40,11 @@
       "enabled": true,
       "publicClient": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"],
+      "redirectUris": ["http://localhost:3000/*", "http://app.localhost.adapt:3000/*"],
+      "webOrigins": ["http://localhost:3000", "http://app.localhost.adapt:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
       "defaultClientScopes": ["openid", "profile", "email", "roles"]
