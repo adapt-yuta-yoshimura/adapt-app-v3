@@ -16,9 +16,9 @@ Claude の判断基準・人格は
 以下 4 点のみが正であり、これ以外は存在しない。
 
 - 基本設計書（Excel・最終版）
-- openapi_app.yaml（64 エンドポイント）
-- openapi_admin.yaml（13 エンドポイント）
-- schema.prisma（27 モデル・19 Enum）
+- openapi_app.yaml（65 エンドポイント）
+- openapi_admin.yaml（21 エンドポイント）
+- schema.prisma（26 モデル・18 Enum）
 
 これらに無い API / Model / Enum / Role / Status を
 **Claude Code が生成・補完・仮定してはならない**。
@@ -36,9 +36,12 @@ Claude の判断基準・人格は
 
 | スコープ | Enum 名 | 値 |
 |---|---|---|
-| グローバル | `GlobalRole` | guest, learner, instructor, assistant, operator, root_operator |
-| プラットフォーム | `PlatformRole` | operator, root_operator |
+| グローバル | `GlobalRole` | guest, learner, instructor, operator, root_operator |
 | コース内 | `CourseMemberRole` | instructor_owner, learner, instructor, assistant |
+
+> ※ `assistant` はコース内ロール（CourseMemberRole）のみ。GlobalRole には含まない
+> ※ `PlatformMembership` / `PlatformRole` は廃止（User.globalRole に統合）
+> ※ 運営スタッフ判定: User.globalRole が operator / root_operator かで判定
 
 ---
 

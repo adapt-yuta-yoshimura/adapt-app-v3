@@ -1,15 +1,15 @@
 openapi: 3.1.0
 info:
   title: adapt App API (V1 - 基本設計書完全準拠)
-  version: v19-integrated
+  version: v1.0
   description: |
     adapt オンライン学習プラットフォーム App API
 
     ## 概要
-    - **対象**: 受講者・講師向けアプリケーションAPI
-    - **認証**: OIDC（auth.adapt-co.io）+ Bearer Token
-    - **エンドポイント数**: 64個
-    - **基本設計書**: 06_API一覧 完全準拠（100%）
+    - 対象: 受講者・講師向けアプリケーションAPI
+    - 認証: OIDC（auth.adapt-co.io）+ Bearer Token
+    - エンドポイント数: 65個
+    - 基本設計書: 06_API一覧 完全準拠
 
     ## 機能グループ
 
@@ -49,32 +49,26 @@ info:
     ## 認証・認可
 
     ### 認証方式
-    - **OIDC**: auth.adapt-co.ioでの認証
-    - **Bearer Token**: JWTトークンをAuthorizationヘッダーに設定
-    - **例外**: /api/v1/health（ヘルスチェック）は認証不要
+    - OIDC: auth.adapt-co.ioでの認証
+    - Bearer Token: JWTトークンをAuthorizationヘッダーに設定
+    - 例外: /api/v1/health（ヘルスチェック）は認証不要
 
     ### ロール
-    - `guest`: 未ログイン（閲覧のみ）
-    - `learner`: 受講者
-    - `instructor`: 講師
-    - `assistant`: アシスタント/TA
-    - `operator`: 運営（通常）
-    - `root`: 運営（特権）
+    - guest: 未ログイン（閲覧のみ）
+    - learner: 受講者
+    - instructor: 講師
+    - operator: 運営（通常）
+    - root_operator: 運営（特権）
 
     ### x-roles 拡張プロパティ
-    各エンドポイントには`x-roles`で必要なロールを指定：
-    ```yaml
-    x-roles:
-      - learner
-      - instructor
-    ```
+    各エンドポイントにはx-rolesで必要なロールを指定
 
     ## 設計原則
 
     ### アーキテクチャ
-    - **Repository Pattern**: Service層はORM非依存
-    - **DTO分離**: Prisma ModelはDTOとして公開しない
-    - **契約の正**: packages/sharedのDTOが正
+    - Repository Pattern: Service層はORM非依存
+    - DTO分離: Prisma ModelはDTOとして公開しない
+    - 契約の正: packages/sharedのDTOが正
 
     ### エラーハンドリング
     - 4xx: クライアントエラー（バリデーション等）
@@ -82,15 +76,16 @@ info:
     - 詳細はErrorResponseスキーマ参照
 
     ### バージョニング
-    - URLパスに`/api/v1/`を含む
+    - URLパスに/api/v1/を含む
     - 破壊的変更は新バージョンで対応
 
     ## 技術スタック
-    - **フレームワーク**: NestJS
-    - **DB**: PostgreSQL
-    - **ORM**: Prisma
-    - **認証**: OIDC + Google OAuth
-    - **リアルタイム**: Socket.IO（チャット用）
+    - フレームワーク: NestJS
+    - DB: PostgreSQL
+    - ORM: Prisma
+    - 認証: OIDC + Google OAuth
+    - リアルタイム: Socket.IO（チャット用）
+
 servers:
 - url: https://app.adapt-co.io
 tags:
@@ -109,9 +104,11 @@ paths:
       tags:
       - Auth/Identity
       summary: プロフィール取得
-      description: ログイン中ユーザー自身の基本情報（名前、アイコン、全体ロール、所属組織等）を取得する。
-      operationId: API_007
-      x-api-id: API-007
+
+      description: ログイン中ユーザー自身の基本情報を取得する。
+
+      operationId: API_001
+      x-api-id: API-001
       x-roles: all
       x-policy: '-'
       responses:
@@ -127,9 +124,11 @@ paths:
       tags:
       - Auth/Identity
       summary: プロフィール更新
-      description: 名前、アイコン画像URL、自己紹介等のプロフィール情報を更新する（image_33b70dのデザインを反映）。
-      operationId: API_008
-      x-api-id: API-008
+
+      description: プロフィール情報を更新する。
+
+      operationId: API_002
+      x-api-id: API-002
       x-roles: all
       x-policy: '-'
       responses:
@@ -151,10 +150,12 @@ paths:
     put:
       tags:
       - Auth/Identity
-      summary: PW変更
-      description: 現在のパスワードを検証した上で、新しいパスワードへ直接変更する。セキュリティ上、即時反映される。
-      operationId: API_009
-      x-api-id: API-009
+      summary: パスワード変更
+
+      description: パスワードを変更する。
+
+      operationId: API_003
+      x-api-id: API-003
       x-roles: all
       x-policy: '-'
       responses:
@@ -177,9 +178,11 @@ paths:
       tags:
       - Auth/Identity
       summary: 通知一覧取得
-      description: 自分宛の通知（返信、採点完了、ライブ予約、運営案内）を最新順に取得する（image_32dc7bのリスト用）。
-      operationId: API_010
-      x-api-id: API-010
+
+      description: 自分宛の通知一覧を取得する。
+
+      operationId: API_004
+      x-api-id: API-004
       x-roles: all
       x-policy: '-'
       responses:
@@ -196,9 +199,11 @@ paths:
       tags:
       - Auth/Identity
       summary: 通知既読化
-      description: 指定されたIDの通知を既読状態にする。UI上のバッジカウントを減らすトリガーとなる。
-      operationId: API_011
-      x-api-id: API-011
+
+      description: 指定した通知を既読にする。
+
+      operationId: API_005
+      x-api-id: API-005
       x-roles: all
       x-policy: '-'
       responses:
@@ -227,9 +232,11 @@ paths:
       tags:
       - Auth/Identity
       summary: 通知一括既読
-      description: 全ての未読通知を一括で既読状態にする。
-      operationId: API_012
-      x-api-id: API-012
+
+      description: 全通知を一括既読にする。
+
+      operationId: API_006
+      x-api-id: API-006
       x-roles: all
       x-policy: '-'
       responses:
@@ -252,9 +259,11 @@ paths:
       tags:
       - Auth/Identity
       summary: 通知設定取得
-      description: メール通知、プッシュ通知のON/OFF、およびカテゴリ別の受け取り設定を取得する。
-      operationId: API_013
-      x-api-id: API-013
+
+      description: 通知設定を取得する。
+
+      operationId: API_007
+      x-api-id: API-007
       x-roles: all
       x-policy: '-'
       responses:
@@ -270,9 +279,11 @@ paths:
       tags:
       - Auth/Identity
       summary: 通知設定更新
-      description: 通知設定をユーザーの好みに合わせて更新する。
-      operationId: API_014
-      x-api-id: API-014
+
+      description: 通知設定を更新する。
+
+      operationId: API_008
+      x-api-id: API-008
       x-roles: all
       x-policy: '-'
       responses:
@@ -295,9 +306,11 @@ paths:
       tags:
       - Store/Public Access
       summary: 講座一覧取得
-      description: 公開中(active)の講座を検索・取得。1on1、セミナー、ブートキャンプのスタイルやカテゴリでフィルタが可能。
-      operationId: API_015
-      x-api-id: API-015
+
+      description: ストア公開講座一覧を取得する。
+
+      operationId: API_009
+      x-api-id: API-009
       x-roles: guest, all
       x-policy: '-'
       responses:
@@ -314,9 +327,11 @@ paths:
       tags:
       - Store/Public Access
       summary: 講座詳細取得
-      description: 未受講者向けLPデータ。アウトカム、前提条件、おすすめ、FAQ、日程スケジュールをすべて取得。
-      operationId: API_016
-      x-api-id: API-016
+
+      description: 講座の詳細情報を取得する。
+
+      operationId: API_010
+      x-api-id: API-010
       x-roles: guest, all
       x-policy: '-'
       responses:
@@ -339,9 +354,11 @@ paths:
       tags:
       - Store/Public Access
       summary: 講座申込(開始)
-      description: 講座への受講を申し込む。有料時はpending、無料時はactiveでEnrollmentを生成する。
-      operationId: API_017
-      x-api-id: API-017
+
+      description: 講座への受講申込を開始する。
+
+      operationId: API_011
+      x-api-id: API-011
       x-roles: learner
       x-policy: Enrollment(pending)
       responses:
@@ -370,9 +387,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: Stripeセッション生成
-      description: 有料講座の決済を開始するためのStripe URLを発行。コースがfrozen時は423でブロック。
-      operationId: API_018
-      x-api-id: API-018
+
+      description: Stripe Checkoutセッションを生成する。
+
+      operationId: API_012
+      x-api-id: API-012
       x-roles: learner
       x-policy: 423_ON_FROZEN
       responses:
@@ -397,9 +416,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: マイ講座一覧
-      description: 自身が受講中、または過去に受講したすべての講座をリスト取得する。
-      operationId: API_019
-      x-api-id: API-019
+
+      description: 受講中の講座一覧を取得する。
+
+      operationId: API_013
+      x-api-id: API-013
       x-roles: learner
       x-policy: '-'
       responses:
@@ -416,9 +437,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: 受講中講座詳細
-      description: 受講者用学習画面。最新の進捗、シラバス、受講者専用の連絡事項、解禁済み教材等を取得。
-      operationId: API_020
-      x-api-id: API-020
+
+      description: 受講中講座の詳細を取得する。
+
+      operationId: API_014
+      x-api-id: API-014
       x-roles: learner
       x-policy: 423_ON_FROZEN
       responses:
@@ -443,11 +466,13 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: 決済/申込状況確認
-      description: pending状態（決済確認中）からactiveになったかをポーリング/確認するためのAPI。
-      operationId: API_021
-      x-api-id: API-021
+
+      description: 受講申込・決済の状況を確認する。
+
+      operationId: API_015
+      x-api-id: API-015
       x-roles: learner
-      x-policy: pending対応
+      x-policy: é–²è¦§ã®ã¿
       responses:
         '200':
           description: OK
@@ -468,9 +493,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: サイドメニュー取得
-      description: チャットチャンネルと解禁済み課題レッスンを階層構造化して取得（image_3345d2を完全再現）。
-      operationId: API_022
-      x-api-id: API-022
+
+      description: コース内サイドメニューを取得する。
+
+      operationId: API_016
+      x-api-id: API-016
       x-roles: learner
       x-policy: '-'
       responses:
@@ -493,9 +520,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: 自分の課題一覧
-      description: 自分が提出すべき、または提出済みのすべての課題を全講座横断で一覧取得する。
-      operationId: API_023
-      x-api-id: API-023
+
+      description: 自分の課題一覧を取得する。
+
+      operationId: API_017
+      x-api-id: API-017
       x-roles: learner
       x-policy: '-'
       responses:
@@ -512,9 +541,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: 課題詳細取得
-      description: 課題の設問内容、配布資料、現在の提出状況と講師からの最新フィードバックを取得する。
-      operationId: API_024
-      x-api-id: API-024
+
+      description: 課題の詳細情報を取得する。
+
+      operationId: API_018
+      x-api-id: API-018
       x-roles: learner
       x-policy: '-'
       responses:
@@ -537,9 +568,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: 課題提出
-      description: 回答を提出。自動的にassignmentチャンネル内に講師との返信用スレッドを生成する。
-      operationId: API_025
-      x-api-id: API-025
+
+      description: 課題を提出する。
+
+      operationId: API_019
+      x-api-id: API-019
       x-roles: learner
       x-policy: 423_ON_FROZEN, threads_only
       responses:
@@ -570,9 +603,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: 学習実績取得
-      description: 獲得した証明書、バッジ、修了した講座の最終成績や学習時間統計を一覧取得する。
-      operationId: API_026
-      x-api-id: API-026
+
+      description: 学習実績を取得する。
+
+      operationId: API_020
+      x-api-id: API-020
       x-roles: learner
       x-policy: '-'
       responses:
@@ -589,9 +624,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: カレンダー取得
-      description: 受講している全講座のライブ予定、提出期限、面談予定をカレンダー形式(JSON)で取得。
-      operationId: API_027
-      x-api-id: API-027
+
+      description: カレンダー情報を取得する。
+
+      operationId: API_021
+      x-api-id: API-021
       x-roles: learner
       x-policy: '-'
       responses:
@@ -608,9 +645,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: コース修了処理
-      description: 全レッスン完了時の最終修了申請。講師による最終確認が必要な場合、評価待ちへ遷移。
-      operationId: API_028
-      x-api-id: API-028
+
+      description: コースの修了を申請する。
+
+      operationId: API_022
+      x-api-id: API-022
       x-roles: learner
       x-policy: '-'
       responses:
@@ -639,9 +678,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: アンケート取得
-      description: 講座内アンケートの設問（選択式、記述式）を取得する。
-      operationId: API_029
-      x-api-id: API-029
+
+      description: アンケートを取得する。
+
+      operationId: API_023
+      x-api-id: API-023
       x-roles: learner
       x-policy: '-'
       responses:
@@ -664,9 +705,11 @@ paths:
       tags:
       - Learner Dashboard/Progress
       summary: アンケート回答
-      description: アンケート回答を送信。423チェック対象。回答により教材解禁が連動する場合がある。
-      operationId: API_030
-      x-api-id: API-030
+
+      description: アンケートに回答する。
+
+      operationId: API_024
+      x-api-id: API-024
       x-roles: learner
       x-policy: 423_ON_FROZEN
       responses:
@@ -697,9 +740,11 @@ paths:
       tags:
       - Course Management
       summary: 自講座一覧
-      description: 自分が管理、または講師として参加（担当）している全講座を一覧取得する。
-      operationId: API_031
-      x-api-id: API-031
+
+      description: 講師として管理する講座一覧を取得する。
+
+      operationId: API_025
+      x-api-id: API-025
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -715,10 +760,11 @@ paths:
       tags:
       - Course Management
       summary: 講座新規作成（講師）
-      description: |-
-        講師がコースを新規作成。ownerUserId=作成者（サーバー側で自動設定、リクエストでの指定不可）。初期status=draft。CourseMember(role=instructor_owner)が自動作成される。公開にはrequest-approval→approve が必要。
-      operationId: API_032
-      x-api-id: API-032
+
+      description: 講師がコースを新規作成する。
+
+      operationId: API_026
+      x-api-id: API-026
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -741,9 +787,11 @@ paths:
       tags:
       - Course Management
       summary: 講座詳細取得(管理)
-      description: 講師用管理画面。売上概況、受講者推移、下書き情報を含む管理用詳細データ。
-      operationId: API_033
-      x-api-id: API-033
+
+      description: 講師管理用の講座詳細を取得する。
+
+      operationId: API_027
+      x-api-id: API-027
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -765,9 +813,11 @@ paths:
       tags:
       - Course Management
       summary: 講座情報更新
-      description: 講座のタイトル、LP、価格、募集期間、マーケティング項目を更新（image_33637a反映）。
-      operationId: API_034
-      x-api-id: API-034
+
+      description: 講座情報を更新する。
+
+      operationId: API_028
+      x-api-id: API-028
       x-roles: instructor_owner
       x-policy: 423_ON_FROZEN
       responses:
@@ -797,9 +847,11 @@ paths:
       tags:
       - Course Management
       summary: 講座削除(論理)
-      description: 講座を論理削除(archived)状態にする。既存の受講生には閲覧権限のみ残存させる。
-      operationId: API_035
-      x-api-id: API-035
+
+      description: 講座を論理削除する。
+
+      operationId: API_029
+      x-api-id: API-029
       x-roles: instructor_owner
       x-policy: '-'
       responses:
@@ -822,9 +874,11 @@ paths:
       tags:
       - Course Management
       summary: 承認申請
-      description: 運営へ公開審査を依頼。statusがpending_approvalとなり、以降承認まで423 Locked。
-      operationId: API_036
-      x-api-id: API-036
+
+      description: 講座の公開承認を申請する。
+
+      operationId: API_030
+      x-api-id: API-030
       x-roles: instructor_owner
       x-policy: 423_ON_FROZEN
       responses:
@@ -855,10 +909,11 @@ paths:
       tags:
       - Course Management
       summary: コース公開（講師）
-      description: |-
-        ownerUserId一致の講師がコースを公開する。statusをactiveに変更。operator作成コースの場合、CourseMember.roleをinstructor→instructor_ownerへ昇格（委譲完了）。
-      operationId: API_036B
-      x-api-id: API-036B
+
+      description: 承認済み講座を公開する。
+
+      operationId: API_031
+      x-api-id: API-031
       x-roles: instructor_owner
       x-policy: AUDIT_LOG
       responses:
@@ -869,7 +924,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CourseDetailView'
         '403':
-          description: Forbidden (ownerUserId不一致)
+          description: Forbidden (ownerUserIdä¸ä¸€è‡´)
         '423':
           description: Locked (Course is frozen)
       security:
@@ -885,9 +940,11 @@ paths:
       tags:
       - Course Management
       summary: 売上分析サマリ
-      description: 期間別の収益、成約率、受講生離脱ポイント等の分析サマリーを取得。
-      operationId: API_037
-      x-api-id: API-037
+
+      description: 売上分析サマリを取得する。
+
+      operationId: API_032
+      x-api-id: API-032
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -904,9 +961,11 @@ paths:
       tags:
       - Course Management
       summary: 振込先銀行設定
-      description: 講師への報酬振込先口座情報をStripe Connect等と連携して設定・更新。
-      operationId: API_038
-      x-api-id: API-038
+
+      description: 振込先銀行口座を設定する。
+
+      operationId: API_033
+      x-api-id: API-033
       x-roles: instructor_owner
       x-policy: '-'
       responses:
@@ -929,9 +988,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: シラバス構造取得
-      description: 編集中の章立てとレッスン構成をツリー形式で取得（image_32dd18の構成用）。
-      operationId: API_039
-      x-api-id: API-039
+
+      description: シラバス構造を取得する。
+
+      operationId: API_034
+      x-api-id: API-034
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -954,9 +1015,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: セクション追加
-      description: カリキュラム内に新しい「章」を追加。423チェック対象。
-      operationId: API_040
-      x-api-id: API-040
+
+      description: セクションを追加する。
+
+      operationId: API_035
+      x-api-id: API-035
       x-roles: instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -987,9 +1050,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: セクション編集
-      description: セクション名の変更、表示順の並び替え、および削除。
-      operationId: API_041
-      x-api-id: API-041
+
+      description: セクションを編集する。
+
+      operationId: API_036
+      x-api-id: API-036
       x-roles: instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -1019,9 +1084,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: セクション削除
-      description: 指定されたセクションと、配下のレッスン紐付けを削除（論理/物理）。
-      operationId: API_042
-      x-api-id: API-042
+
+      description: セクションを削除する。
+
+      operationId: API_037
+      x-api-id: API-037
       x-roles: instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -1046,9 +1113,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: レッスン作成
-      description: 指定セクションに新規レッスンを追加（座学/動画/課題/ライブ）（image_32dcf8反映）。
-      operationId: API_043
-      x-api-id: API-043
+
+      description: レッスンを作成する。
+
+      operationId: API_038
+      x-api-id: API-038
       x-roles: instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -1079,9 +1148,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: レッスン詳細取得
-      description: 編集画面用。動画URL、リッチテキスト本文、課題要件、Drip設定の詳細。
-      operationId: API_044
-      x-api-id: API-044
+
+      description: レッスン詳細を取得する。
+
+      operationId: API_039
+      x-api-id: API-039
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -1103,9 +1174,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: レッスン編集
-      description: コンテンツの修正、Drip(解禁日)、先行ロック条件の保存。423チェック対象。
-      operationId: API_045
-      x-api-id: API-045
+
+      description: レッスンを編集する。
+
+      operationId: API_040
+      x-api-id: API-040
       x-roles: instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -1135,9 +1208,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: レッスン削除
-      description: レッスンをカリキュラムから削除。
-      operationId: API_046
-      x-api-id: API-046
+
+      description: レッスンを削除する。
+
+      operationId: API_041
+      x-api-id: API-041
       x-roles: instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -1162,9 +1237,11 @@ paths:
       tags:
       - Syllabus/Content
       summary: ライブ配信設定
-      description: ZoomやYouTube LiveのURL、および配信日時の設定（カレンダー連動）。
-      operationId: API_047
-      x-api-id: API-047
+
+      description: ライブ配信設定を行う。
+
+      operationId: API_042
+      x-api-id: API-042
       x-roles: instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -1195,9 +1272,11 @@ paths:
       tags:
       - Submission Management
       summary: 提出一覧取得
-      description: 受講者別の課題進捗、未確認提出物、最終提出日時の一覧（image_32dcd7反映）。
-      operationId: API_048
-      x-api-id: API-048
+
+      description: 提出物一覧を取得する。
+
+      operationId: API_043
+      x-api-id: API-043
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -1220,9 +1299,11 @@ paths:
       tags:
       - Submission Management
       summary: 評価・採点実行
-      description: 提出物への合否、講評を送信。合格時は自動で次の教材を解禁。フィードバックはスレッドへ。
-      operationId: API_049
-      x-api-id: API-049
+
+      description: 提出物の評価・採点を実行する。
+
+      operationId: API_044
+      x-api-id: API-044
       x-roles: instructor, assistant
       x-policy: THREAD_REPLY(AUTO)
       responses:
@@ -1251,9 +1332,11 @@ paths:
       tags:
       - Submission Management
       summary: 受講者名簿取得
-      description: 全参加ユーザーの属性、現在の進捗状況、メールアドレス等の名簿取得。
-      operationId: API_050
-      x-api-id: API-050
+
+      description: 受講者名簿を取得する。
+
+      operationId: API_045
+      x-api-id: API-045
       x-roles: instructor
       x-policy: '-'
       responses:
@@ -1276,9 +1359,11 @@ paths:
       tags:
       - Submission Management
       summary: 講座内ロール変更
-      description: 特定ユーザーの役割（講師、アシスタント、受講生）を動的に切り替え。
-      operationId: API_051
-      x-api-id: API-051
+
+      description: コースメンバーのロールを変更する。
+
+      operationId: API_046
+      x-api-id: API-046
       x-roles: instructor_owner
       x-policy: 423_ON_FROZEN
       responses:
@@ -1314,9 +1399,11 @@ paths:
       tags:
       - Submission Management
       summary: 受講権限剥奪
-      description: 特定ユーザーの受講権限を剥奪（revoked）し、コンテンツへのアクセスを遮断。
-      operationId: API_052
-      x-api-id: API-052
+
+      description: 受講権限を剥奪する。
+
+      operationId: API_047
+      x-api-id: API-047
       x-roles: instructor_owner
       x-policy: 423_ON_FROZEN
       responses:
@@ -1352,9 +1439,11 @@ paths:
       tags:
       - Submission Management
       summary: 受講者CSV出力
-      description: 受講者名簿と学習進捗データをCSV形式でエクスポートする。
-      operationId: API_053
-      x-api-id: API-053
+
+      description: 受講者一覧をCSVエクスポートする。
+
+      operationId: API_048
+      x-api-id: API-048
       x-roles: instructor_owner
       x-policy: '-'
       responses:
@@ -1377,9 +1466,11 @@ paths:
       tags:
       - Communication
       summary: チャンネル一覧取得
-      description: サイドメニュー構築用。general, announcement等のチャンネル種別を含む。
-      operationId: API_054
-      x-api-id: API-054
+
+      description: チャンネル一覧を取得する。
+
+      operationId: API_049
+      x-api-id: API-049
       x-roles: all_in_course
       x-policy: '-'
       responses:
@@ -1401,9 +1492,11 @@ paths:
       tags:
       - Communication
       summary: チャンネル作成
-      description: コース内に新しいカスタムチャンネルを追加。
-      operationId: API_055
-      x-api-id: API-055
+
+      description: チャンネルを作成する。
+
+      operationId: API_050
+      x-api-id: API-050
       x-roles: instructor_owner
       x-policy: 423_ON_FROZEN
       responses:
@@ -1434,9 +1527,11 @@ paths:
       tags:
       - Communication
       summary: チャンネル編集
-      description: チャンネル名、説明文、閲覧制限、アーカイブ状態の更新。
-      operationId: API_056
-      x-api-id: API-056
+
+      description: チャンネルを編集する。
+
+      operationId: API_051
+      x-api-id: API-051
       x-roles: instructor_owner
       x-policy: 423_ON_FROZEN
       responses:
@@ -1466,9 +1561,11 @@ paths:
       tags:
       - Communication
       summary: チャンネル削除
-      description: チャンネルを論理削除。過去ログは監査用に保持。
-      operationId: API_057
-      x-api-id: API-057
+
+      description: チャンネルを削除する。
+
+      operationId: API_052
+      x-api-id: API-052
       x-roles: instructor_owner
       x-policy: 423_ON_FROZEN
       responses:
@@ -1493,11 +1590,13 @@ paths:
       tags:
       - Communication
       summary: メッセージ履歴取得
-      description: スレッド親（ルート）メッセージの一覧取得。課題の相互閲覧可（image_32d9b1反映）。
-      operationId: API_058
-      x-api-id: API-058
+
+      description: メッセージ履歴を取得する。
+
+      operationId: API_053
+      x-api-id: API-053
       x-roles: all_in_course
-      x-policy: 閲覧のみ可
+      x-policy: é–²è¦§ã®ã¿
       responses:
         '200':
           description: OK
@@ -1517,9 +1616,11 @@ paths:
       tags:
       - Communication
       summary: メッセージ投稿
-      description: チャンネルへの新規投稿。親メッセージとして保存。threads_onlyを強制適用。
-      operationId: API_059
-      x-api-id: API-059
+
+      description: メッセージを投稿する。
+
+      operationId: API_054
+      x-api-id: API-054
       x-roles: all_in_course
       x-policy: threads_only(AUTO)
       responses:
@@ -1548,9 +1649,11 @@ paths:
       tags:
       - Communication
       summary: スレッド詳細取得
-      description: 特定メッセージに紐づく返信メッセージ一覧（スレッドビュー）を全件取得。
-      operationId: API_060
-      x-api-id: API-060
+
+      description: スレッド詳細を取得する。
+
+      operationId: API_055
+      x-api-id: API-055
       x-roles: all_in_course
       x-policy: '-'
       responses:
@@ -1573,9 +1676,11 @@ paths:
       tags:
       - Communication
       summary: スレッド返信投稿
-      description: 返信投稿(image_32d9b1)。announcementタイプは講師以外返信不可。
-      operationId: API_061
-      x-api-id: API-061
+
+      description: スレッドに返信する。
+
+      operationId: API_056
+      x-api-id: API-056
       x-roles: all_in_course
       x-policy: THREAD_REPLY
       responses:
@@ -1604,9 +1709,11 @@ paths:
       tags:
       - Communication
       summary: メッセージ編集
-      description: 自分の投稿内容を修正。編集履歴を保持。423チェック対象。
-      operationId: API_062
-      x-api-id: API-062
+
+      description: メッセージを編集する。
+
+      operationId: API_057
+      x-api-id: API-057
       x-roles: owner_only
       x-policy: 423_ON_FROZEN
       responses:
@@ -1636,9 +1743,11 @@ paths:
       tags:
       - Communication
       summary: メッセージ削除
-      description: 投稿の論理削除。返信がある場合は「削除されました」と表示。
-      operationId: API_063
-      x-api-id: API-063
+
+      description: メッセージを削除する。
+
+      operationId: API_058
+      x-api-id: API-058
       x-roles: owner_only, instructor
       x-policy: 423_ON_FROZEN
       responses:
@@ -1663,9 +1772,11 @@ paths:
       tags:
       - Communication
       summary: リアクション追加
-      description: メッセージに対する絵文字リアクションの付与。423チェック対象。
-      operationId: API_064
-      x-api-id: API-064
+
+      description: リアクションを追加する。
+
+      operationId: API_059
+      x-api-id: API-059
       x-roles: all_in_course
       x-policy: 423_ON_FROZEN
       responses:
@@ -1695,10 +1806,12 @@ paths:
     get:
       tags:
       - Communication
-      summary: スレッド一覧取得（ルートメッセージのみ）
-      description: threads_only対応
-      operationId: API_065
-      x-api-id: API-065
+      summary: スレッド一覧取得
+
+      description: スレッド一覧を取得する。
+
+      operationId: API_060
+      x-api-id: API-060
       x-roles: all_in_course
       x-policy: '-'
       responses:
@@ -1724,10 +1837,12 @@ paths:
     post:
       tags:
       - Communication
-      summary: スレッド作成（ルート投稿）
-      description: threadId=NULLで作成
-      operationId: API_066
-      x-api-id: API-066
+      summary: スレッド作成
+
+      description: スレッドを作成する。
+
+      operationId: API_061
+      x-api-id: API-061
       x-roles: all_in_course
       x-policy: '-'
       responses:
@@ -1760,10 +1875,12 @@ paths:
     get:
       tags:
       - Communication
-      summary: スレッド内メッセージ一覧（ルート+返信）
-      description: threadId指定で返信も取得
-      operationId: API_067
-      x-api-id: API-067
+      summary: スレッド内メッセージ一覧
+
+      description: スレッド内メッセージを取得する。
+
+      operationId: API_062
+      x-api-id: API-062
       x-roles: all_in_course
       x-policy: '-'
       responses:
@@ -1795,9 +1912,11 @@ paths:
       tags:
       - Communication
       summary: スレッド返信
-      description: threadId必須
-      operationId: API_068
-      x-api-id: API-068
+
+      description: スレッドに返信する。
+
+      operationId: API_063
+      x-api-id: API-063
       x-roles: all_in_course
       x-policy: '-'
       responses:
@@ -1836,9 +1955,11 @@ paths:
       tags:
       - ' Infrastructure'
       summary: Stripe Webhook
-      description: 外部決済完了通知を受け取り、Enrollmentを自動的にactive化する。
-      operationId: API_083
-      x-api-id: API-083
+
+      description: Stripe Webhookを受信する。
+
+      operationId: API_064
+      x-api-id: API-064
       x-roles: public(Stripe)
       x-policy: Webhook専用
       responses:
@@ -1861,9 +1982,11 @@ paths:
       tags:
       - System
       summary: ヘルスチェック
-      description: サーバーの死活監視用。DB、Redis、外部サービスの接続確認。
-      operationId: API_084
-      x-api-id: API-084
+
+      description: サーバーの死活監視。
+
+      operationId: API_065
+      x-api-id: API-065
       x-roles: public
       x-policy: '-'
       responses:
@@ -1909,7 +2032,6 @@ components:
           - guest
           - learner
           - instructor
-          - assistant
           - operator
           - root_operator
       additionalProperties: false
@@ -2034,7 +2156,7 @@ components:
           format: date-time
         createdByUserId:
           type: string
-          description: 作成者ユーザーID（instructor 作成 or operator/root 作成）
+          description: ä½œæˆè€…ãƒ¦ãƒ¼ã‚¶ãƒ¼IDï¼ˆinstructor or operator/root_operatorï¼‰
         status:
           type: string
           enum:
@@ -2042,7 +2164,7 @@ components:
           - pending_approval
           - active
           - archived
-          description: 講座ステータス
+          description: ""
         approvalRequestedAt:
           type: string
           format: date-time
@@ -3327,6 +3449,8 @@ components:
           - course_approved
           - course_published
           - course_member_role_promoted
+          - user_frozen
+          - user_unfrozen
           type: string
         courseId:
           type: string
@@ -4513,7 +4637,6 @@ components:
       - guest
       - learner
       - instructor
-      - assistant
       - operator
       - root_operator
     OrderStatus:
@@ -4545,3 +4668,9 @@ components:
       - course_approved
       - course_published
       - course_member_role_promoted
+      - user_frozen
+      - user_unfrozen
+      - user_created
+      - user_updated
+      - user_deleted
+      - operator_role_changed

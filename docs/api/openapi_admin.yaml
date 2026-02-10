@@ -1,34 +1,36 @@
 openapi: 3.1.0
 info:
   title: adapt Admin API (V1 - 基本設計書完全準拠)
-  version: v19-integrated
+  version: v1.0
   description: "adapt オンライン学習プラットフォーム Admin API\n\n## 概要\n- **対象**: 運営者向け管理API\n- **認証**: OIDC（auth.adapt-co.io）+ Bearer Token\n\
-    - **権限**: operator または root_operator のみ\n- **エンドポイント数**: 13個\n- **基本設計書**: 06_API一覧 完全準拠（100%）\n\n## 機能グループ\n\n### コース管理\n\
-    - コース一覧・検索\n- コース承認（審査）\n- コース凍結・凍結解除\n- 監査ログ閲覧\n\n### ユーザー・講師管理\n- ユーザー一覧・検索\n- ユーザー凍結\n\n### チャンネル管理\n- チャンネル凍結・凍結解除\n\
-    - 不適切コンテンツ対応\n\n### 決済管理\n- 決済一覧\n- 売上分析\n- 返金処理\n\n### 運営スタッフ管理\n- 運営スタッフ一覧\n- 運営スタッフ追加\n- 権限管理（operator/root_operator）\n\
-    \n## 認証・認可\n\n### 認証方式\n- **OIDC**: auth.adapt-co.ioでの認証\n- **Bearer Token**: JWTトークンをAuthorizationヘッダーに設定\n- **全エンドポイント**:\
-    \ 認証必須\n\n### ロール階層\n- `root_operator`: すべての権限（DM閲覧、緊急凍結等）\n- `operator`: 通常の運営権限\n\n### x-roles 拡張プロパティ\n```yaml\nx-roles:\n\
-    \  - operator  # operator以上（root_operator含む）\n  \nx-roles:\n  - root_operator      # root_operator のみ\n```\n\n## 監査ログ\n\
-    \n### 自動記録\n以下の操作は自動的に監査ログに記録：\n- コース凍結・凍結解除\n- チャンネル凍結・凍結解除\n- ユーザー凍結\n- DM閲覧（root_operator権限）\n- 緊急アナウンス投稿\n\n### 監査イベント種別\n\
-    - `course_frozen`: コース凍結\n- `course_unfrozen`: コース凍結解除\n- `channel_frozen`: チャンネル凍結\n- `channel_unfrozen`: チャンネル凍結解除\n\
-    - `dm_viewed_by_root_operator`: root_operatorによるDM閲覧\n\n## 設計原則\n\n### アーキテクチャ\n- **Repository Pattern**: Service層はORM非依存\n\
-    - **DTO分離**: Prisma ModelはDTOとして公開しない\n- **監査ログ**: 重要操作は必ず記録\n\n### セキュリティ\n- **権限チェック**: 全エンドポイントでロール確認\n- **監査ログ**:\
-    \ すべての管理操作を記録\n- **レート制限**: abuse防止\n\n## 技術スタック\n- **フレームワーク**: NestJS\n- **DB**: PostgreSQL\n- **ORM**: Prisma\n- **認証**:\
-    \ OIDC + Google OAuth\n"
+    - **権限**: operator または root_operator のみ\n- **エンドポイント数**: 20個\n- **基本設計書**: 06_API一覧 完全準拠（100%）\n\n## 機能グループ\n\n### コース管理\n\
+    - コース一覧・検索\n- コース代理作成・編集・削除\n- コース承認（審査）\n- コース凍結・凍結解除\n- 監査ログ閲覧\n\n### ユーザー・講師管理\n- ユーザー一覧・検索\n- ユーザー作成（受講者/講師）\n- ユーザー編集\n\
+    - ユーザー論理削除\n- ユーザー凍結・凍結解除\n\n### チャンネル管理\n- チャンネル凍結・凍結解除\n- 不正コンテンツ対応\n\n### 決済管理\n- 決済一覧\n\n### 運営スタッフ管理\n- 運営スタッフ一覧\n\
+    - 運営スタッフ追加（globalRole変更）\n- 運営スタッフ編集（ロール変更）\n- 運営スタッフ削除（論理削除）\n- 権限管理（operator/root_operator）\n\n## 認証・認可\n\n### 認証方式\n\
+    - **OIDC**: auth.adapt-co.ioでの認証\n- **Bearer Token**: JWTトークンをAuthorizationヘッダーに設定\n- **全エンドポイント**: 認証必須\n\n### ロール階層\n\
+    - `root_operator`: すべての権限（DM閲覧、緊急凍結等）\n- `operator`: 通常の運営権限\n\n### x-roles 拡張プロパティ\n```yaml\nx-roles:\n  - operator \
+    \ # operator以上（root_operatorにも可）\n  \nx-roles:\n  - root_operator      # root_operator のみ\n```\n\n## 監査ログ\n\n### 自動記録\n\
+    以下の操作は自動的に監査ログに記録：\n- コース凍結・凍結解除\n- チャンネル凍結・凍結解除\n- ユーザー凍結・凍結解除\n- ユーザー作成・編集・削除\n- 運営スタッフロール変更\n- DM閲覧（root_operator権限）\n\
+    - 緊急アナウンス投稿\n\n## 設計原則\n\n### アーキテクチャ\n- **Repository Pattern**: Service層はORM非依存\n- **DTO分離**: Prisma ModelはDTOとして公開しない\n\
+    - **監査ログ**: 重要操作は必ず記録\n\n### セキュリティ\n- **権限チェック**: 全エンドポイントでロール確認\n- **監査ログ**: すべての管理操作を記録\n- **レート制限**: abuse防止\n\n##\
+    \ 技術スタック\n- **フレームワーク**: NestJS\n- **DB**: PostgreSQL\n- **ORM**: Prisma\n- **認証**: OIDC + Google OAuth\n"
 servers:
 - url: https://admin.adapt-co.io
 tags:
-- name: Admin
-- name: admin
+- name: Admin-Course
+- name: Admin-User
+- name: Admin-Operator
+- name: Admin-Payment
+- name: Admin-Channel
 paths:
   /api/v1/admin/courses:
     get:
       tags:
-      - Admin
+      - Admin-Course
       summary: 全講座一覧
-      description: システム全体の全コース検索。ステータスや売上規模でのソートが可能。
-      operationId: API_069
-      x-api-id: API-069
+      description: システム全体の全コース検索。ステータスや売上情報でのソートも可能。
+      operationId: API_ADMIN_01
+      x-api-id: API-ADMIN-01
       x-roles: operator, root_operator
       x-policy: '-'
       responses:
@@ -42,10 +44,13 @@ paths:
       - bearerAuth: []
     post:
       tags:
-      - admin
-      summary: 講座新規作成（運営）
-      description: operator/root_operator が講座を作成し、ownerUserId（=指定講師）を必須指定する。初期status=draft（非公開）。承認免除。公開は講師側のpublish操作で行う（publish時にCourseMember.role=instructor→instructor_ownerへ昇格）。
+      - Admin-Course
+      summary: 講座代理作成（運営）
+      description: operator/root_operator が講座を代理作成。ownerUserId（=指定講師）を必須指定する。初期status=draft（非公開）。承認免除。公開は講師側のpublish操作で行う（publish時にCourseMember.role=instructor→instructor_ownerへ昇格）。
+      operationId: API_ADMIN_02
+      x-api-id: API-ADMIN-02
       x-roles: operator, root_operator
+      x-policy: AUDIT_LOG
       requestBody:
         required: true
         content:
@@ -53,8 +58,8 @@ paths:
             schema:
               $ref: '#/components/schemas/AdminCourseCreateRequest'
       responses:
-        '200':
-          description: OK
+        '201':
+          description: Created
           content:
             application/json:
               schema:
@@ -77,25 +82,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/admin/courses/{courseId}:
+    patch:
+      tags:
+      - Admin-Course
+      summary: 講座代理編集（運営）
+      description: 運営によるコース情報の代理編集。title, description, catalogVisibility, visibility, ownerUserId を変更可能。
+      operationId: API_ADMIN_03
+      x-api-id: API-ADMIN-03
+      x-roles: operator, root_operator
+      x-policy: AUDIT_LOG
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCourseUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Admin-Course
+      summary: 講座削除（運営）
+      description: コースの論理削除。status=archivedに変更。受講者への影響を考慮し、既存受講データは保持。
+      operationId: API_ADMIN_04
+      x-api-id: API-ADMIN-04
+      x-roles: operator, root_operator
+      x-policy: AUDIT_LOG
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
   /api/v1/admin/courses/{courseId}/approve:
     post:
       tags:
-      - Admin
-      summary: 講座審査・承認
-      description: 公開申請中の講座を承認。statusをactiveにしLPを公開する。
-      operationId: API_070
-      x-api-id: API-070
+      - Admin-Course
+      summary: 講座承認・審査
+      description: 公開審査中の講座を承認。statusをactiveに変更しLPを公開する。
+      operationId: API_ADMIN_05
+      x-api-id: API-ADMIN-05
       x-roles: operator, root_operator
       x-policy: AUDIT_LOG
-      responses:
-        '201':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CourseDetailView'
-      security:
-      - bearerAuth: []
       parameters:
       - name: courseId
         in: path
@@ -108,29 +173,33 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericWriteRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
   /api/v1/admin/courses/{courseId}/freeze:
     post:
       tags:
-      - Admin
+      - Admin-Course
       summary: コース凍結（運営）
       description: '規約違反等の際に発動。全更新APIを423 Lockedにする。
 
+
         ---
 
-        コースを凍結し、全ユーザーのアクセスを423 Lockedにする'
-      operationId: API_079
-      x-api-id: API-079
+
+        コースを凍結すると、全ユーザーのアクセスを423 Lockedにする'
+      operationId: API_ADMIN_06
+      x-api-id: API-ADMIN-06
       x-roles: operator, root_operator
       x-policy: AUDIT_LOG
-      responses:
-        '201':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CourseDetailView'
-      security:
-      - bearerAuth: []
+      x-api-merged-from:
+      - API-071
       parameters:
       - name: courseId
         in: path
@@ -143,18 +212,62 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericWriteRequest'
-      x-api-merged-from:
-      - API-071
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
+  /api/v1/admin/courses/{courseId}/unfreeze:
+    post:
+      tags:
+      - Admin-Course
+      summary: コース凍結解除（運営）
+      description: コースの凍結を解除し、通常アクセスを復帰させる
+      operationId: API_ADMIN_07
+      x-api-id: API-ADMIN-07
+      x-roles: root_operator
+      x-policy: '-'
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenericWriteRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailView'
+      security:
+      - bearerAuth: []
   /api/v1/admin/audit/courses/{courseId}:
     get:
       tags:
-      - Admin
+      - Admin-Course
       summary: '[監査]凍結講座閲覧'
       description: 凍結中の秘匿コンテンツを精査。誰が閲覧したかのログを強制記録。
-      operationId: API_073
-      x-api-id: API-073
+      operationId: API_ADMIN_08
+      x-api-id: API-ADMIN-08
       x-roles: operator, root_operator
       x-policy: AUDIT_LOG(強制)
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: OK
@@ -164,20 +277,14 @@ paths:
                 $ref: '#/components/schemas/GenericDetailView'
       security:
       - bearerAuth: []
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema:
-          type: string
   /api/v1/admin/users:
     get:
       tags:
-      - Admin
+      - Admin-User
       summary: 全ユーザー一覧
-      description: プラットフォーム上の全アカウントを横断検索。
-      operationId: API_074
-      x-api-id: API-074
+      description: プラットフォーム上の全アカウントを横断検索。globalRole, isActive, deletedAt でフィルタ可能。
+      operationId: API_ADMIN_09
+      x-api-id: API-ADMIN-09
       x-roles: operator, root_operator
       x-policy: '-'
       responses:
@@ -189,25 +296,126 @@ paths:
                 $ref: '#/components/schemas/UserListResponse'
       security:
       - bearerAuth: []
+    post:
+      tags:
+      - Admin-User
+      summary: ユーザー作成（受講者/講師）
+      description: 運営による受講者/講師の代理登録。globalRoleはlearnerまたはinstructorのみ指定可能。operator/root_operatorの登録は /api/v1/admin/operators
+        経由で行う。
+      operationId: API_ADMIN_10
+      x-api-id: API-ADMIN-10
+      x-roles: operator, root_operator
+      x-policy: AUDIT_LOG
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict (email重複)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/admin/users/{userId}:
+    patch:
+      tags:
+      - Admin-User
+      summary: ユーザー編集
+      description: 運営による受講者/講師情報の代理編集。email, name, globalRole(learner/instructor), isActive を変更可能。
+      operationId: API_ADMIN_11
+      x-api-id: API-ADMIN-11
+      x-roles: operator, root_operator
+      x-policy: AUDIT_LOG
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict (email重複)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Admin-User
+      summary: ユーザー論理削除
+      description: ユーザーの論理削除。deletedAtをセットしisActive=falseに変更。物理削除は行わない。
+      operationId: API_ADMIN_12
+      x-api-id: API-ADMIN-12
+      x-roles: operator, root_operator
+      x-policy: AUDIT_LOG
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
   /api/v1/admin/users/{userId}/freeze:
     post:
       tags:
-      - Admin
+      - Admin-User
       summary: ユーザー凍結(BAN)
       description: 悪質ユーザーのシステム全体へのアクセス禁止処理。
-      operationId: API_075
-      x-api-id: API-075
+      operationId: API_ADMIN_13
+      x-api-id: API-ADMIN-13
       x-roles: operator, root_operator
       x-policy: AUDIT_LOG
-      responses:
-        '201':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-      security:
-      - bearerAuth: []
       parameters:
       - name: userId
         in: path
@@ -220,25 +428,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericWriteRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
   /api/v1/admin/users/{userId}/unfreeze:
     post:
       tags:
-      - Admin
+      - Admin-User
       summary: ユーザー凍結解除
-      description: ユーザーの凍結(BAN)を解除し、システムアクセスを復帰させる。
-      operationId: API_075B
-      x-api-id: API-075B
+      description: 凍結中ユーザーのシステム全体へのアクセス禁止を解除する。
+      operationId: API_ADMIN_14
+      x-api-id: API-ADMIN-14
       x-roles: operator, root_operator
       x-policy: AUDIT_LOG
-      responses:
-        '201':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-      security:
-      - bearerAuth: []
       parameters:
       - name: userId
         in: path
@@ -251,14 +459,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericWriteRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+      security:
+      - bearerAuth: []
   /api/v1/admin/operators:
     get:
       tags:
-      - Admin
+      - Admin-Operator
       summary: 運営スタッフ一覧
-      description: '運営アカウント(GlobalRole: operator/root)の管理。'
-      operationId: API_076
-      x-api-id: API-076
+      description: globalRoleがoperator/root_operatorのユーザー一覧。
+      operationId: API_ADMIN_15
+      x-api-id: API-ADMIN-15
       x-roles: root_operator
       x-policy: '-'
       responses:
@@ -272,36 +489,109 @@ paths:
       - bearerAuth: []
     post:
       tags:
-      - Admin
+      - Admin-Operator
       summary: 運営スタッフ追加
-      description: 新規運営アカウントの発行。監査ログ対象。
-      operationId: API_077
-      x-api-id: API-077
+      description: 既存ユーザーのglobalRoleをoperator/root_operatorに変更し、運営スタッフとして登録。監査ログ対象。
+      operationId: API_ADMIN_16
+      x-api-id: API-ADMIN-16
       x-roles: root_operator
       x-policy: AUDIT_LOG
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OperatorCreateRequest'
       responses:
         '201':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/OperatorAdminView'
+        '404':
+          description: Not Found（対象ユーザーが存在しない）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       security:
       - bearerAuth: []
+  /api/v1/admin/operators/{userId}:
+    patch:
+      tags:
+      - Admin-Operator
+      summary: 運営スタッフ編集（ロール変更）
+      description: 運営スタッフのglobalRoleをoperator⇔root_operatorで変更。
+      operationId: API_ADMIN_17
+      x-api-id: API-ADMIN-17
+      x-roles: root_operator
+      x-policy: AUDIT_LOG
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenericWriteRequest'
+              $ref: '#/components/schemas/OperatorUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperatorAdminView'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Admin-Operator
+      summary: 運営スタッフ削除（論理削除）
+      description: 運営スタッフの論理削除。deletedAtをセットしisActive=falseに変更。globalRoleは変更しない（復帰時の参考情報として保持）。
+      operationId: API_ADMIN_18
+      x-api-id: API-ADMIN-18
+      x-roles: root_operator
+      x-policy: AUDIT_LOG
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - bearerAuth: []
   /api/v1/admin/payments:
     get:
       tags:
-      - Admin
+      - Admin-Payment
       summary: 決済履歴一覧
-      description: Stripe経由の全決済ログ、返金対応状況、売上分配を監視。
-      operationId: API_078
-      x-api-id: API-078
+      description: Stripe経由の全決済ログ、返金対応状況、売上動向を監視。
+      operationId: API_ADMIN_19
+      x-api-id: API-ADMIN-19
       x-roles: operator, root_operator
       x-policy: '-'
       responses:
@@ -313,56 +603,16 @@ paths:
                 $ref: '#/components/schemas/PaymentListResponse'
       security:
       - bearerAuth: []
-  /api/v1/admin/courses/{courseId}/unfreeze:
-    post:
-      tags:
-      - Admin
-      summary: コース凍結解除（運営）
-      description: コースの凍結を解除し、通常アクセスを復帰させる
-      operationId: API_080
-      x-api-id: API-080
-      x-roles: root_operator
-      x-policy: '-'
-      responses:
-        '201':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CourseDetailView'
-      security:
-      - bearerAuth: []
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenericWriteRequest'
   /api/v1/admin/channels/{channelId}/freeze:
     post:
       tags:
-      - Admin
+      - Admin-Channel
       summary: チャンネル凍結（運営）
       description: チャンネルを凍結
-      operationId: API_081
-      x-api-id: API-081
+      operationId: API_ADMIN_20
+      x-api-id: API-ADMIN-20
       x-roles: operator, root_operator
       x-policy: '-'
-      responses:
-        '201':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CourseChannelDetailView'
-      security:
-      - bearerAuth: []
       parameters:
       - name: channelId
         in: path
@@ -375,25 +625,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericWriteRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseChannelDetailView'
+      security:
+      - bearerAuth: []
   /api/v1/admin/channels/{channelId}/unfreeze:
     post:
       tags:
-      - Admin
+      - Admin-Channel
       summary: チャンネル凍結解除（運営）
       description: チャンネルの凍結を解除
-      operationId: API_082
-      x-api-id: API-082
+      operationId: API_ADMIN_21
+      x-api-id: API-ADMIN-21
       x-roles: root_operator
       x-policy: '-'
-      responses:
-        '201':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CourseChannelDetailView'
-      security:
-      - bearerAuth: []
       parameters:
       - name: channelId
         in: path
@@ -406,6 +656,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/GenericWriteRequest'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseChannelDetailView'
+      security:
+      - bearerAuth: []
 components:
   securitySchemes:
     bearerAuth:
@@ -438,18 +697,13 @@ components:
           format: date-time
         globalRole:
           $ref: '#/components/schemas/GlobalRole'
-          enum:
-          - guest
-          - learner
-          - instructor
-          - assistant
-          - operator
-          - root_operator
       additionalProperties: false
       required:
-      - createdAt
       - id
+      - email
+      - name
       - isActive
+      - createdAt
       - updatedAt
       - globalRole
     UserCreateRequest:
@@ -457,73 +711,132 @@ components:
       properties:
         email:
           type: string
+          format: email
         name:
           type: string
-        isActive:
-          type: boolean
-        deletedAt:
+        globalRole:
           type: string
-          format: date-time
+          enum:
+          - learner
+          - instructor
+          description: 受講者(learner)または講師(instructor)のみ指定可能。operator/root_operatorは /operators 経由。
       additionalProperties: false
+      required:
+      - email
+      - name
+      - globalRole
     UserUpdateRequest:
       type: object
       properties:
         email:
           type: string
+          format: email
         name:
           type: string
+        globalRole:
+          type: string
+          enum:
+          - learner
+          - instructor
+          description: 受講者(learner)または講師(instructor)のみ指定可能。
         isActive:
           type: boolean
-        deletedAt:
+      additionalProperties: false
+    UserAdminView:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        status:
+          type: string
+        lastLoginAt:
           type: string
           format: date-time
+          nullable: true
+      required:
+      - user
+      - status
       additionalProperties: false
-    PlatformMembership:
+    UserListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserAdminView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    OperatorAdminView:
       type: object
       properties:
         id:
           type: string
-        userId:
+          description: User.id
+        email:
           type: string
-        role:
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        globalRole:
           type: string
           enum: &id001
           - operator
           - root_operator
+          description: operator または root_operator
+        isActive:
+          type: boolean
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      additionalProperties: false
       required:
-      - createdAt
       - id
-      - role
+      - globalRole
+      - isActive
+      - createdAt
       - updatedAt
-      - userId
-    PlatformMembershipCreateRequest:
+      additionalProperties: false
+    OperatorListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperatorAdminView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+    OperatorCreateRequest:
       type: object
       properties:
         userId:
           type: string
-        role:
+          description: 運営スタッフに昇格させる既存ユーザーのID
+        globalRole:
           type: string
           enum: *id001
+          description: operator または root_operator
       additionalProperties: false
       required:
-      - role
       - userId
-    PlatformMembershipUpdateRequest:
+      - globalRole
+    OperatorUpdateRequest:
       type: object
       properties:
-        userId:
-          type: string
-        role:
+        globalRole:
           type: string
           enum: *id001
+          description: operator または root_operator
       additionalProperties: false
+      required:
+      - globalRole
     Course:
       type: object
       properties:
@@ -567,7 +880,7 @@ components:
           format: date-time
         createdByUserId:
           type: string
-          description: 作成者ユーザーID（instructor 作成 or operator/root 作成）
+          description: 作成者ユーザーID（instructor or operator/root_operator）
         status:
           type: string
           enum:
@@ -589,17 +902,17 @@ components:
           nullable: true
       additionalProperties: false
       required:
-      - visibility
-      - updatedAt
-      - createdByUserId
-      - createdAt
+      - id
       - title
-      - isFrozen
       - ownerUserId
       - catalogVisibility
-      - id
+      - visibility
+      - isFrozen
+      - createdAt
+      - updatedAt
+      - createdByUserId
       - status
-    CourseCreateRequest:
+    AdminCourseCreateRequest:
       type: object
       properties:
         title:
@@ -608,26 +921,18 @@ components:
           type: string
         ownerUserId:
           type: string
+          description: このコースのオーナー講師（必須）。初期CourseMemberロールはinstructorとして仮与。公開（publish）時にinstructor_ownerへ昇格する。
         catalogVisibility:
           type: string
           enum: *id002
         visibility:
           type: string
           enum: *id003
-        isFrozen:
-          type: boolean
-        frozenAt:
-          type: string
-          format: date-time
-        frozenByUserId:
-          type: string
-        freezeReason:
-          type: string
       additionalProperties: false
       required:
+      - title
       - ownerUserId
-      - title
-    CourseUpdateRequest:
+    AdminCourseUpdateRequest:
       type: object
       properties:
         title:
@@ -642,199 +947,22 @@ components:
         visibility:
           type: string
           enum: *id003
-        isFrozen:
-          type: boolean
-        frozenAt:
-          type: string
-          format: date-time
-        frozenByUserId:
-          type: string
-        freezeReason:
-          type: string
       additionalProperties: false
-    CourseMember:
+    CourseDetailView:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Course'
+    CourseListResponse:
       type: object
       properties:
-        id:
-          type: string
-        courseId:
-          type: string
-        userId:
-          type: string
-        role:
-          type: string
-          enum: &id004
-          - instructor_owner
-          - learner
-          - instructor
-          - assistant
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Course'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
       required:
-      - courseId
-      - createdAt
-      - id
-      - role
-      - updatedAt
-      - userId
-    CourseMemberCreateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        userId:
-          type: string
-        role:
-          type: string
-          enum: *id004
-      additionalProperties: false
-      required:
-      - courseId
-      - role
-      - userId
-    CourseMemberUpdateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        userId:
-          type: string
-        role:
-          type: string
-          enum: *id004
-      additionalProperties: false
-    Lesson:
-      type: object
-      properties:
-        id:
-          type: string
-        courseId:
-          type: string
-        type:
-          type: string
-          enum: &id005
-          - text
-          - video
-          - live
-          - assignment
-        title:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - courseId
-      - createdAt
-      - id
-      - title
-      - type
-      - updatedAt
-    LessonCreateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        type:
-          type: string
-          enum: *id005
-        title:
-          type: string
-      additionalProperties: false
-      required:
-      - courseId
-      - title
-      - type
-    LessonUpdateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        type:
-          type: string
-          enum: *id005
-        title:
-          type: string
-      additionalProperties: false
-    Assignment:
-      type: object
-      properties:
-        id:
-          type: string
-        courseId:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-          nullable: true
-        dueAt:
-          type: string
-          format: date-time
-          nullable: true
-        allowResubmission:
-          type: boolean
-        isPublished:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - allowResubmission
-      - courseId
-      - createdAt
-      - id
-      - isPublished
-      - title
-      - updatedAt
-    AssignmentCreateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        dueAt:
-          type: string
-          format: date-time
-        allowResubmission:
-          type: boolean
-        isPublished:
-          type: boolean
-      additionalProperties: false
-      required:
-      - courseId
-      - title
-    AssignmentUpdateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        dueAt:
-          type: string
-          format: date-time
-        allowResubmission:
-          type: boolean
-        isPublished:
-          type: boolean
+      - items
       additionalProperties: false
     CourseChannel:
       type: object
@@ -845,37 +973,19 @@ components:
           type: string
         type:
           type: string
-          enum: &id006
+          enum:
           - assignment
           - one_on_one
           - announcement
           - general
         postingMode:
           type: string
-          enum: &id007
+          enum:
           - mixed
           - threads_only
-        visibility:
-          type: string
-          enum: *id003
         isFrozen:
           type: boolean
-        frozenAt:
-          type: string
-          format: date-time
-          nullable: true
-        frozenByUserId:
-          type: string
-          nullable: true
-        freezeReason:
-          type: string
-          nullable: true
         name:
-          type: string
-          nullable: true
-        isManual:
-          type: boolean
-        systemKey:
           type: string
           nullable: true
         createdAt:
@@ -886,2088 +996,51 @@ components:
           format: date-time
       additionalProperties: false
       required:
-      - courseId
-      - createdAt
       - id
-      - isFrozen
-      - isManual
+      - courseId
+      - type
       - postingMode
-      - type
-      - updatedAt
-      - visibility
-    CourseChannelCreateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        type:
-          type: string
-          enum: *id006
-        postingMode:
-          type: string
-          enum: *id007
-        visibility:
-          type: string
-          enum: *id003
-        isFrozen:
-          type: boolean
-        frozenAt:
-          type: string
-          format: date-time
-        frozenByUserId:
-          type: string
-        freezeReason:
-          type: string
-        name:
-          type: string
-        isManual:
-          type: boolean
-        systemKey:
-          type: string
-      additionalProperties: false
-      required:
-      - courseId
-      - type
-    CourseChannelUpdateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        type:
-          type: string
-          enum: *id006
-        postingMode:
-          type: string
-          enum: *id007
-        visibility:
-          type: string
-          enum: *id003
-        isFrozen:
-          type: boolean
-        frozenAt:
-          type: string
-          format: date-time
-        frozenByUserId:
-          type: string
-        freezeReason:
-          type: string
-        name:
-          type: string
-        isManual:
-          type: boolean
-        systemKey:
-          type: string
-      additionalProperties: false
-    CourseChannelMember:
-      type: object
-      properties:
-        id:
-          type: string
-        channelId:
-          type: string
-        courseMemberId:
-          type: string
-        status:
-          type: string
-          enum: &id008
-          - invited
-          - joined
-          - declined
-        invitedAt:
-          type: string
-          format: date-time
-          nullable: true
-        joinedAt:
-          type: string
-          format: date-time
-          nullable: true
-        declinedAt:
-          type: string
-          format: date-time
-          nullable: true
-        lastReadMessageId:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - channelId
-      - courseMemberId
-      - createdAt
-      - id
-      - status
-      - updatedAt
-    CourseChannelMemberCreateRequest:
-      type: object
-      properties:
-        channelId:
-          type: string
-        courseMemberId:
-          type: string
-        status:
-          type: string
-          enum: *id008
-        invitedAt:
-          type: string
-          format: date-time
-        joinedAt:
-          type: string
-          format: date-time
-        declinedAt:
-          type: string
-          format: date-time
-        lastReadMessageId:
-          type: string
-      additionalProperties: false
-      required:
-      - channelId
-      - courseMemberId
-    CourseChannelMemberUpdateRequest:
-      type: object
-      properties:
-        channelId:
-          type: string
-        courseMemberId:
-          type: string
-        status:
-          type: string
-          enum: *id008
-        invitedAt:
-          type: string
-          format: date-time
-        joinedAt:
-          type: string
-          format: date-time
-        declinedAt:
-          type: string
-          format: date-time
-        lastReadMessageId:
-          type: string
-      additionalProperties: false
-    CourseThread:
-      type: object
-      properties:
-        id:
-          type: string
-        channelId:
-          type: string
-        type:
-          type: string
-          enum: &id009
-          - submission
-          - message_thread
-        rootMessageId:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - channelId
-      - createdAt
-      - id
-      - type
-      - updatedAt
-    CourseThreadCreateRequest:
-      type: object
-      properties:
-        channelId:
-          type: string
-        type:
-          type: string
-          enum: *id009
-        rootMessageId:
-          type: string
-      additionalProperties: false
-      required:
-      - channelId
-      - type
-    CourseThreadUpdateRequest:
-      type: object
-      properties:
-        channelId:
-          type: string
-        type:
-          type: string
-          enum: *id009
-        rootMessageId:
-          type: string
-      additionalProperties: false
-    CourseThreadReadState:
-      type: object
-      properties:
-        id:
-          type: string
-        threadId:
-          type: string
-        courseMemberId:
-          type: string
-        lastReadMessageId:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - courseMemberId
-      - createdAt
-      - id
-      - threadId
-      - updatedAt
-    CourseThreadReadStateCreateRequest:
-      type: object
-      properties:
-        threadId:
-          type: string
-        courseMemberId:
-          type: string
-        lastReadMessageId:
-          type: string
-      additionalProperties: false
-      required:
-      - courseMemberId
-      - threadId
-    CourseThreadReadStateUpdateRequest:
-      type: object
-      properties:
-        threadId:
-          type: string
-        courseMemberId:
-          type: string
-        lastReadMessageId:
-          type: string
-      additionalProperties: false
-    CourseMessage:
-      type: object
-      properties:
-        id:
-          type: string
-        channelId:
-          type: string
-        threadId:
-          type: string
-          nullable: true
-        authorCourseMemberId:
-          type: string
-          nullable: true
-        text:
-          type: string
-        isEmergency:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - channelId
-      - createdAt
-      - id
-      - isEmergency
-      - text
-      - updatedAt
-    CourseMessageCreateRequest:
-      type: object
-      properties:
-        channelId:
-          type: string
-        threadId:
-          type: string
-        authorCourseMemberId:
-          type: string
-        text:
-          type: string
-        isEmergency:
-          type: boolean
-      additionalProperties: false
-      required:
-      - channelId
-      - text
-    CourseMessageUpdateRequest:
-      type: object
-      properties:
-        channelId:
-          type: string
-        threadId:
-          type: string
-        authorCourseMemberId:
-          type: string
-        text:
-          type: string
-        isEmergency:
-          type: boolean
-      additionalProperties: false
-    CourseMessageAttachment:
-      type: object
-      properties:
-        id:
-          type: string
-        courseMessageId:
-          type: string
-        type:
-          type: string
-        storageKey:
-          type: string
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        size:
-          type: integer
-          format: int32
-        createdAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - courseMessageId
-      - createdAt
-      - fileName
-      - id
-      - mimeType
-      - size
-      - storageKey
-      - type
-    CourseMessageAttachmentCreateRequest:
-      type: object
-      properties:
-        courseMessageId:
-          type: string
-        type:
-          type: string
-        storageKey:
-          type: string
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        size:
-          type: integer
-          format: int32
-      additionalProperties: false
-      required:
-      - courseMessageId
-      - fileName
-      - mimeType
-      - size
-      - storageKey
-      - type
-    CourseMessageAttachmentUpdateRequest:
-      type: object
-      properties:
-        courseMessageId:
-          type: string
-        type:
-          type: string
-        storageKey:
-          type: string
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        size:
-          type: integer
-          format: int32
-      additionalProperties: false
-    CourseNotificationPreference:
-      type: object
-      properties:
-        id:
-          type: string
-        courseMemberId:
-          type: string
-        announcementNormalEnabled:
-          type: boolean
-        submissionEnabled:
-          type: boolean
-        submissionCommentEnabled:
-          type: boolean
-        threadReplyEnabled:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - announcementNormalEnabled
-      - courseMemberId
-      - createdAt
-      - id
-      - submissionCommentEnabled
-      - submissionEnabled
-      - threadReplyEnabled
-      - updatedAt
-    CourseNotificationPreferenceCreateRequest:
-      type: object
-      properties:
-        courseMemberId:
-          type: string
-        announcementNormalEnabled:
-          type: boolean
-        submissionEnabled:
-          type: boolean
-        submissionCommentEnabled:
-          type: boolean
-        threadReplyEnabled:
-          type: boolean
-      additionalProperties: false
-      required:
-      - courseMemberId
-    CourseNotificationPreferenceUpdateRequest:
-      type: object
-      properties:
-        courseMemberId:
-          type: string
-        announcementNormalEnabled:
-          type: boolean
-        submissionEnabled:
-          type: boolean
-        submissionCommentEnabled:
-          type: boolean
-        threadReplyEnabled:
-          type: boolean
-      additionalProperties: false
-    CourseChannelNotificationPreference:
-      type: object
-      properties:
-        id:
-          type: string
-        courseMemberId:
-          type: string
-        channelId:
-          type: string
-        muted:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - channelId
-      - courseMemberId
-      - createdAt
-      - id
-      - muted
-      - updatedAt
-    CourseChannelNotificationPreferenceCreateRequest:
-      type: object
-      properties:
-        courseMemberId:
-          type: string
-        channelId:
-          type: string
-        muted:
-          type: boolean
-      additionalProperties: false
-      required:
-      - channelId
-      - courseMemberId
-    CourseChannelNotificationPreferenceUpdateRequest:
-      type: object
-      properties:
-        courseMemberId:
-          type: string
-        channelId:
-          type: string
-        muted:
-          type: boolean
-      additionalProperties: false
-    CourseEnrollment:
-      type: object
-      properties:
-        id:
-          type: string
-        courseId:
-          type: string
-        userId:
-          type: string
-        status:
-          type: string
-          enum: &id010
-          - applied
-          - active
-          - revoked
-        grantedAt:
-          type: string
-          format: date-time
-          nullable: true
-        revokedAt:
-          type: string
-          format: date-time
-          nullable: true
-        paidAt:
-          type: string
-          format: date-time
-          nullable: true
-        source:
-          type: string
-          enum: &id011
-          - stripe
-          - manual
-        paymentId:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - courseId
-      - createdAt
-      - id
-      - source
-      - status
-      - updatedAt
-      - userId
-    CourseEnrollmentCreateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        userId:
-          type: string
-        status:
-          type: string
-          enum: *id010
-        grantedAt:
-          type: string
-          format: date-time
-        revokedAt:
-          type: string
-          format: date-time
-        paidAt:
-          type: string
-          format: date-time
-        source:
-          type: string
-          enum: *id011
-        paymentId:
-          type: string
-      additionalProperties: false
-      required:
-      - courseId
-      - userId
-    CourseEnrollmentUpdateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        userId:
-          type: string
-        status:
-          type: string
-          enum: *id010
-        grantedAt:
-          type: string
-          format: date-time
-        revokedAt:
-          type: string
-          format: date-time
-        paidAt:
-          type: string
-          format: date-time
-        source:
-          type: string
-          enum: *id011
-        paymentId:
-          type: string
-      additionalProperties: false
-    Payment:
-      type: object
-      properties:
-        id:
-          type: string
-        provider:
-          type: string
-          enum: *id011
-        providerRef:
-          type: string
-          nullable: true
-        userId:
-          type: string
-        courseId:
-          type: string
-          nullable: true
-        amount:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        status:
-          type: string
-          enum: &id012
-          - pending
-          - succeeded
-          - failed
-          - canceled
-          - refunded
-        paidAt:
-          type: string
-          format: date-time
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - amount
-      - createdAt
-      - currency
-      - id
-      - provider
-      - status
-      - updatedAt
-      - userId
-    PaymentCreateRequest:
-      type: object
-      properties:
-        provider:
-          type: string
-          enum: *id011
-        providerRef:
-          type: string
-        userId:
-          type: string
-        courseId:
-          type: string
-        amount:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        status:
-          type: string
-          enum: *id012
-        paidAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - amount
-      - userId
-    PaymentUpdateRequest:
-      type: object
-      properties:
-        provider:
-          type: string
-          enum: *id011
-        providerRef:
-          type: string
-        userId:
-          type: string
-        courseId:
-          type: string
-        amount:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        status:
-          type: string
-          enum: *id012
-        paidAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-    Refund:
-      type: object
-      properties:
-        id:
-          type: string
-        paymentId:
-          type: string
-        providerRef:
-          type: string
-          nullable: true
-        amount:
-          type: integer
-          format: int32
-        status:
-          type: string
-          enum: &id013
-          - pending
-          - succeeded
-          - failed
-          - canceled
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - amount
-      - createdAt
-      - id
-      - paymentId
-      - status
-      - updatedAt
-    RefundCreateRequest:
-      type: object
-      properties:
-        paymentId:
-          type: string
-        providerRef:
-          type: string
-        amount:
-          type: integer
-          format: int32
-        status:
-          type: string
-          enum: *id013
-      additionalProperties: false
-      required:
-      - amount
-      - paymentId
-    RefundUpdateRequest:
-      type: object
-      properties:
-        paymentId:
-          type: string
-        providerRef:
-          type: string
-        amount:
-          type: integer
-          format: int32
-        status:
-          type: string
-          enum: *id013
-      additionalProperties: false
-    Coupon:
-      type: object
-      properties:
-        id:
-          type: string
-        code:
-          type: string
-        discountType:
-          type: string
-          enum: &id014
-          - amount_fixed
-          - amount_percent
-        discountValue:
-          type: integer
-          format: int32
-        currency:
-          type: string
-          nullable: true
-        expiresAt:
-          type: string
-          format: date-time
-          nullable: true
-        usageLimit:
-          type: integer
-          format: int32
-          nullable: true
-        usedCount:
-          type: integer
-          format: int32
-        isActive:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - code
-      - createdAt
-      - discountType
-      - discountValue
-      - id
-      - isActive
-      - updatedAt
-      - usedCount
-    CouponCreateRequest:
-      type: object
-      properties:
-        code:
-          type: string
-        discountType:
-          type: string
-          enum: *id014
-        discountValue:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        expiresAt:
-          type: string
-          format: date-time
-        usageLimit:
-          type: integer
-          format: int32
-        usedCount:
-          type: integer
-          format: int32
-        isActive:
-          type: boolean
-      additionalProperties: false
-      required:
-      - code
-      - discountType
-      - discountValue
-    CouponUpdateRequest:
-      type: object
-      properties:
-        code:
-          type: string
-        discountType:
-          type: string
-          enum: *id014
-        discountValue:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        expiresAt:
-          type: string
-          format: date-time
-        usageLimit:
-          type: integer
-          format: int32
-        usedCount:
-          type: integer
-          format: int32
-        isActive:
-          type: boolean
-      additionalProperties: false
-    CouponRedemption:
-      type: object
-      properties:
-        id:
-          type: string
-        couponId:
-          type: string
-        userId:
-          type: string
-        courseId:
-          type: string
-          nullable: true
-        paymentId:
-          type: string
-          nullable: true
-        redeemedAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - couponId
-      - createdAt
-      - id
-      - redeemedAt
-      - updatedAt
-      - userId
-    CouponRedemptionCreateRequest:
-      type: object
-      properties:
-        couponId:
-          type: string
-        userId:
-          type: string
-        courseId:
-          type: string
-        paymentId:
-          type: string
-        redeemedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - couponId
-      - userId
-    CouponRedemptionUpdateRequest:
-      type: object
-      properties:
-        couponId:
-          type: string
-        userId:
-          type: string
-        courseId:
-          type: string
-        paymentId:
-          type: string
-        redeemedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-    AuditEvent:
-      type: object
-      properties:
-        id:
-          type: string
-        occurredAt:
-          type: string
-          format: date-time
-        actorUserId:
-          type: string
-        actorGlobalRole:
-          type: string
-          enum: &id015
-          - guest
-          - learner
-          - instructor
-          - assistant
-          - operator
-          - root_operator
-        eventType:
-          $ref: '#/components/schemas/AuditEventType'
-          enum: &id016
-          - announcement_emergency_posted
-          - course_frozen
-          - course_unfrozen
-          - channel_frozen
-          - channel_unfrozen
-          - dm_viewed_by_root_operator
-          - course_created
-          - course_approval_requested
-          - course_approved
-          - course_published
-          - course_member_role_promoted
-          type: string
-        courseId:
-          type: string
-          nullable: true
-        channelId:
-          type: string
-          nullable: true
-        messageId:
-          type: string
-          nullable: true
-        reason:
-          type: string
-        metaJson:
-          type: object
-          nullable: true
-        requestId:
-          type: string
-          nullable: true
-        ipHash:
-          type: string
-          nullable: true
-        userAgentHash:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - actorGlobalRole
-      - actorUserId
-      - createdAt
-      - eventType
-      - id
-      - occurredAt
-      - reason
-      - updatedAt
-    AuditEventCreateRequest:
-      type: object
-      properties:
-        occurredAt:
-          type: string
-          format: date-time
-        actorUserId:
-          type: string
-        actorGlobalRole:
-          type: string
-          enum: *id015
-        eventType:
-          type: string
-          enum: *id016
-        courseId:
-          type: string
-        channelId:
-          type: string
-        messageId:
-          type: string
-        reason:
-          type: string
-        metaJson:
-          type: object
-        requestId:
-          type: string
-        ipHash:
-          type: string
-        userAgentHash:
-          type: string
-      additionalProperties: false
-      required:
-      - actorGlobalRole
-      - actorUserId
-      - eventType
-      - reason
-    AuditEventUpdateRequest:
-      type: object
-      properties:
-        occurredAt:
-          type: string
-          format: date-time
-        actorUserId:
-          type: string
-        actorGlobalRole:
-          type: string
-          enum: *id015
-        eventType:
-          type: string
-          enum: *id016
-        courseId:
-          type: string
-        channelId:
-          type: string
-        messageId:
-          type: string
-        reason:
-          type: string
-        metaJson:
-          type: object
-        requestId:
-          type: string
-        ipHash:
-          type: string
-        userAgentHash:
-          type: string
-      additionalProperties: false
-    Order:
-      type: object
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        courseId:
-          type: string
-        amount:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        status:
-          $ref: '#/components/schemas/OrderStatus'
-          enum: &id017
-          - pending
-          - paid
-          - cancelled
-          - failed
-          - refunded
-        paymentProvider:
-          type: string
-        paymentIntentId:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - amount
-      - courseId
-      - createdAt
-      - currency
-      - id
-      - paymentProvider
-      - status
-      - userId
-    OrderCreateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        courseId:
-          type: string
-        amount:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        status:
-          type: string
-          enum: *id017
-        paymentProvider:
-          type: string
-        paymentIntentId:
-          type: string
-      additionalProperties: false
-      required:
-      - amount
-      - courseId
-      - currency
-      - paymentProvider
-      - status
-      - userId
-    OrderUpdateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        courseId:
-          type: string
-        amount:
-          type: integer
-          format: int32
-        currency:
-          type: string
-        status:
-          type: string
-          enum: *id017
-        paymentProvider:
-          type: string
-        paymentIntentId:
-          type: string
-      additionalProperties: false
-    OAuthIdentity:
-      type: object
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        provider:
-          type: string
-        providerUserId:
-          type: string
-        email:
-          type: string
-          nullable: true
-        lastLoginAt:
-          type: string
-          format: date-time
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - createdAt
-      - id
-      - provider
-      - providerUserId
-      - userId
-    OAuthIdentityCreateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        provider:
-          type: string
-        providerUserId:
-          type: string
-        email:
-          type: string
-        lastLoginAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - provider
-      - providerUserId
-      - userId
-    OAuthIdentityUpdateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        provider:
-          type: string
-        providerUserId:
-          type: string
-        email:
-          type: string
-        lastLoginAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-    PasswordCredential:
-      type: object
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        passwordHash:
-          type: string
-        algorithm:
-          type: string
-        passwordUpdatedAt:
-          type: string
-          format: date-time
-        isDisabled:
-          type: boolean
-        failedCount:
-          type: integer
-          format: int32
-        lastFailedAt:
-          type: string
-          format: date-time
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - algorithm
-      - createdAt
-      - failedCount
-      - id
-      - isDisabled
-      - passwordHash
-      - passwordUpdatedAt
-      - updatedAt
-      - userId
-    PasswordCredentialCreateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        passwordHash:
-          type: string
-        algorithm:
-          type: string
-        passwordUpdatedAt:
-          type: string
-          format: date-time
-        isDisabled:
-          type: boolean
-        failedCount:
-          type: integer
-          format: int32
-        lastFailedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - algorithm
-      - passwordHash
-      - passwordUpdatedAt
-      - userId
-    PasswordCredentialUpdateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        passwordHash:
-          type: string
-        algorithm:
-          type: string
-        passwordUpdatedAt:
-          type: string
-          format: date-time
-        isDisabled:
-          type: boolean
-        failedCount:
-          type: integer
-          format: int32
-        lastFailedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-    FileObject:
-      type: object
-      properties:
-        id:
-          type: string
-        storageKey:
-          type: string
-        bucket:
-          type: string
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        size:
-          type: integer
-          format: int32
-        checksum:
-          type: string
-          nullable: true
-        isScanned:
-          type: boolean
-        isMalicious:
-          type: boolean
-        createdByUserId:
-          type: string
-          nullable: true
-        deletedAt:
-          type: string
-          format: date-time
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - bucket
-      - createdAt
-      - fileName
-      - id
-      - isMalicious
-      - isScanned
-      - mimeType
-      - size
-      - storageKey
-    FileObjectCreateRequest:
-      type: object
-      properties:
-        storageKey:
-          type: string
-        bucket:
-          type: string
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        size:
-          type: integer
-          format: int32
-        checksum:
-          type: string
-        isScanned:
-          type: boolean
-        isMalicious:
-          type: boolean
-        createdByUserId:
-          type: string
-        deletedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - bucket
-      - fileName
-      - mimeType
-      - size
-      - storageKey
-    FileObjectUpdateRequest:
-      type: object
-      properties:
-        storageKey:
-          type: string
-        bucket:
-          type: string
-        fileName:
-          type: string
-        mimeType:
-          type: string
-        size:
-          type: integer
-          format: int32
-        checksum:
-          type: string
-        isScanned:
-          type: boolean
-        isMalicious:
-          type: boolean
-        createdByUserId:
-          type: string
-        deletedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-    Submission:
-      type: object
-      properties:
-        id:
-          type: string
-        assignmentId:
-          type: string
-        courseId:
-          type: string
-        userId:
-          type: string
-        threadId:
-          type: string
-        submittedAt:
-          type: string
-          format: date-time
-        status:
-          $ref: '#/components/schemas/SubmissionStatus'
-          enum: &id018
-          - draft
-          - submitted
-          - returned
-          - graded
-        gradedAt:
-          type: string
-          format: date-time
-          nullable: true
-      additionalProperties: false
-      required:
-      - assignmentId
-      - courseId
-      - id
-      - status
-      - submittedAt
-      - threadId
-      - userId
-    SubmissionCreateRequest:
-      type: object
-      properties:
-        assignmentId:
-          type: string
-        courseId:
-          type: string
-        userId:
-          type: string
-        threadId:
-          type: string
-        submittedAt:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum: *id018
-        gradedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - assignmentId
-      - courseId
-      - status
-      - threadId
-      - userId
-    SubmissionUpdateRequest:
-      type: object
-      properties:
-        assignmentId:
-          type: string
-        courseId:
-          type: string
-        userId:
-          type: string
-        threadId:
-          type: string
-        submittedAt:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum: *id018
-        gradedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-    UserProfile:
-      type: object
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        displayName:
-          type: string
-        avatarFileObjectId:
-          type: string
-          nullable: true
-        bio:
-          type: string
-          nullable: true
-        isPublic:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - createdAt
-      - displayName
-      - id
-      - isPublic
-      - updatedAt
-      - userId
-    UserProfileCreateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        displayName:
-          type: string
-        avatarFileObjectId:
-          type: string
-        bio:
-          type: string
-        isPublic:
-          type: boolean
-      additionalProperties: false
-      required:
-      - displayName
-      - userId
-    UserProfileUpdateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        displayName:
-          type: string
-        avatarFileObjectId:
-          type: string
-        bio:
-          type: string
-        isPublic:
-          type: boolean
-      additionalProperties: false
-    GradingComment:
-      type: object
-      properties:
-        id:
-          type: string
-        courseId:
-          type: string
-        threadId:
-          type: string
-        authorUserId:
-          type: string
-        targetUserId:
-          type: string
-        body:
-          type: string
-        score:
-          type: integer
-          format: int32
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - authorUserId
-      - body
-      - courseId
-      - createdAt
-      - id
-      - targetUserId
-      - threadId
-      - updatedAt
-    GradingCommentCreateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        threadId:
-          type: string
-        authorUserId:
-          type: string
-        targetUserId:
-          type: string
-        body:
-          type: string
-        score:
-          type: integer
-          format: int32
-      additionalProperties: false
-      required:
-      - authorUserId
-      - body
-      - courseId
-      - targetUserId
-      - threadId
-    GradingCommentUpdateRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        threadId:
-          type: string
-        authorUserId:
-          type: string
-        targetUserId:
-          type: string
-        body:
-          type: string
-        score:
-          type: integer
-          format: int32
-      additionalProperties: false
-    SuccessResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-      required:
-      - success
-      additionalProperties: false
-    ErrorResponse:
-      type: object
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-      required:
-      - message
-      additionalProperties: false
-    LoginRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-      required:
-      - email
-      - password
-      additionalProperties: false
-    LoginResponse:
-      type: object
-      properties:
-        accessToken:
-          type: string
-        refreshToken:
-          type: string
-      required:
-      - accessToken
-      - refreshToken
-      additionalProperties: false
-    RegisterRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-        name:
-          type: string
-      required:
-      - email
-      - password
-      - name
-      additionalProperties: false
-    RegisterResponse:
-      $ref: '#/components/schemas/User'
-    RefreshResponse:
-      type: object
-      properties:
-        accessToken:
-          type: string
-      required:
-      - accessToken
-      additionalProperties: false
-    CheckoutRequest:
-      type: object
-      properties:
-        courseId:
-          type: string
-        couponCode:
-          type: string
-      required:
-      - courseId
-      additionalProperties: false
-    CheckoutResponse:
-      type: object
-      properties:
-        sessionId:
-          type: string
-        url:
-          type: string
-          format: uri
-      required:
-      - sessionId
-      - url
-      additionalProperties: false
-    Notification:
-      type: object
-      properties:
-        id:
-          type: string
-        type:
-          type: string
-        title:
-          type: string
-        body:
-          type: string
-        isRead:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-      required:
-      - id
-      - type
-      - title
-      - isRead
-      - createdAt
-      additionalProperties: false
-    NotificationListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Notification'
-      required:
-      - items
-      additionalProperties: false
-    CourseSideMenuResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            type: object
-      required:
-      - items
-      additionalProperties: false
-    CursorPageInfo:
-      type: object
-      properties:
-        nextCursor:
-          type: string
-          nullable: true
-        hasMore:
-          type: boolean
-      required:
-      - hasMore
-      additionalProperties: false
-    OffsetPageInfo:
-      type: object
-      properties:
-        page:
-          type: integer
-          minimum: 1
-        pageSize:
-          type: integer
-          minimum: 1
-        total:
-          type: integer
-          minimum: 0
-          nullable: true
-      required:
-      - page
-      - pageSize
-      additionalProperties: false
-    ListMeta:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/OffsetPageInfo'
-        cursor:
-          $ref: '#/components/schemas/CursorPageInfo'
-      additionalProperties: false
-    UserPublicView:
-      type: object
-      properties:
-        id:
-          type: string
-        displayName:
-          type: string
-        avatarUrl:
-          type: string
-          nullable: true
-      required:
-      - id
-      - displayName
-      additionalProperties: false
-    FileObjectView:
-      type: object
-      properties:
-        file:
-          $ref: '#/components/schemas/FileObject'
-        url:
-          type: string
-        mimeType:
-          type: string
-          nullable: true
-        size:
-          type: integer
-          minimum: 0
-          nullable: true
-      required:
-      - file
-      - url
-      additionalProperties: false
-    MessageReactionView:
-      type: object
-      properties:
-        emoji:
-          type: string
-        count:
-          type: integer
-          minimum: 0
-        reactedByMe:
-          type: boolean
-      required:
-      - emoji
-      - count
-      - reactedByMe
-      additionalProperties: false
-    CourseMessageView:
-      type: object
-      properties:
-        message:
-          $ref: '#/components/schemas/CourseMessage'
-        sender:
-          $ref: '#/components/schemas/UserPublicView'
-        attachments:
-          type: array
-          items:
-            $ref: '#/components/schemas/FileObjectView'
-        reactions:
-          type: array
-          items:
-            $ref: '#/components/schemas/MessageReactionView'
-      required:
-      - message
-      - sender
-      - attachments
-      - reactions
-      additionalProperties: false
-    CourseChannelSummaryView:
-      type: object
-      properties:
-        channel:
-          $ref: '#/components/schemas/CourseChannel'
-        lastMessageAt:
-          type: string
-          format: date-time
-          nullable: true
-        unreadCount:
-          type: integer
-          minimum: 0
-      required:
-      - channel
-      - unreadCount
-      additionalProperties: false
-    CourseStatsView:
-      type: object
-      properties:
-        learnerCount:
-          type: integer
-          minimum: 0
-        assignmentCount:
-          type: integer
-          minimum: 0
-        lessonCount:
-          type: integer
-          minimum: 0
-        activeChannelCount:
-          type: integer
-          minimum: 0
-      required:
-      - learnerCount
-      - assignmentCount
-      - lessonCount
-      - activeChannelCount
-      additionalProperties: false
-    CourseSummaryView:
-      type: object
-      properties:
-        course:
-          $ref: '#/components/schemas/Course'
-        channelCount:
-          type: integer
-          minimum: 0
-        memberCount:
-          type: integer
-          minimum: 0
-        isFrozen:
-          type: boolean
-      required:
-      - course
-      - channelCount
-      - memberCount
       - isFrozen
-      additionalProperties: false
-    CourseDetailView:
+      - createdAt
+      - updatedAt
+    CourseChannelDetailView:
       type: object
-      properties:
-        course:
-          $ref: '#/components/schemas/Course'
-        channels:
-          type: array
-          items:
-            $ref: '#/components/schemas/CourseChannelSummaryView'
-        stats:
-          $ref: '#/components/schemas/CourseStatsView'
-      required:
-      - course
-      - channels
-      - stats
-      additionalProperties: false
-    ThreadSummaryView:
-      type: object
-      properties:
-        threadId:
-          type: string
-        rootMessage:
-          $ref: '#/components/schemas/CourseMessageView'
-        replyCount:
-          type: integer
-          minimum: 0
-        lastReplyAt:
-          type: string
-          format: date-time
-          nullable: true
-      required:
-      - threadId
-      - rootMessage
-      - replyCount
-      additionalProperties: false
-    AssignmentSummaryView:
-      type: object
-      properties:
-        assignment:
-          $ref: '#/components/schemas/Assignment'
-        dueAt:
-          type: string
-          format: date-time
-          nullable: true
-        status:
-          type: string
-      required:
-      - assignment
-      - status
-      additionalProperties: false
-    AssignmentDetailView:
-      type: object
-      properties:
-        assignment:
-          $ref: '#/components/schemas/Assignment'
-        mySubmission:
-          $ref: '#/components/schemas/Submission'
-        rubric:
-          type: object
-          additionalProperties: true
-          nullable: true
-      required:
-      - assignment
-      additionalProperties: false
-    SubmissionView:
-      type: object
-      properties:
-        submission:
-          $ref: '#/components/schemas/Submission'
-        attachments:
-          type: array
-          items:
-            $ref: '#/components/schemas/FileObjectView'
-      required:
-      - submission
-      - attachments
-      additionalProperties: false
+      allOf:
+      - $ref: '#/components/schemas/CourseChannel'
     PaymentSummaryView:
       type: object
       properties:
-        payment:
-          $ref: '#/components/schemas/Payment'
-        course:
-          $ref: '#/components/schemas/Course'
-        buyer:
-          $ref: '#/components/schemas/UserPublicView'
-      required:
-      - payment
-      - course
-      - buyer
+        id:
+          type: string
+        userId:
+          type: string
+        courseId:
+          type: string
+          nullable: true
+        amount:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+        provider:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
       additionalProperties: false
-    CourseListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/CourseSummaryView'
-        meta:
-          $ref: '#/components/schemas/ListMeta'
       required:
-      - items
-      additionalProperties: false
-    CourseChannelListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/CourseChannelSummaryView'
-        meta:
-          $ref: '#/components/schemas/ListMeta'
-      required:
-      - items
-      additionalProperties: false
-    ThreadListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ThreadSummaryView'
-        meta:
-          $ref: '#/components/schemas/ListMeta'
-      required:
-      - items
-      additionalProperties: false
-    MessageListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/CourseMessageView'
-        meta:
-          $ref: '#/components/schemas/ListMeta'
-      required:
-      - items
-      additionalProperties: false
-    AssignmentListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/AssignmentSummaryView'
-        meta:
-          $ref: '#/components/schemas/ListMeta'
-      required:
-      - items
-      additionalProperties: false
+      - id
+      - userId
+      - amount
+      - currency
+      - status
+      - provider
+      - createdAt
     PaymentListResponse:
       type: object
       properties:
@@ -2975,33 +1048,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentSummaryView'
-        meta:
-          $ref: '#/components/schemas/ListMeta'
-      required:
-      - items
-      additionalProperties: false
-    UserAdminView:
-      type: object
-      properties:
-        user:
-          $ref: '#/components/schemas/User'
-        status:
-          type: string
-        lastLoginAt:
-          type: string
-          format: date-time
-          nullable: true
-      required:
-      - user
-      - status
-      additionalProperties: false
-    UserListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserAdminView'
         meta:
           $ref: '#/components/schemas/ListMeta'
       required:
@@ -3024,98 +1070,56 @@ components:
           $ref: '#/components/schemas/ListMeta'
       required:
       - items
-    OperatorAdminView:
+    SuccessResponse:
       type: object
       properties:
-        id:
+        success:
+          type: boolean
+        message:
           type: string
-        userId:
-          type: string
-        role:
-          $ref: '#/components/schemas/PlatformRole'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        user:
-          type: object
-          nullable: true
-          properties:
-            name:
-              type: string
-              nullable: true
-            email:
-              type: string
-              nullable: true
-            isActive:
-              type: boolean
-          required:
-            - isActive
       required:
-        - id
-        - userId
-        - role
-        - createdAt
-        - updatedAt
+      - success
       additionalProperties: false
-    OperatorListResponse:
+    ErrorResponse:
       type: object
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OperatorAdminView'
-        meta:
-          $ref: '#/components/schemas/ListMeta'
+        statusCode:
+          type: integer
+        message:
+          type: string
+        error:
+          type: string
       required:
-      - items
+      - statusCode
+      - message
+      additionalProperties: false
+    ListMeta:
+      type: object
+      properties:
+        totalCount:
+          type: integer
+        page:
+          type: integer
+        perPage:
+          type: integer
+        totalPages:
+          type: integer
+      required:
+      - totalCount
+      - page
+      - perPage
+      - totalPages
+      additionalProperties: false
     UserMeView:
       type: object
       allOf:
       - $ref: '#/components/schemas/User'
-    CourseChannelDetailView:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/CourseChannel'
-    AdminCourseCreateRequest:
-      type: object
-      properties:
-        title:
-          type: string
-        description:
-          type: string
-        ownerUserId:
-          type: string
-          description: このコースのオーナー講師（必須）。初期CourseMemberロールはinstructorとして付与。公開（publish）時にinstructor_ownerへ昇格する。
-        catalogVisibility:
-          type: string
-          enum:
-          - public_listed
-          - public_unlisted
-          - private
-        visibility:
-          type: string
-          enum:
-          - public
-          - instructors_only
-      additionalProperties: false
-      required:
-      - title
-      - ownerUserId
     GlobalRole:
       type: string
       enum:
       - guest
       - learner
       - instructor
-      - assistant
-      - operator
-      - root_operator
-    PlatformRole:
-      type: string
-      enum:
       - operator
       - root_operator
     OrderStatus:
@@ -3147,3 +1151,9 @@ components:
       - course_approved
       - course_published
       - course_member_role_promoted
+      - user_frozen
+      - user_unfrozen
+      - user_created
+      - user_updated
+      - user_deleted
+      - operator_role_changed
