@@ -2067,52 +2067,6 @@ components:
           type: string
           format: date-time
       additionalProperties: false
-    PlatformMembership:
-      type: object
-      properties:
-        id:
-          type: string
-        userId:
-          type: string
-        role:
-          type: string
-          enum: &id001
-          - operator
-          - root_operator
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      additionalProperties: false
-      required:
-      - createdAt
-      - id
-      - role
-      - updatedAt
-      - userId
-    PlatformMembershipCreateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        role:
-          type: string
-          enum: *id001
-      additionalProperties: false
-      required:
-      - role
-      - userId
-    PlatformMembershipUpdateRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        role:
-          type: string
-          enum: *id001
-      additionalProperties: false
     Course:
       type: object
       properties:

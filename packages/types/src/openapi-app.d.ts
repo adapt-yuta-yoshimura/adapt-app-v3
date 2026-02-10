@@ -466,26 +466,6 @@ export interface components {
       /** Format: date-time */
       deletedAt?: string;
     };
-    PlatformMembership: {
-      id: string;
-      userId: string;
-      /** @enum {string} */
-      role: "operator" | "root_operator";
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    PlatformMembershipCreateRequest: {
-      userId: string;
-      /** @enum {string} */
-      role: "operator" | "root_operator";
-    };
-    PlatformMembershipUpdateRequest: {
-      userId?: string;
-      /** @enum {string} */
-      role?: "operator" | "root_operator";
-    };
     Course: {
       id: string;
       title: string;
