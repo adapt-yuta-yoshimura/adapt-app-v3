@@ -36,14 +36,14 @@ export class ListUsersUseCase {
     ]);
 
     const items = users.map((u) => this.toUserAdminView(u));
+    const totalPages = Math.ceil(total / ps);
     return {
       items,
       meta: {
-        page: {
-          page: p,
-          pageSize: ps,
-          total,
-        },
+        totalCount: total,
+        page: p,
+        perPage: ps,
+        totalPages,
       },
     };
   }

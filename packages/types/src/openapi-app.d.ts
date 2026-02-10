@@ -8,429 +8,429 @@ export interface paths {
   "/api/v1/users/me": {
     /**
      * プロフィール取得
-     * @description ログイン中ユーザー自身の基本情報（名前、アイコン、全体ロール、所属組織等）を取得する。
+     * @description ログイン中ユーザー自身の基本情報を取得する。
      */
-    get: operations["API_007"];
+    get: operations["API_001"];
     /**
      * プロフィール更新
-     * @description 名前、アイコン画像URL、自己紹介等のプロフィール情報を更新する（image_33b70dのデザインを反映）。
+     * @description プロフィール情報を更新する。
      */
-    put: operations["API_008"];
+    put: operations["API_002"];
   };
   "/api/v1/users/me/password": {
     /**
-     * PW変更
-     * @description 現在のパスワードを検証した上で、新しいパスワードへ直接変更する。セキュリティ上、即時反映される。
+     * パスワード変更
+     * @description パスワードを変更する。
      */
-    put: operations["API_009"];
+    put: operations["API_003"];
   };
   "/api/v1/notifications": {
     /**
      * 通知一覧取得
-     * @description 自分宛の通知（返信、採点完了、ライブ予約、運営案内）を最新順に取得する（image_32dc7bのリスト用）。
+     * @description 自分宛の通知一覧を取得する。
      */
-    get: operations["API_010"];
+    get: operations["API_004"];
   };
   "/api/v1/notifications/{notificationId}/read": {
     /**
      * 通知既読化
-     * @description 指定されたIDの通知を既読状態にする。UI上のバッジカウントを減らすトリガーとなる。
+     * @description 指定した通知を既読にする。
      */
-    post: operations["API_011"];
+    post: operations["API_005"];
   };
   "/api/v1/notifications/read-all": {
     /**
      * 通知一括既読
-     * @description 全ての未読通知を一括で既読状態にする。
+     * @description 全通知を一括既読にする。
      */
-    post: operations["API_012"];
+    post: operations["API_006"];
   };
   "/api/v1/users/me/settings/notifications": {
     /**
      * 通知設定取得
-     * @description メール通知、プッシュ通知のON/OFF、およびカテゴリ別の受け取り設定を取得する。
+     * @description 通知設定を取得する。
      */
-    get: operations["API_013"];
+    get: operations["API_007"];
     /**
      * 通知設定更新
-     * @description 通知設定をユーザーの好みに合わせて更新する。
+     * @description 通知設定を更新する。
      */
-    put: operations["API_014"];
+    put: operations["API_008"];
   };
   "/api/v1/store/courses": {
     /**
      * 講座一覧取得
-     * @description 公開中(active)の講座を検索・取得。1on1、セミナー、ブートキャンプのスタイルやカテゴリでフィルタが可能。
+     * @description ストア公開講座一覧を取得する。
      */
-    get: operations["API_015"];
+    get: operations["API_009"];
   };
   "/api/v1/store/courses/{courseId}": {
     /**
      * 講座詳細取得
-     * @description 未受講者向けLPデータ。アウトカム、前提条件、おすすめ、FAQ、日程スケジュールをすべて取得。
+     * @description 講座の詳細情報を取得する。
      */
-    get: operations["API_016"];
+    get: operations["API_010"];
   };
   "/api/v1/store/courses/{courseId}/apply": {
     /**
      * 講座申込(開始)
-     * @description 講座への受講を申し込む。有料時はpending、無料時はactiveでEnrollmentを生成する。
+     * @description 講座への受講申込を開始する。
      */
-    post: operations["API_017"];
+    post: operations["API_011"];
   };
   "/api/v1/payments/stripe/checkout": {
     /**
      * Stripeセッション生成
-     * @description 有料講座の決済を開始するためのStripe URLを発行。コースがfrozen時は423でブロック。
+     * @description Stripe Checkoutセッションを生成する。
      */
-    post: operations["API_018"];
+    post: operations["API_012"];
   };
   "/api/v1/learner/courses": {
     /**
      * マイ講座一覧
-     * @description 自身が受講中、または過去に受講したすべての講座をリスト取得する。
+     * @description 受講中の講座一覧を取得する。
      */
-    get: operations["API_019"];
+    get: operations["API_013"];
   };
   "/api/v1/learner/courses/{courseId}": {
     /**
      * 受講中講座詳細
-     * @description 受講者用学習画面。最新の進捗、シラバス、受講者専用の連絡事項、解禁済み教材等を取得。
+     * @description 受講中講座の詳細を取得する。
      */
-    get: operations["API_020"];
+    get: operations["API_014"];
   };
   "/api/v1/learner/enrollments/{enrollmentId}": {
     /**
      * 決済/申込状況確認
-     * @description pending状態（決済確認中）からactiveになったかをポーリング/確認するためのAPI。
+     * @description 受講申込・決済の状況を確認する。
      */
-    get: operations["API_021"];
+    get: operations["API_015"];
   };
   "/api/v1/learner/courses/{courseId}/side-menu": {
     /**
      * サイドメニュー取得
-     * @description チャットチャンネルと解禁済み課題レッスンを階層構造化して取得（image_3345d2を完全再現）。
+     * @description コース内サイドメニューを取得する。
      */
-    get: operations["API_022"];
+    get: operations["API_016"];
   };
   "/api/v1/learner/assignments": {
     /**
      * 自分の課題一覧
-     * @description 自分が提出すべき、または提出済みのすべての課題を全講座横断で一覧取得する。
+     * @description 自分の課題一覧を取得する。
      */
-    get: operations["API_023"];
+    get: operations["API_017"];
   };
   "/api/v1/learner/assignments/{lessonId}": {
     /**
      * 課題詳細取得
-     * @description 課題の設問内容、配布資料、現在の提出状況と講師からの最新フィードバックを取得する。
+     * @description 課題の詳細情報を取得する。
      */
-    get: operations["API_024"];
+    get: operations["API_018"];
   };
   "/api/v1/learner/lessons/{lessonId}/submissions": {
     /**
      * 課題提出
-     * @description 回答を提出。自動的にassignmentチャンネル内に講師との返信用スレッドを生成する。
+     * @description 課題を提出する。
      */
-    post: operations["API_025"];
+    post: operations["API_019"];
   };
   "/api/v1/learner/records": {
     /**
      * 学習実績取得
-     * @description 獲得した証明書、バッジ、修了した講座の最終成績や学習時間統計を一覧取得する。
+     * @description 学習実績を取得する。
      */
-    get: operations["API_026"];
+    get: operations["API_020"];
   };
   "/api/v1/learner/calendar": {
     /**
      * カレンダー取得
-     * @description 受講している全講座のライブ予定、提出期限、面談予定をカレンダー形式(JSON)で取得。
+     * @description カレンダー情報を取得する。
      */
-    get: operations["API_027"];
+    get: operations["API_021"];
   };
   "/api/v1/learner/courses/{courseId}/complete": {
     /**
      * コース修了処理
-     * @description 全レッスン完了時の最終修了申請。講師による最終確認が必要な場合、評価待ちへ遷移。
+     * @description コースの修了を申請する。
      */
-    post: operations["API_028"];
+    post: operations["API_022"];
   };
   "/api/v1/surveys/{surveyId}": {
     /**
      * アンケート取得
-     * @description 講座内アンケートの設問（選択式、記述式）を取得する。
+     * @description アンケートを取得する。
      */
-    get: operations["API_029"];
+    get: operations["API_023"];
   };
   "/api/v1/surveys/{surveyId}/responses": {
     /**
      * アンケート回答
-     * @description アンケート回答を送信。423チェック対象。回答により教材解禁が連動する場合がある。
+     * @description アンケートに回答する。
      */
-    post: operations["API_030"];
+    post: operations["API_024"];
   };
   "/api/v1/instructor/courses": {
     /**
      * 自講座一覧
-     * @description 自分が管理、または講師として参加（担当）している全講座を一覧取得する。
+     * @description 講師として管理する講座一覧を取得する。
      */
-    get: operations["API_031"];
+    get: operations["API_025"];
     /**
      * 講座新規作成（講師）
-     * @description 講師がコースを新規作成。ownerUserId=作成者（サーバー側で自動設定、リクエストでの指定不可）。初期status=draft。CourseMember(role=instructor_owner)が自動作成される。公開にはrequest-approval→approve が必要。
+     * @description 講師がコースを新規作成する。
      */
-    post: operations["API_032"];
+    post: operations["API_026"];
   };
   "/api/v1/instructor/courses/{courseId}": {
     /**
      * 講座詳細取得(管理)
-     * @description 講師用管理画面。売上概況、受講者推移、下書き情報を含む管理用詳細データ。
+     * @description 講師管理用の講座詳細を取得する。
      */
-    get: operations["API_033"];
+    get: operations["API_027"];
     /**
      * 講座情報更新
-     * @description 講座のタイトル、LP、価格、募集期間、マーケティング項目を更新（image_33637a反映）。
+     * @description 講座情報を更新する。
      */
-    put: operations["API_034"];
+    put: operations["API_028"];
     /**
      * 講座削除(論理)
-     * @description 講座を論理削除(archived)状態にする。既存の受講生には閲覧権限のみ残存させる。
+     * @description 講座を論理削除する。
      */
-    delete: operations["API_035"];
+    delete: operations["API_029"];
   };
   "/api/v1/instructor/courses/{courseId}/request-approval": {
     /**
      * 承認申請
-     * @description 運営へ公開審査を依頼。statusがpending_approvalとなり、以降承認まで423 Locked。
+     * @description 講座の公開承認を申請する。
      */
-    post: operations["API_036"];
+    post: operations["API_030"];
   };
   "/api/v1/instructor/courses/{courseId}/publish": {
     /**
      * コース公開（講師）
-     * @description ownerUserId一致の講師がコースを公開する。statusをactiveに変更。operator作成コースの場合、CourseMember.roleをinstructor→instructor_ownerへ昇格（委譲完了）。
+     * @description 承認済み講座を公開する。
      */
-    post: operations["API_036B"];
+    post: operations["API_031"];
   };
   "/api/v1/instructor/analytics/overview": {
     /**
      * 売上分析サマリ
-     * @description 期間別の収益、成約率、受講生離脱ポイント等の分析サマリーを取得。
+     * @description 売上分析サマリを取得する。
      */
-    get: operations["API_037"];
+    get: operations["API_032"];
   };
   "/api/v1/instructor/settings/payout": {
     /**
      * 振込先銀行設定
-     * @description 講師への報酬振込先口座情報をStripe Connect等と連携して設定・更新。
+     * @description 振込先銀行口座を設定する。
      */
-    put: operations["API_038"];
+    put: operations["API_033"];
   };
   "/api/v1/instructor/courses/{courseId}/syllabus": {
     /**
      * シラバス構造取得
-     * @description 編集中の章立てとレッスン構成をツリー形式で取得（image_32dd18の構成用）。
+     * @description シラバス構造を取得する。
      */
-    get: operations["API_039"];
+    get: operations["API_034"];
   };
   "/api/v1/instructor/courses/{courseId}/sections": {
     /**
      * セクション追加
-     * @description カリキュラム内に新しい「章」を追加。423チェック対象。
+     * @description セクションを追加する。
      */
-    post: operations["API_040"];
+    post: operations["API_035"];
   };
   "/api/v1/instructor/sections/{sectionId}": {
     /**
      * セクション編集
-     * @description セクション名の変更、表示順の並び替え、および削除。
+     * @description セクションを編集する。
      */
-    put: operations["API_041"];
+    put: operations["API_036"];
     /**
      * セクション削除
-     * @description 指定されたセクションと、配下のレッスン紐付けを削除（論理/物理）。
+     * @description セクションを削除する。
      */
-    delete: operations["API_042"];
+    delete: operations["API_037"];
   };
   "/api/v1/instructor/sections/{sectionId}/lessons": {
     /**
      * レッスン作成
-     * @description 指定セクションに新規レッスンを追加（座学/動画/課題/ライブ）（image_32dcf8反映）。
+     * @description レッスンを作成する。
      */
-    post: operations["API_043"];
+    post: operations["API_038"];
   };
   "/api/v1/instructor/lessons/{lessonId}": {
     /**
      * レッスン詳細取得
-     * @description 編集画面用。動画URL、リッチテキスト本文、課題要件、Drip設定の詳細。
+     * @description レッスン詳細を取得する。
      */
-    get: operations["API_044"];
+    get: operations["API_039"];
     /**
      * レッスン編集
-     * @description コンテンツの修正、Drip(解禁日)、先行ロック条件の保存。423チェック対象。
+     * @description レッスンを編集する。
      */
-    put: operations["API_045"];
+    put: operations["API_040"];
     /**
      * レッスン削除
-     * @description レッスンをカリキュラムから削除。
+     * @description レッスンを削除する。
      */
-    delete: operations["API_046"];
+    delete: operations["API_041"];
   };
   "/api/v1/instructor/lessons/{lessonId}/live": {
     /**
      * ライブ配信設定
-     * @description ZoomやYouTube LiveのURL、および配信日時の設定（カレンダー連動）。
+     * @description ライブ配信設定を行う。
      */
-    put: operations["API_047"];
+    put: operations["API_042"];
   };
   "/api/v1/instructor/courses/{courseId}/submissions": {
     /**
      * 提出一覧取得
-     * @description 受講者別の課題進捗、未確認提出物、最終提出日時の一覧（image_32dcd7反映）。
+     * @description 提出物一覧を取得する。
      */
-    get: operations["API_048"];
+    get: operations["API_043"];
   };
   "/api/v1/instructor/submissions/{submissionId}/evaluation": {
     /**
      * 評価・採点実行
-     * @description 提出物への合否、講評を送信。合格時は自動で次の教材を解禁。フィードバックはスレッドへ。
+     * @description 提出物の評価・採点を実行する。
      */
-    patch: operations["API_049"];
+    patch: operations["API_044"];
   };
   "/api/v1/instructor/courses/{courseId}/members": {
     /**
      * 受講者名簿取得
-     * @description 全参加ユーザーの属性、現在の進捗状況、メールアドレス等の名簿取得。
+     * @description 受講者名簿を取得する。
      */
-    get: operations["API_050"];
+    get: operations["API_045"];
   };
   "/api/v1/instructor/courses/{courseId}/members/{userId}/role": {
     /**
      * 講座内ロール変更
-     * @description 特定ユーザーの役割（講師、アシスタント、受講生）を動的に切り替え。
+     * @description コースメンバーのロールを変更する。
      */
-    patch: operations["API_051"];
+    patch: operations["API_046"];
   };
   "/api/v1/instructor/courses/{courseId}/members/{userId}/revoke": {
     /**
      * 受講権限剥奪
-     * @description 特定ユーザーの受講権限を剥奪（revoked）し、コンテンツへのアクセスを遮断。
+     * @description 受講権限を剥奪する。
      */
-    post: operations["API_052"];
+    post: operations["API_047"];
   };
   "/api/v1/instructor/courses/{courseId}/export": {
     /**
      * 受講者CSV出力
-     * @description 受講者名簿と学習進捗データをCSV形式でエクスポートする。
+     * @description 受講者一覧をCSVエクスポートする。
      */
-    get: operations["API_053"];
+    get: operations["API_048"];
   };
   "/api/v1/courses/{courseId}/channels": {
     /**
      * チャンネル一覧取得
-     * @description サイドメニュー構築用。general, announcement等のチャンネル種別を含む。
+     * @description チャンネル一覧を取得する。
      */
-    get: operations["API_054"];
+    get: operations["API_049"];
     /**
      * チャンネル作成
-     * @description コース内に新しいカスタムチャンネルを追加。
+     * @description チャンネルを作成する。
      */
-    post: operations["API_055"];
+    post: operations["API_050"];
   };
   "/api/v1/channels/{channelId}": {
     /**
      * チャンネル編集
-     * @description チャンネル名、説明文、閲覧制限、アーカイブ状態の更新。
+     * @description チャンネルを編集する。
      */
-    put: operations["API_056"];
+    put: operations["API_051"];
     /**
      * チャンネル削除
-     * @description チャンネルを論理削除。過去ログは監査用に保持。
+     * @description チャンネルを削除する。
      */
-    delete: operations["API_057"];
+    delete: operations["API_052"];
   };
   "/api/v1/channels/{channelId}/messages": {
     /**
      * メッセージ履歴取得
-     * @description スレッド親（ルート）メッセージの一覧取得。課題の相互閲覧可（image_32d9b1反映）。
+     * @description メッセージ履歴を取得する。
      */
-    get: operations["API_058"];
+    get: operations["API_053"];
     /**
      * メッセージ投稿
-     * @description チャンネルへの新規投稿。親メッセージとして保存。threads_onlyを強制適用。
+     * @description メッセージを投稿する。
      */
-    post: operations["API_059"];
+    post: operations["API_054"];
   };
   "/api/v1/messages/{messageId}/thread": {
     /**
      * スレッド詳細取得
-     * @description 特定メッセージに紐づく返信メッセージ一覧（スレッドビュー）を全件取得。
+     * @description スレッド詳細を取得する。
      */
-    get: operations["API_060"];
+    get: operations["API_055"];
   };
   "/api/v1/messages/{messageId}/replies": {
     /**
      * スレッド返信投稿
-     * @description 返信投稿(image_32d9b1)。announcementタイプは講師以外返信不可。
+     * @description スレッドに返信する。
      */
-    post: operations["API_061"];
+    post: operations["API_056"];
   };
   "/api/v1/messages/{messageId}": {
     /**
      * メッセージ削除
-     * @description 投稿の論理削除。返信がある場合は「削除されました」と表示。
+     * @description メッセージを削除する。
      */
-    delete: operations["API_063"];
+    delete: operations["API_058"];
     /**
      * メッセージ編集
-     * @description 自分の投稿内容を修正。編集履歴を保持。423チェック対象。
+     * @description メッセージを編集する。
      */
-    patch: operations["API_062"];
+    patch: operations["API_057"];
   };
   "/api/v1/messages/{messageId}/reactions": {
     /**
      * リアクション追加
-     * @description メッセージに対する絵文字リアクションの付与。423チェック対象。
+     * @description リアクションを追加する。
      */
-    post: operations["API_064"];
+    post: operations["API_059"];
   };
   "/api/v1/courses/{courseId}/channels/{channelId}/threads": {
     /**
-     * スレッド一覧取得（ルートメッセージのみ）
-     * @description threads_only対応
+     * スレッド一覧取得
+     * @description スレッド一覧を取得する。
      */
-    get: operations["API_065"];
+    get: operations["API_060"];
     /**
-     * スレッド作成（ルート投稿）
-     * @description threadId=NULLで作成
+     * スレッド作成
+     * @description スレッドを作成する。
      */
-    post: operations["API_066"];
+    post: operations["API_061"];
   };
   "/api/v1/courses/{courseId}/channels/{channelId}/threads/{threadId}/messages": {
     /**
-     * スレッド内メッセージ一覧（ルート+返信）
-     * @description threadId指定で返信も取得
+     * スレッド内メッセージ一覧
+     * @description スレッド内メッセージを取得する。
      */
-    get: operations["API_067"];
+    get: operations["API_062"];
     /**
      * スレッド返信
-     * @description threadId必須
+     * @description スレッドに返信する。
      */
-    post: operations["API_068"];
+    post: operations["API_063"];
   };
   "/api/v1/payments/webhook": {
     /**
      * Stripe Webhook
-     * @description 外部決済完了通知を受け取り、Enrollmentを自動的にactive化する。
+     * @description Stripe Webhookを受信する。
      */
-    post: operations["API_083"];
+    post: operations["API_064"];
   };
   "/api/v1/health": {
     /**
      * ヘルスチェック
-     * @description サーバーの死活監視用。DB、Redis、外部サービスの接続確認。
+     * @description サーバーの死活監視。
      */
-    get: operations["API_084"];
+    get: operations["API_065"];
   };
 }
 
@@ -504,12 +504,9 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
-      /** @description 作成者ユーザーID（instructor 作成 or operator/root 作成） */
+      /** @description ä½œæˆè€…ãƒ¦ãƒ¼ã‚¶ãƒ¼IDï¼ˆinstructor or operator/root_operatorï¼‰ */
       createdByUserId: string;
-      /**
-       * @description 講座ステータス
-       * @enum {string}
-       */
+      /** @enum {string} */
       status: "draft" | "pending_approval" | "active" | "archived";
       /** Format: date-time */
       approvalRequestedAt?: string | null;
@@ -1103,7 +1100,7 @@ export interface components {
       /** @enum {string} */
       actorGlobalRole: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
       /** @enum {string} */
-      eventType: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted";
+      eventType: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted" | "user_frozen" | "user_unfrozen";
       courseId?: string;
       channelId?: string;
       messageId?: string;
@@ -1120,7 +1117,7 @@ export interface components {
       /** @enum {string} */
       actorGlobalRole?: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
       /** @enum {string} */
-      eventType?: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted";
+      eventType?: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted" | "user_frozen" | "user_unfrozen";
       courseId?: string;
       channelId?: string;
       messageId?: string;
@@ -1563,13 +1560,13 @@ export interface components {
       visibility?: "public" | "instructors_only";
     };
     /** @enum {string} */
-    GlobalRole: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
+    GlobalRole: "guest" | "learner" | "instructor" | "operator" | "root_operator";
     /** @enum {string} */
     OrderStatus: "pending" | "paid" | "cancelled" | "failed" | "refunded";
     /** @enum {string} */
     SubmissionStatus: "draft" | "submitted" | "returned" | "graded";
     /** @enum {string} */
-    AuditEventType: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted";
+    AuditEventType: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted" | "user_frozen" | "user_unfrozen" | "user_created" | "user_updated" | "user_deleted" | "operator_role_changed";
   };
   responses: never;
   parameters: never;
@@ -1586,9 +1583,9 @@ export interface operations {
 
   /**
    * プロフィール取得
-   * @description ログイン中ユーザー自身の基本情報（名前、アイコン、全体ロール、所属組織等）を取得する。
+   * @description ログイン中ユーザー自身の基本情報を取得する。
    */
-  API_007: {
+  API_001: {
     responses: {
       /** @description OK */
       200: {
@@ -1600,9 +1597,9 @@ export interface operations {
   };
   /**
    * プロフィール更新
-   * @description 名前、アイコン画像URL、自己紹介等のプロフィール情報を更新する（image_33b70dのデザインを反映）。
+   * @description プロフィール情報を更新する。
    */
-  API_008: {
+  API_002: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["UserUpdateRequest"];
@@ -1618,10 +1615,10 @@ export interface operations {
     };
   };
   /**
-   * PW変更
-   * @description 現在のパスワードを検証した上で、新しいパスワードへ直接変更する。セキュリティ上、即時反映される。
+   * パスワード変更
+   * @description パスワードを変更する。
    */
-  API_009: {
+  API_003: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["GenericWriteRequest"];
@@ -1638,9 +1635,9 @@ export interface operations {
   };
   /**
    * 通知一覧取得
-   * @description 自分宛の通知（返信、採点完了、ライブ予約、運営案内）を最新順に取得する（image_32dc7bのリスト用）。
+   * @description 自分宛の通知一覧を取得する。
    */
-  API_010: {
+  API_004: {
     responses: {
       /** @description OK */
       200: {
@@ -1652,9 +1649,9 @@ export interface operations {
   };
   /**
    * 通知既読化
-   * @description 指定されたIDの通知を既読状態にする。UI上のバッジカウントを減らすトリガーとなる。
+   * @description 指定した通知を既読にする。
    */
-  API_011: {
+  API_005: {
     parameters: {
       path: {
         notificationId: string;
@@ -1676,9 +1673,9 @@ export interface operations {
   };
   /**
    * 通知一括既読
-   * @description 全ての未読通知を一括で既読状態にする。
+   * @description 全通知を一括既読にする。
    */
-  API_012: {
+  API_006: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["GenericWriteRequest"];
@@ -1695,9 +1692,9 @@ export interface operations {
   };
   /**
    * 通知設定取得
-   * @description メール通知、プッシュ通知のON/OFF、およびカテゴリ別の受け取り設定を取得する。
+   * @description 通知設定を取得する。
    */
-  API_013: {
+  API_007: {
     responses: {
       /** @description OK */
       200: {
@@ -1709,9 +1706,9 @@ export interface operations {
   };
   /**
    * 通知設定更新
-   * @description 通知設定をユーザーの好みに合わせて更新する。
+   * @description 通知設定を更新する。
    */
-  API_014: {
+  API_008: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["GenericWriteRequest"];
@@ -1728,9 +1725,9 @@ export interface operations {
   };
   /**
    * 講座一覧取得
-   * @description 公開中(active)の講座を検索・取得。1on1、セミナー、ブートキャンプのスタイルやカテゴリでフィルタが可能。
+   * @description ストア公開講座一覧を取得する。
    */
-  API_015: {
+  API_009: {
     responses: {
       /** @description OK */
       200: {
@@ -1742,9 +1739,9 @@ export interface operations {
   };
   /**
    * 講座詳細取得
-   * @description 未受講者向けLPデータ。アウトカム、前提条件、おすすめ、FAQ、日程スケジュールをすべて取得。
+   * @description 講座の詳細情報を取得する。
    */
-  API_016: {
+  API_010: {
     parameters: {
       path: {
         courseId: string;
@@ -1761,9 +1758,9 @@ export interface operations {
   };
   /**
    * 講座申込(開始)
-   * @description 講座への受講を申し込む。有料時はpending、無料時はactiveでEnrollmentを生成する。
+   * @description 講座への受講申込を開始する。
    */
-  API_017: {
+  API_011: {
     parameters: {
       path: {
         courseId: string;
@@ -1785,9 +1782,9 @@ export interface operations {
   };
   /**
    * Stripeセッション生成
-   * @description 有料講座の決済を開始するためのStripe URLを発行。コースがfrozen時は423でブロック。
+   * @description Stripe Checkoutセッションを生成する。
    */
-  API_018: {
+  API_012: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["CheckoutRequest"];
@@ -1808,9 +1805,9 @@ export interface operations {
   };
   /**
    * マイ講座一覧
-   * @description 自身が受講中、または過去に受講したすべての講座をリスト取得する。
+   * @description 受講中の講座一覧を取得する。
    */
-  API_019: {
+  API_013: {
     responses: {
       /** @description OK */
       200: {
@@ -1822,9 +1819,9 @@ export interface operations {
   };
   /**
    * 受講中講座詳細
-   * @description 受講者用学習画面。最新の進捗、シラバス、受講者専用の連絡事項、解禁済み教材等を取得。
+   * @description 受講中講座の詳細を取得する。
    */
-  API_020: {
+  API_014: {
     parameters: {
       path: {
         courseId: string;
@@ -1845,9 +1842,9 @@ export interface operations {
   };
   /**
    * 決済/申込状況確認
-   * @description pending状態（決済確認中）からactiveになったかをポーリング/確認するためのAPI。
+   * @description 受講申込・決済の状況を確認する。
    */
-  API_021: {
+  API_015: {
     parameters: {
       path: {
         enrollmentId: string;
@@ -1864,9 +1861,9 @@ export interface operations {
   };
   /**
    * サイドメニュー取得
-   * @description チャットチャンネルと解禁済み課題レッスンを階層構造化して取得（image_3345d2を完全再現）。
+   * @description コース内サイドメニューを取得する。
    */
-  API_022: {
+  API_016: {
     parameters: {
       path: {
         courseId: string;
@@ -1883,9 +1880,9 @@ export interface operations {
   };
   /**
    * 自分の課題一覧
-   * @description 自分が提出すべき、または提出済みのすべての課題を全講座横断で一覧取得する。
+   * @description 自分の課題一覧を取得する。
    */
-  API_023: {
+  API_017: {
     responses: {
       /** @description OK */
       200: {
@@ -1897,9 +1894,9 @@ export interface operations {
   };
   /**
    * 課題詳細取得
-   * @description 課題の設問内容、配布資料、現在の提出状況と講師からの最新フィードバックを取得する。
+   * @description 課題の詳細情報を取得する。
    */
-  API_024: {
+  API_018: {
     parameters: {
       path: {
         lessonId: string;
@@ -1916,9 +1913,9 @@ export interface operations {
   };
   /**
    * 課題提出
-   * @description 回答を提出。自動的にassignmentチャンネル内に講師との返信用スレッドを生成する。
+   * @description 課題を提出する。
    */
-  API_025: {
+  API_019: {
     parameters: {
       path: {
         lessonId: string;
@@ -1944,9 +1941,9 @@ export interface operations {
   };
   /**
    * 学習実績取得
-   * @description 獲得した証明書、バッジ、修了した講座の最終成績や学習時間統計を一覧取得する。
+   * @description 学習実績を取得する。
    */
-  API_026: {
+  API_020: {
     responses: {
       /** @description OK */
       200: {
@@ -1958,9 +1955,9 @@ export interface operations {
   };
   /**
    * カレンダー取得
-   * @description 受講している全講座のライブ予定、提出期限、面談予定をカレンダー形式(JSON)で取得。
+   * @description カレンダー情報を取得する。
    */
-  API_027: {
+  API_021: {
     responses: {
       /** @description OK */
       200: {
@@ -1972,9 +1969,9 @@ export interface operations {
   };
   /**
    * コース修了処理
-   * @description 全レッスン完了時の最終修了申請。講師による最終確認が必要な場合、評価待ちへ遷移。
+   * @description コースの修了を申請する。
    */
-  API_028: {
+  API_022: {
     parameters: {
       path: {
         courseId: string;
@@ -1996,9 +1993,9 @@ export interface operations {
   };
   /**
    * アンケート取得
-   * @description 講座内アンケートの設問（選択式、記述式）を取得する。
+   * @description アンケートを取得する。
    */
-  API_029: {
+  API_023: {
     parameters: {
       path: {
         surveyId: string;
@@ -2015,9 +2012,9 @@ export interface operations {
   };
   /**
    * アンケート回答
-   * @description アンケート回答を送信。423チェック対象。回答により教材解禁が連動する場合がある。
+   * @description アンケートに回答する。
    */
-  API_030: {
+  API_024: {
     parameters: {
       path: {
         surveyId: string;
@@ -2043,9 +2040,9 @@ export interface operations {
   };
   /**
    * 自講座一覧
-   * @description 自分が管理、または講師として参加（担当）している全講座を一覧取得する。
+   * @description 講師として管理する講座一覧を取得する。
    */
-  API_031: {
+  API_025: {
     responses: {
       /** @description OK */
       200: {
@@ -2057,9 +2054,9 @@ export interface operations {
   };
   /**
    * 講座新規作成（講師）
-   * @description 講師がコースを新規作成。ownerUserId=作成者（サーバー側で自動設定、リクエストでの指定不可）。初期status=draft。CourseMember(role=instructor_owner)が自動作成される。公開にはrequest-approval→approve が必要。
+   * @description 講師がコースを新規作成する。
    */
-  API_032: {
+  API_026: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["InstructorCourseCreateRequest"];
@@ -2076,9 +2073,9 @@ export interface operations {
   };
   /**
    * 講座詳細取得(管理)
-   * @description 講師用管理画面。売上概況、受講者推移、下書き情報を含む管理用詳細データ。
+   * @description 講師管理用の講座詳細を取得する。
    */
-  API_033: {
+  API_027: {
     parameters: {
       path: {
         courseId: string;
@@ -2095,9 +2092,9 @@ export interface operations {
   };
   /**
    * 講座情報更新
-   * @description 講座のタイトル、LP、価格、募集期間、マーケティング項目を更新（image_33637a反映）。
+   * @description 講座情報を更新する。
    */
-  API_034: {
+  API_028: {
     parameters: {
       path: {
         courseId: string;
@@ -2123,9 +2120,9 @@ export interface operations {
   };
   /**
    * 講座削除(論理)
-   * @description 講座を論理削除(archived)状態にする。既存の受講生には閲覧権限のみ残存させる。
+   * @description 講座を論理削除する。
    */
-  API_035: {
+  API_029: {
     parameters: {
       path: {
         courseId: string;
@@ -2142,9 +2139,9 @@ export interface operations {
   };
   /**
    * 承認申請
-   * @description 運営へ公開審査を依頼。statusがpending_approvalとなり、以降承認まで423 Locked。
+   * @description 講座の公開承認を申請する。
    */
-  API_036: {
+  API_030: {
     parameters: {
       path: {
         courseId: string;
@@ -2170,9 +2167,9 @@ export interface operations {
   };
   /**
    * コース公開（講師）
-   * @description ownerUserId一致の講師がコースを公開する。statusをactiveに変更。operator作成コースの場合、CourseMember.roleをinstructor→instructor_ownerへ昇格（委譲完了）。
+   * @description 承認済み講座を公開する。
    */
-  API_036B: {
+  API_031: {
     parameters: {
       path: {
         courseId: string;
@@ -2185,7 +2182,7 @@ export interface operations {
           "application/json": components["schemas"]["CourseDetailView"];
         };
       };
-      /** @description Forbidden (ownerUserId不一致) */
+      /** @description Forbidden (ownerUserIdä¸ä¸€è‡´) */
       403: {
         content: never;
       };
@@ -2197,9 +2194,9 @@ export interface operations {
   };
   /**
    * 売上分析サマリ
-   * @description 期間別の収益、成約率、受講生離脱ポイント等の分析サマリーを取得。
+   * @description 売上分析サマリを取得する。
    */
-  API_037: {
+  API_032: {
     responses: {
       /** @description OK */
       200: {
@@ -2211,9 +2208,9 @@ export interface operations {
   };
   /**
    * 振込先銀行設定
-   * @description 講師への報酬振込先口座情報をStripe Connect等と連携して設定・更新。
+   * @description 振込先銀行口座を設定する。
    */
-  API_038: {
+  API_033: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["GenericWriteRequest"];
@@ -2230,9 +2227,9 @@ export interface operations {
   };
   /**
    * シラバス構造取得
-   * @description 編集中の章立てとレッスン構成をツリー形式で取得（image_32dd18の構成用）。
+   * @description シラバス構造を取得する。
    */
-  API_039: {
+  API_034: {
     parameters: {
       path: {
         courseId: string;
@@ -2249,9 +2246,9 @@ export interface operations {
   };
   /**
    * セクション追加
-   * @description カリキュラム内に新しい「章」を追加。423チェック対象。
+   * @description セクションを追加する。
    */
-  API_040: {
+  API_035: {
     parameters: {
       path: {
         courseId: string;
@@ -2277,9 +2274,9 @@ export interface operations {
   };
   /**
    * セクション編集
-   * @description セクション名の変更、表示順の並び替え、および削除。
+   * @description セクションを編集する。
    */
-  API_041: {
+  API_036: {
     parameters: {
       path: {
         sectionId: string;
@@ -2305,9 +2302,9 @@ export interface operations {
   };
   /**
    * セクション削除
-   * @description 指定されたセクションと、配下のレッスン紐付けを削除（論理/物理）。
+   * @description セクションを削除する。
    */
-  API_042: {
+  API_037: {
     parameters: {
       path: {
         sectionId: string;
@@ -2328,9 +2325,9 @@ export interface operations {
   };
   /**
    * レッスン作成
-   * @description 指定セクションに新規レッスンを追加（座学/動画/課題/ライブ）（image_32dcf8反映）。
+   * @description レッスンを作成する。
    */
-  API_043: {
+  API_038: {
     parameters: {
       path: {
         sectionId: string;
@@ -2356,9 +2353,9 @@ export interface operations {
   };
   /**
    * レッスン詳細取得
-   * @description 編集画面用。動画URL、リッチテキスト本文、課題要件、Drip設定の詳細。
+   * @description レッスン詳細を取得する。
    */
-  API_044: {
+  API_039: {
     parameters: {
       path: {
         lessonId: string;
@@ -2375,9 +2372,9 @@ export interface operations {
   };
   /**
    * レッスン編集
-   * @description コンテンツの修正、Drip(解禁日)、先行ロック条件の保存。423チェック対象。
+   * @description レッスンを編集する。
    */
-  API_045: {
+  API_040: {
     parameters: {
       path: {
         lessonId: string;
@@ -2403,9 +2400,9 @@ export interface operations {
   };
   /**
    * レッスン削除
-   * @description レッスンをカリキュラムから削除。
+   * @description レッスンを削除する。
    */
-  API_046: {
+  API_041: {
     parameters: {
       path: {
         lessonId: string;
@@ -2426,9 +2423,9 @@ export interface operations {
   };
   /**
    * ライブ配信設定
-   * @description ZoomやYouTube LiveのURL、および配信日時の設定（カレンダー連動）。
+   * @description ライブ配信設定を行う。
    */
-  API_047: {
+  API_042: {
     parameters: {
       path: {
         lessonId: string;
@@ -2454,9 +2451,9 @@ export interface operations {
   };
   /**
    * 提出一覧取得
-   * @description 受講者別の課題進捗、未確認提出物、最終提出日時の一覧（image_32dcd7反映）。
+   * @description 提出物一覧を取得する。
    */
-  API_048: {
+  API_043: {
     parameters: {
       path: {
         courseId: string;
@@ -2473,9 +2470,9 @@ export interface operations {
   };
   /**
    * 評価・採点実行
-   * @description 提出物への合否、講評を送信。合格時は自動で次の教材を解禁。フィードバックはスレッドへ。
+   * @description 提出物の評価・採点を実行する。
    */
-  API_049: {
+  API_044: {
     parameters: {
       path: {
         submissionId: string;
@@ -2497,9 +2494,9 @@ export interface operations {
   };
   /**
    * 受講者名簿取得
-   * @description 全参加ユーザーの属性、現在の進捗状況、メールアドレス等の名簿取得。
+   * @description 受講者名簿を取得する。
    */
-  API_050: {
+  API_045: {
     parameters: {
       path: {
         courseId: string;
@@ -2516,9 +2513,9 @@ export interface operations {
   };
   /**
    * 講座内ロール変更
-   * @description 特定ユーザーの役割（講師、アシスタント、受講生）を動的に切り替え。
+   * @description コースメンバーのロールを変更する。
    */
-  API_051: {
+  API_046: {
     parameters: {
       path: {
         courseId: string;
@@ -2545,9 +2542,9 @@ export interface operations {
   };
   /**
    * 受講権限剥奪
-   * @description 特定ユーザーの受講権限を剥奪（revoked）し、コンテンツへのアクセスを遮断。
+   * @description 受講権限を剥奪する。
    */
-  API_052: {
+  API_047: {
     parameters: {
       path: {
         courseId: string;
@@ -2574,9 +2571,9 @@ export interface operations {
   };
   /**
    * 受講者CSV出力
-   * @description 受講者名簿と学習進捗データをCSV形式でエクスポートする。
+   * @description 受講者一覧をCSVエクスポートする。
    */
-  API_053: {
+  API_048: {
     parameters: {
       path: {
         courseId: string;
@@ -2593,9 +2590,9 @@ export interface operations {
   };
   /**
    * チャンネル一覧取得
-   * @description サイドメニュー構築用。general, announcement等のチャンネル種別を含む。
+   * @description チャンネル一覧を取得する。
    */
-  API_054: {
+  API_049: {
     parameters: {
       path: {
         courseId: string;
@@ -2612,9 +2609,9 @@ export interface operations {
   };
   /**
    * チャンネル作成
-   * @description コース内に新しいカスタムチャンネルを追加。
+   * @description チャンネルを作成する。
    */
-  API_055: {
+  API_050: {
     parameters: {
       path: {
         courseId: string;
@@ -2640,9 +2637,9 @@ export interface operations {
   };
   /**
    * チャンネル編集
-   * @description チャンネル名、説明文、閲覧制限、アーカイブ状態の更新。
+   * @description チャンネルを編集する。
    */
-  API_056: {
+  API_051: {
     parameters: {
       path: {
         channelId: string;
@@ -2668,9 +2665,9 @@ export interface operations {
   };
   /**
    * チャンネル削除
-   * @description チャンネルを論理削除。過去ログは監査用に保持。
+   * @description チャンネルを削除する。
    */
-  API_057: {
+  API_052: {
     parameters: {
       path: {
         channelId: string;
@@ -2691,9 +2688,9 @@ export interface operations {
   };
   /**
    * メッセージ履歴取得
-   * @description スレッド親（ルート）メッセージの一覧取得。課題の相互閲覧可（image_32d9b1反映）。
+   * @description メッセージ履歴を取得する。
    */
-  API_058: {
+  API_053: {
     parameters: {
       path: {
         channelId: string;
@@ -2710,9 +2707,9 @@ export interface operations {
   };
   /**
    * メッセージ投稿
-   * @description チャンネルへの新規投稿。親メッセージとして保存。threads_onlyを強制適用。
+   * @description メッセージを投稿する。
    */
-  API_059: {
+  API_054: {
     parameters: {
       path: {
         channelId: string;
@@ -2734,9 +2731,9 @@ export interface operations {
   };
   /**
    * スレッド詳細取得
-   * @description 特定メッセージに紐づく返信メッセージ一覧（スレッドビュー）を全件取得。
+   * @description スレッド詳細を取得する。
    */
-  API_060: {
+  API_055: {
     parameters: {
       path: {
         messageId: string;
@@ -2753,9 +2750,9 @@ export interface operations {
   };
   /**
    * スレッド返信投稿
-   * @description 返信投稿(image_32d9b1)。announcementタイプは講師以外返信不可。
+   * @description スレッドに返信する。
    */
-  API_061: {
+  API_056: {
     parameters: {
       path: {
         messageId: string;
@@ -2777,9 +2774,9 @@ export interface operations {
   };
   /**
    * メッセージ削除
-   * @description 投稿の論理削除。返信がある場合は「削除されました」と表示。
+   * @description メッセージを削除する。
    */
-  API_063: {
+  API_058: {
     parameters: {
       path: {
         messageId: string;
@@ -2800,9 +2797,9 @@ export interface operations {
   };
   /**
    * メッセージ編集
-   * @description 自分の投稿内容を修正。編集履歴を保持。423チェック対象。
+   * @description メッセージを編集する。
    */
-  API_062: {
+  API_057: {
     parameters: {
       path: {
         messageId: string;
@@ -2828,9 +2825,9 @@ export interface operations {
   };
   /**
    * リアクション追加
-   * @description メッセージに対する絵文字リアクションの付与。423チェック対象。
+   * @description リアクションを追加する。
    */
-  API_064: {
+  API_059: {
     parameters: {
       path: {
         messageId: string;
@@ -2855,10 +2852,10 @@ export interface operations {
     };
   };
   /**
-   * スレッド一覧取得（ルートメッセージのみ）
-   * @description threads_only対応
+   * スレッド一覧取得
+   * @description スレッド一覧を取得する。
    */
-  API_065: {
+  API_060: {
     parameters: {
       path: {
         courseId: string;
@@ -2875,10 +2872,10 @@ export interface operations {
     };
   };
   /**
-   * スレッド作成（ルート投稿）
-   * @description threadId=NULLで作成
+   * スレッド作成
+   * @description スレッドを作成する。
    */
-  API_066: {
+  API_061: {
     parameters: {
       path: {
         courseId: string;
@@ -2900,10 +2897,10 @@ export interface operations {
     };
   };
   /**
-   * スレッド内メッセージ一覧（ルート+返信）
-   * @description threadId指定で返信も取得
+   * スレッド内メッセージ一覧
+   * @description スレッド内メッセージを取得する。
    */
-  API_067: {
+  API_062: {
     parameters: {
       path: {
         courseId: string;
@@ -2922,9 +2919,9 @@ export interface operations {
   };
   /**
    * スレッド返信
-   * @description threadId必須
+   * @description スレッドに返信する。
    */
-  API_068: {
+  API_063: {
     parameters: {
       path: {
         courseId: string;
@@ -2948,9 +2945,9 @@ export interface operations {
   };
   /**
    * Stripe Webhook
-   * @description 外部決済完了通知を受け取り、Enrollmentを自動的にactive化する。
+   * @description Stripe Webhookを受信する。
    */
-  API_083: {
+  API_064: {
     requestBody: {
       content: {
         "application/json": components["schemas"]["GenericWriteRequest"];
@@ -2967,9 +2964,9 @@ export interface operations {
   };
   /**
    * ヘルスチェック
-   * @description サーバーの死活監視用。DB、Redis、外部サービスの接続確認。
+   * @description サーバーの死活監視。
    */
-  API_084: {
+  API_065: {
     responses: {
       /** @description OK */
       200: {

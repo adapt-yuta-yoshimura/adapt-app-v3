@@ -44,15 +44,14 @@ export default function AdminUsersPage(): React.ReactNode {
   const { data, isLoading } = useAdminUsers(page, 20, q || undefined);
   const items = data?.items ?? [];
   const meta = data?.meta;
-  const pageInfo = meta?.page;
 
-  const totalCount = pageInfo?.total ?? 0;
+  const totalCount = meta?.totalCount ?? 0;
   const activeCount = useMemo(
-    () => items.filter((row) => row.status !== 'frozen').length,
+    () => items.filter((row: UserAdminView) => row.status !== 'frozen').length,
     [items],
   );
   const frozenCount = useMemo(
-    () => items.filter((row) => row.status === 'frozen').length,
+    () => items.filter((row: UserAdminView) => row.status === 'frozen').length,
     [items],
   );
 
@@ -172,11 +171,11 @@ export default function AdminUsersPage(): React.ReactNode {
         data={items}
         isLoading={isLoading}
         pagination={
-          pageInfo
+          meta
             ? {
-                page: pageInfo.page,
-                pageSize: pageInfo.pageSize,
-                total: pageInfo.total ?? 0,
+                page: meta.page,
+                pageSize: meta.perPage,
+                total: meta.totalCount ?? 0,
               }
             : undefined
         }

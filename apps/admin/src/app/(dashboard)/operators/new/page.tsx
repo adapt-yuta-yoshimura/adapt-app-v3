@@ -29,7 +29,9 @@ export default function OperatorNewPage(): React.ReactNode {
       e.preventDefault();
       try {
         await createOperator.mutateAsync({
-          reason: `運営スタッフ追加: ${email} (${role})`,
+          email,
+          role,
+          reason: '運営スタッフ追加',
         });
         router.push('/operators');
       } catch (err) {

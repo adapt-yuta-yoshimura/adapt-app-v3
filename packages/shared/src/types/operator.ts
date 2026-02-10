@@ -1,23 +1,22 @@
 /**
  * 運営スタッフ Admin View 型定義
- * @see openapi_admin.yaml - components.schemas.OperatorAdminView, PlatformMembership
- * API-076 運営スタッフ一覧の items 要素
+ * @see openapi_admin.yaml - components.schemas.OperatorAdminView
+ * 運営スタッフは PlatformMembership テーブルではなく User.globalRole で管理
  */
 
-import type { PlatformRole } from '../enums/platform-role.enum';
-import type { User } from './user';
+import type { GlobalRole } from '../enums/global-role.enum';
 
 /**
- * 運営スタッフ一覧用 View（API-076）
- * OpenAPI: OperatorAdminView（additionalProperties: true のため、
- * 実装では PlatformMembership 相当 + 表示用 user を含む想定）
+ * 運営スタッフ一覧用 View（API-ADMIN-15）
+ * OpenAPI: OperatorAdminView
+ * User テーブルから globalRole が operator/root_operator のレコードを取得
  */
 export interface OperatorAdminView {
   id: string;
-  userId: string;
-  role: PlatformRole;
+  email: string | null;
+  name: string | null;
+  globalRole: Extract<GlobalRole, GlobalRole.OPERATOR | GlobalRole.ROOT_OPERATOR>;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  /** 一覧表示用（API が含める場合） */
-  user?: User;
 }

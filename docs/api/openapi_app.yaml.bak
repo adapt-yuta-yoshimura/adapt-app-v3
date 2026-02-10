@@ -1,90 +1,90 @@
 openapi: 3.1.0
 info:
-  title: adapt App API (V1 - 基本設計書完全準拠)
+  title: adapt App API (V1 - åŸºæœ¬è¨­è¨ˆæ›¸å®Œå…¨æº–æ‹ )
   version: v1.0
   description: |
-    adapt オンライン学習プラットフォーム App API
+    adapt ã‚ªãƒ³ãƒ©ã‚¤ãƒ³å­¦ç¿’ãƒ—ãƒ©ãƒƒãƒˆãƒ•ã‚©ãƒ¼ãƒ  App API
 
-    ## 概要
-    - 対象: 受講者・講師向けアプリケーションAPI
-    - 認証: OIDC（auth.adapt-co.io）+ Bearer Token
-    - エンドポイント数: 65個
-    - 基本設計書: 06_API一覧 完全準拠
+    ## æ¦‚è¦
+    - å¯¾è±¡: å—è¬›è€…ãƒ»è¬›å¸«å‘ã‘ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³API
+    - èªè¨¼: OIDCï¼ˆauth.adapt-co.ioï¼‰+ Bearer Token
+    - ã‚¨ãƒ³ãƒ‰ãƒã‚¤ãƒ³ãƒˆæ•°: 65å€‹
+    - åŸºæœ¬è¨­è¨ˆæ›¸: 06_APIä¸€è¦§ å®Œå…¨æº–æ‹ 
 
-    ## 機能グループ
+    ## æ©Ÿèƒ½ã‚°ãƒ«ãƒ¼ãƒ—
 
-    ### ユーザー管理
-    - プロフィール管理（取得・更新）
-    - パスワード変更
-    - 通知設定
+    ### ãƒ¦ãƒ¼ã‚¶ãƒ¼ç®¡ç†
+    - ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«ç®¡ç†ï¼ˆå–å¾—ãƒ»æ›´æ–°ï¼‰
+    - ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰å¤‰æ›´
+    - é€šçŸ¥è¨­å®š
 
-    ### コース閲覧・受講
-    - ストアトップ（講座一覧）
-    - 講座詳細・申込
-    - マイ講座一覧
-    - 学習進捗管理
+    ### ã‚³ãƒ¼ã‚¹é–²è¦§ãƒ»å—è¬›
+    - ã‚¹ãƒˆã‚¢ãƒˆãƒƒãƒ—ï¼ˆè¬›åº§ä¸€è¦§ï¼‰
+    - è¬›åº§è©³ç´°ãƒ»ç”³è¾¼
+    - ãƒžã‚¤è¬›åº§ä¸€è¦§
+    - å­¦ç¿’é€²æ—ç®¡ç†
 
-    ### チャット・コミュニケーション
-    - チャンネル管理
-    - スレッド・メッセージ投稿
-    - 既読管理
-    - リアルタイム通知
+    ### ãƒãƒ£ãƒƒãƒˆãƒ»ã‚³ãƒŸãƒ¥ãƒ‹ã‚±ãƒ¼ã‚·ãƒ§ãƒ³
+    - ãƒãƒ£ãƒ³ãƒãƒ«ç®¡ç†
+    - ã‚¹ãƒ¬ãƒƒãƒ‰ãƒ»ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸æŠ•ç¨¿
+    - æ—¢èª­ç®¡ç†
+    - ãƒªã‚¢ãƒ«ã‚¿ã‚¤ãƒ é€šçŸ¥
 
-    ### 課題・提出
-    - 課題一覧・詳細
-    - 課題提出
-    - 採点・フィードバック閲覧
+    ### èª²é¡Œãƒ»æå‡º
+    - èª²é¡Œä¸€è¦§ãƒ»è©³ç´°
+    - èª²é¡Œæå‡º
+    - æŽ¡ç‚¹ãƒ»ãƒ•ã‚£ãƒ¼ãƒ‰ãƒãƒƒã‚¯é–²è¦§
 
-    ### 決済
-    - Stripe決済
-    - クーポン適用
-    - 購入履歴
+    ### æ±ºæ¸ˆ
+    - Stripeæ±ºæ¸ˆ
+    - ã‚¯ãƒ¼ãƒãƒ³é©ç”¨
+    - è³¼å…¥å±¥æ­´
 
-    ### 講師機能
-    - コース作成・編集
-    - レッスン管理
-    - 受講者管理
-    - 売上確認
+    ### è¬›å¸«æ©Ÿèƒ½
+    - ã‚³ãƒ¼ã‚¹ä½œæˆãƒ»ç·¨é›†
+    - ãƒ¬ãƒƒã‚¹ãƒ³ç®¡ç†
+    - å—è¬›è€…ç®¡ç†
+    - å£²ä¸Šç¢ºèª
 
-    ## 認証・認可
+    ## èªè¨¼ãƒ»èªå¯
 
-    ### 認証方式
-    - OIDC: auth.adapt-co.ioでの認証
-    - Bearer Token: JWTトークンをAuthorizationヘッダーに設定
-    - 例外: /api/v1/health（ヘルスチェック）は認証不要
+    ### èªè¨¼æ–¹å¼
+    - OIDC: auth.adapt-co.ioã§ã®èªè¨¼
+    - Bearer Token: JWTãƒˆãƒ¼ã‚¯ãƒ³ã‚’Authorizationãƒ˜ãƒƒãƒ€ãƒ¼ã«è¨­å®š
+    - ä¾‹å¤–: /api/v1/healthï¼ˆãƒ˜ãƒ«ã‚¹ãƒã‚§ãƒƒã‚¯ï¼‰ã¯èªè¨¼ä¸è¦
 
-    ### ロール
-    - guest: 未ログイン（閲覧のみ）
-    - learner: 受講者
-    - instructor: 講師
-    - operator: 運営（通常）
-    - root_operator: 運営（特権）
+    ### ãƒ­ãƒ¼ãƒ«
+    - guest: æœªãƒ­ã‚°ã‚¤ãƒ³ï¼ˆé–²è¦§ã®ã¿ï¼‰
+    - learner: å—è¬›è€…
+    - instructor: è¬›å¸«
+    - operator: é‹å–¶ï¼ˆé€šå¸¸ï¼‰
+    - root_operator: é‹å–¶ï¼ˆç‰¹æ¨©ï¼‰
 
-    ### x-roles 拡張プロパティ
-    各エンドポイントにはx-rolesで必要なロールを指定
+    ### x-roles æ‹¡å¼µãƒ—ãƒ­ãƒ‘ãƒ†ã‚£
+    å„ã‚¨ãƒ³ãƒ‰ãƒã‚¤ãƒ³ãƒˆã«ã¯x-rolesã§å¿…è¦ãªãƒ­ãƒ¼ãƒ«ã‚’æŒ‡å®š
 
-    ## 設計原則
+    ## è¨­è¨ˆåŽŸå‰‡
 
-    ### アーキテクチャ
-    - Repository Pattern: Service層はORM非依存
-    - DTO分離: Prisma ModelはDTOとして公開しない
-    - 契約の正: packages/sharedのDTOが正
+    ### ã‚¢ãƒ¼ã‚­ãƒ†ã‚¯ãƒãƒ£
+    - Repository Pattern: Serviceå±¤ã¯ORMéžä¾å­˜
+    - DTOåˆ†é›¢: Prisma Modelã¯DTOã¨ã—ã¦å…¬é–‹ã—ãªã„
+    - å¥‘ç´„ã®æ­£: packages/sharedã®DTOãŒæ­£
 
-    ### エラーハンドリング
-    - 4xx: クライアントエラー（バリデーション等）
-    - 5xx: サーバーエラー
-    - 詳細はErrorResponseスキーマ参照
+    ### ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°
+    - 4xx: ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã‚¨ãƒ©ãƒ¼ï¼ˆãƒãƒªãƒ‡ãƒ¼ã‚·ãƒ§ãƒ³ç­‰ï¼‰
+    - 5xx: ã‚µãƒ¼ãƒãƒ¼ã‚¨ãƒ©ãƒ¼
+    - è©³ç´°ã¯ErrorResponseã‚¹ã‚­ãƒ¼ãƒžå‚ç…§
 
-    ### バージョニング
-    - URLパスに/api/v1/を含む
-    - 破壊的変更は新バージョンで対応
+    ### ãƒãƒ¼ã‚¸ãƒ§ãƒ‹ãƒ³ã‚°
+    - URLãƒ‘ã‚¹ã«/api/v1/ã‚’å«ã‚€
+    - ç ´å£Šçš„å¤‰æ›´ã¯æ–°ãƒãƒ¼ã‚¸ãƒ§ãƒ³ã§å¯¾å¿œ
 
-    ## 技術スタック
-    - フレームワーク: NestJS
+    ## æŠ€è¡“ã‚¹ã‚¿ãƒƒã‚¯
+    - ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¯ãƒ¼ã‚¯: NestJS
     - DB: PostgreSQL
     - ORM: Prisma
-    - 認証: OIDC + Google OAuth
-    - リアルタイム: Socket.IO（チャット用）
+    - èªè¨¼: OIDC + Google OAuth
+    - ãƒªã‚¢ãƒ«ã‚¿ã‚¤ãƒ : Socket.IOï¼ˆãƒãƒ£ãƒƒãƒˆç”¨ï¼‰
 
 servers:
 - url: https://app.adapt-co.io
@@ -103,9 +103,9 @@ paths:
     get:
       tags:
       - Auth/Identity
-      summary: プロフィール取得
+      summary: ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«å–å¾—
 
-      description: ログイン中ユーザー自身の基本情報を取得する。
+      description: ãƒ­ã‚°ã‚¤ãƒ³ä¸­ãƒ¦ãƒ¼ã‚¶ãƒ¼è‡ªèº«ã®åŸºæœ¬æƒ…å ±ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_001
       x-api-id: API-001
@@ -123,9 +123,9 @@ paths:
     put:
       tags:
       - Auth/Identity
-      summary: プロフィール更新
+      summary: ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«æ›´æ–°
 
-      description: プロフィール情報を更新する。
+      description: ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«æƒ…å ±ã‚’æ›´æ–°ã™ã‚‹ã€‚
 
       operationId: API_002
       x-api-id: API-002
@@ -150,9 +150,9 @@ paths:
     put:
       tags:
       - Auth/Identity
-      summary: パスワード変更
+      summary: ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰å¤‰æ›´
 
-      description: パスワードを変更する。
+      description: ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã‚’å¤‰æ›´ã™ã‚‹ã€‚
 
       operationId: API_003
       x-api-id: API-003
@@ -177,9 +177,9 @@ paths:
     get:
       tags:
       - Auth/Identity
-      summary: 通知一覧取得
+      summary: é€šçŸ¥ä¸€è¦§å–å¾—
 
-      description: 自分宛の通知一覧を取得する。
+      description: è‡ªåˆ†å®›ã®é€šçŸ¥ä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_004
       x-api-id: API-004
@@ -198,9 +198,9 @@ paths:
     post:
       tags:
       - Auth/Identity
-      summary: 通知既読化
+      summary: é€šçŸ¥æ—¢èª­åŒ–
 
-      description: 指定した通知を既読にする。
+      description: æŒ‡å®šã—ãŸé€šçŸ¥ã‚’æ—¢èª­ã«ã™ã‚‹ã€‚
 
       operationId: API_005
       x-api-id: API-005
@@ -231,9 +231,9 @@ paths:
     post:
       tags:
       - Auth/Identity
-      summary: 通知一括既読
+      summary: é€šçŸ¥ä¸€æ‹¬æ—¢èª­
 
-      description: 全通知を一括既読にする。
+      description: å…¨é€šçŸ¥ã‚’ä¸€æ‹¬æ—¢èª­ã«ã™ã‚‹ã€‚
 
       operationId: API_006
       x-api-id: API-006
@@ -258,9 +258,9 @@ paths:
     get:
       tags:
       - Auth/Identity
-      summary: 通知設定取得
+      summary: é€šçŸ¥è¨­å®šå–å¾—
 
-      description: 通知設定を取得する。
+      description: é€šçŸ¥è¨­å®šã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_007
       x-api-id: API-007
@@ -278,9 +278,9 @@ paths:
     put:
       tags:
       - Auth/Identity
-      summary: 通知設定更新
+      summary: é€šçŸ¥è¨­å®šæ›´æ–°
 
-      description: 通知設定を更新する。
+      description: é€šçŸ¥è¨­å®šã‚’æ›´æ–°ã™ã‚‹ã€‚
 
       operationId: API_008
       x-api-id: API-008
@@ -305,9 +305,9 @@ paths:
     get:
       tags:
       - Store/Public Access
-      summary: 講座一覧取得
+      summary: è¬›åº§ä¸€è¦§å–å¾—
 
-      description: ストア公開講座一覧を取得する。
+      description: ã‚¹ãƒˆã‚¢å…¬é–‹è¬›åº§ä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_009
       x-api-id: API-009
@@ -326,9 +326,9 @@ paths:
     get:
       tags:
       - Store/Public Access
-      summary: 講座詳細取得
+      summary: è¬›åº§è©³ç´°å–å¾—
 
-      description: 講座の詳細情報を取得する。
+      description: è¬›åº§ã®è©³ç´°æƒ…å ±ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_010
       x-api-id: API-010
@@ -353,9 +353,9 @@ paths:
     post:
       tags:
       - Store/Public Access
-      summary: 講座申込(開始)
+      summary: è¬›åº§ç”³è¾¼(é–‹å§‹)
 
-      description: 講座への受講申込を開始する。
+      description: è¬›åº§ã¸ã®å—è¬›ç”³è¾¼ã‚’é–‹å§‹ã™ã‚‹ã€‚
 
       operationId: API_011
       x-api-id: API-011
@@ -386,9 +386,9 @@ paths:
     post:
       tags:
       - Learner Dashboard/Progress
-      summary: Stripeセッション生成
+      summary: Stripeã‚»ãƒƒã‚·ãƒ§ãƒ³ç”Ÿæˆ
 
-      description: Stripe Checkoutセッションを生成する。
+      description: Stripe Checkoutã‚»ãƒƒã‚·ãƒ§ãƒ³ã‚’ç”Ÿæˆã™ã‚‹ã€‚
 
       operationId: API_012
       x-api-id: API-012
@@ -415,9 +415,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: マイ講座一覧
+      summary: ãƒžã‚¤è¬›åº§ä¸€è¦§
 
-      description: 受講中の講座一覧を取得する。
+      description: å—è¬›ä¸­ã®è¬›åº§ä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_013
       x-api-id: API-013
@@ -436,9 +436,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: 受講中講座詳細
+      summary: å—è¬›ä¸­è¬›åº§è©³ç´°
 
-      description: 受講中講座の詳細を取得する。
+      description: å—è¬›ä¸­è¬›åº§ã®è©³ç´°ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_014
       x-api-id: API-014
@@ -465,14 +465,14 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: 決済/申込状況確認
+      summary: æ±ºæ¸ˆ/ç”³è¾¼çŠ¶æ³ç¢ºèª
 
-      description: 受講申込・決済の状況を確認する。
+      description: å—è¬›ç”³è¾¼ãƒ»æ±ºæ¸ˆã®çŠ¶æ³ã‚’ç¢ºèªã™ã‚‹ã€‚
 
       operationId: API_015
       x-api-id: API-015
       x-roles: learner
-      x-policy: é–²è¦§ã®ã¿
+      x-policy: Ã©â€“Â²Ã¨Â¦Â§Ã£Â®Ã£Â¿
       responses:
         '200':
           description: OK
@@ -492,9 +492,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: サイドメニュー取得
+      summary: ã‚µã‚¤ãƒ‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼å–å¾—
 
-      description: コース内サイドメニューを取得する。
+      description: ã‚³ãƒ¼ã‚¹å†…ã‚µã‚¤ãƒ‰ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_016
       x-api-id: API-016
@@ -519,9 +519,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: 自分の課題一覧
+      summary: è‡ªåˆ†ã®èª²é¡Œä¸€è¦§
 
-      description: 自分の課題一覧を取得する。
+      description: è‡ªåˆ†ã®èª²é¡Œä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_017
       x-api-id: API-017
@@ -540,9 +540,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: 課題詳細取得
+      summary: èª²é¡Œè©³ç´°å–å¾—
 
-      description: 課題の詳細情報を取得する。
+      description: èª²é¡Œã®è©³ç´°æƒ…å ±ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_018
       x-api-id: API-018
@@ -567,9 +567,9 @@ paths:
     post:
       tags:
       - Learner Dashboard/Progress
-      summary: 課題提出
+      summary: èª²é¡Œæå‡º
 
-      description: 課題を提出する。
+      description: èª²é¡Œã‚’æå‡ºã™ã‚‹ã€‚
 
       operationId: API_019
       x-api-id: API-019
@@ -602,9 +602,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: 学習実績取得
+      summary: å­¦ç¿’å®Ÿç¸¾å–å¾—
 
-      description: 学習実績を取得する。
+      description: å­¦ç¿’å®Ÿç¸¾ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_020
       x-api-id: API-020
@@ -623,9 +623,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: カレンダー取得
+      summary: ã‚«ãƒ¬ãƒ³ãƒ€ãƒ¼å–å¾—
 
-      description: カレンダー情報を取得する。
+      description: ã‚«ãƒ¬ãƒ³ãƒ€ãƒ¼æƒ…å ±ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_021
       x-api-id: API-021
@@ -644,9 +644,9 @@ paths:
     post:
       tags:
       - Learner Dashboard/Progress
-      summary: コース修了処理
+      summary: ã‚³ãƒ¼ã‚¹ä¿®äº†å‡¦ç†
 
-      description: コースの修了を申請する。
+      description: ã‚³ãƒ¼ã‚¹ã®ä¿®äº†ã‚’ç”³è«‹ã™ã‚‹ã€‚
 
       operationId: API_022
       x-api-id: API-022
@@ -677,9 +677,9 @@ paths:
     get:
       tags:
       - Learner Dashboard/Progress
-      summary: アンケート取得
+      summary: ã‚¢ãƒ³ã‚±ãƒ¼ãƒˆå–å¾—
 
-      description: アンケートを取得する。
+      description: ã‚¢ãƒ³ã‚±ãƒ¼ãƒˆã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_023
       x-api-id: API-023
@@ -704,9 +704,9 @@ paths:
     post:
       tags:
       - Learner Dashboard/Progress
-      summary: アンケート回答
+      summary: ã‚¢ãƒ³ã‚±ãƒ¼ãƒˆå›žç­”
 
-      description: アンケートに回答する。
+      description: ã‚¢ãƒ³ã‚±ãƒ¼ãƒˆã«å›žç­”ã™ã‚‹ã€‚
 
       operationId: API_024
       x-api-id: API-024
@@ -739,9 +739,9 @@ paths:
     get:
       tags:
       - Course Management
-      summary: 自講座一覧
+      summary: è‡ªè¬›åº§ä¸€è¦§
 
-      description: 講師として管理する講座一覧を取得する。
+      description: è¬›å¸«ã¨ã—ã¦ç®¡ç†ã™ã‚‹è¬›åº§ä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_025
       x-api-id: API-025
@@ -759,9 +759,9 @@ paths:
     post:
       tags:
       - Course Management
-      summary: 講座新規作成（講師）
+      summary: è¬›åº§æ–°è¦ä½œæˆï¼ˆè¬›å¸«ï¼‰
 
-      description: 講師がコースを新規作成する。
+      description: è¬›å¸«ãŒã‚³ãƒ¼ã‚¹ã‚’æ–°è¦ä½œæˆã™ã‚‹ã€‚
 
       operationId: API_026
       x-api-id: API-026
@@ -786,9 +786,9 @@ paths:
     get:
       tags:
       - Course Management
-      summary: 講座詳細取得(管理)
+      summary: è¬›åº§è©³ç´°å–å¾—(ç®¡ç†)
 
-      description: 講師管理用の講座詳細を取得する。
+      description: è¬›å¸«ç®¡ç†ç”¨ã®è¬›åº§è©³ç´°ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_027
       x-api-id: API-027
@@ -812,9 +812,9 @@ paths:
     put:
       tags:
       - Course Management
-      summary: 講座情報更新
+      summary: è¬›åº§æƒ…å ±æ›´æ–°
 
-      description: 講座情報を更新する。
+      description: è¬›åº§æƒ…å ±ã‚’æ›´æ–°ã™ã‚‹ã€‚
 
       operationId: API_028
       x-api-id: API-028
@@ -846,9 +846,9 @@ paths:
     delete:
       tags:
       - Course Management
-      summary: 講座削除(論理)
+      summary: è¬›åº§å‰Šé™¤(è«–ç†)
 
-      description: 講座を論理削除する。
+      description: è¬›åº§ã‚’è«–ç†å‰Šé™¤ã™ã‚‹ã€‚
 
       operationId: API_029
       x-api-id: API-029
@@ -873,9 +873,9 @@ paths:
     post:
       tags:
       - Course Management
-      summary: 承認申請
+      summary: æ‰¿èªç”³è«‹
 
-      description: 講座の公開承認を申請する。
+      description: è¬›åº§ã®å…¬é–‹æ‰¿èªã‚’ç”³è«‹ã™ã‚‹ã€‚
 
       operationId: API_030
       x-api-id: API-030
@@ -908,9 +908,9 @@ paths:
     post:
       tags:
       - Course Management
-      summary: コース公開（講師）
+      summary: ã‚³ãƒ¼ã‚¹å…¬é–‹ï¼ˆè¬›å¸«ï¼‰
 
-      description: 承認済み講座を公開する。
+      description: æ‰¿èªæ¸ˆã¿è¬›åº§ã‚’å…¬é–‹ã™ã‚‹ã€‚
 
       operationId: API_031
       x-api-id: API-031
@@ -924,7 +924,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CourseDetailView'
         '403':
-          description: Forbidden (ownerUserIdä¸ä¸€è‡´)
+          description: Forbidden (ownerUserIdÃ¤Â¸Ã¤Â¸â‚¬Ã¨â€¡Â´)
         '423':
           description: Locked (Course is frozen)
       security:
@@ -939,9 +939,9 @@ paths:
     get:
       tags:
       - Course Management
-      summary: 売上分析サマリ
+      summary: å£²ä¸Šåˆ†æžã‚µãƒžãƒª
 
-      description: 売上分析サマリを取得する。
+      description: å£²ä¸Šåˆ†æžã‚µãƒžãƒªã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_032
       x-api-id: API-032
@@ -960,9 +960,9 @@ paths:
     put:
       tags:
       - Course Management
-      summary: 振込先銀行設定
+      summary: æŒ¯è¾¼å…ˆéŠ€è¡Œè¨­å®š
 
-      description: 振込先銀行口座を設定する。
+      description: æŒ¯è¾¼å…ˆéŠ€è¡Œå£åº§ã‚’è¨­å®šã™ã‚‹ã€‚
 
       operationId: API_033
       x-api-id: API-033
@@ -987,9 +987,9 @@ paths:
     get:
       tags:
       - Syllabus/Content
-      summary: シラバス構造取得
+      summary: ã‚·ãƒ©ãƒã‚¹æ§‹é€ å–å¾—
 
-      description: シラバス構造を取得する。
+      description: ã‚·ãƒ©ãƒã‚¹æ§‹é€ ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_034
       x-api-id: API-034
@@ -1014,9 +1014,9 @@ paths:
     post:
       tags:
       - Syllabus/Content
-      summary: セクション追加
+      summary: ã‚»ã‚¯ã‚·ãƒ§ãƒ³è¿½åŠ 
 
-      description: セクションを追加する。
+      description: ã‚»ã‚¯ã‚·ãƒ§ãƒ³ã‚’è¿½åŠ ã™ã‚‹ã€‚
 
       operationId: API_035
       x-api-id: API-035
@@ -1049,9 +1049,9 @@ paths:
     put:
       tags:
       - Syllabus/Content
-      summary: セクション編集
+      summary: ã‚»ã‚¯ã‚·ãƒ§ãƒ³ç·¨é›†
 
-      description: セクションを編集する。
+      description: ã‚»ã‚¯ã‚·ãƒ§ãƒ³ã‚’ç·¨é›†ã™ã‚‹ã€‚
 
       operationId: API_036
       x-api-id: API-036
@@ -1083,9 +1083,9 @@ paths:
     delete:
       tags:
       - Syllabus/Content
-      summary: セクション削除
+      summary: ã‚»ã‚¯ã‚·ãƒ§ãƒ³å‰Šé™¤
 
-      description: セクションを削除する。
+      description: ã‚»ã‚¯ã‚·ãƒ§ãƒ³ã‚’å‰Šé™¤ã™ã‚‹ã€‚
 
       operationId: API_037
       x-api-id: API-037
@@ -1112,9 +1112,9 @@ paths:
     post:
       tags:
       - Syllabus/Content
-      summary: レッスン作成
+      summary: ãƒ¬ãƒƒã‚¹ãƒ³ä½œæˆ
 
-      description: レッスンを作成する。
+      description: ãƒ¬ãƒƒã‚¹ãƒ³ã‚’ä½œæˆã™ã‚‹ã€‚
 
       operationId: API_038
       x-api-id: API-038
@@ -1147,9 +1147,9 @@ paths:
     get:
       tags:
       - Syllabus/Content
-      summary: レッスン詳細取得
+      summary: ãƒ¬ãƒƒã‚¹ãƒ³è©³ç´°å–å¾—
 
-      description: レッスン詳細を取得する。
+      description: ãƒ¬ãƒƒã‚¹ãƒ³è©³ç´°ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_039
       x-api-id: API-039
@@ -1173,9 +1173,9 @@ paths:
     put:
       tags:
       - Syllabus/Content
-      summary: レッスン編集
+      summary: ãƒ¬ãƒƒã‚¹ãƒ³ç·¨é›†
 
-      description: レッスンを編集する。
+      description: ãƒ¬ãƒƒã‚¹ãƒ³ã‚’ç·¨é›†ã™ã‚‹ã€‚
 
       operationId: API_040
       x-api-id: API-040
@@ -1207,9 +1207,9 @@ paths:
     delete:
       tags:
       - Syllabus/Content
-      summary: レッスン削除
+      summary: ãƒ¬ãƒƒã‚¹ãƒ³å‰Šé™¤
 
-      description: レッスンを削除する。
+      description: ãƒ¬ãƒƒã‚¹ãƒ³ã‚’å‰Šé™¤ã™ã‚‹ã€‚
 
       operationId: API_041
       x-api-id: API-041
@@ -1236,9 +1236,9 @@ paths:
     put:
       tags:
       - Syllabus/Content
-      summary: ライブ配信設定
+      summary: ãƒ©ã‚¤ãƒ–é…ä¿¡è¨­å®š
 
-      description: ライブ配信設定を行う。
+      description: ãƒ©ã‚¤ãƒ–é…ä¿¡è¨­å®šã‚’è¡Œã†ã€‚
 
       operationId: API_042
       x-api-id: API-042
@@ -1271,9 +1271,9 @@ paths:
     get:
       tags:
       - Submission Management
-      summary: 提出一覧取得
+      summary: æå‡ºä¸€è¦§å–å¾—
 
-      description: 提出物一覧を取得する。
+      description: æå‡ºç‰©ä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_043
       x-api-id: API-043
@@ -1298,9 +1298,9 @@ paths:
     patch:
       tags:
       - Submission Management
-      summary: 評価・採点実行
+      summary: è©•ä¾¡ãƒ»æŽ¡ç‚¹å®Ÿè¡Œ
 
-      description: 提出物の評価・採点を実行する。
+      description: æå‡ºç‰©ã®è©•ä¾¡ãƒ»æŽ¡ç‚¹ã‚’å®Ÿè¡Œã™ã‚‹ã€‚
 
       operationId: API_044
       x-api-id: API-044
@@ -1331,9 +1331,9 @@ paths:
     get:
       tags:
       - Submission Management
-      summary: 受講者名簿取得
+      summary: å—è¬›è€…åç°¿å–å¾—
 
-      description: 受講者名簿を取得する。
+      description: å—è¬›è€…åç°¿ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_045
       x-api-id: API-045
@@ -1358,9 +1358,9 @@ paths:
     patch:
       tags:
       - Submission Management
-      summary: 講座内ロール変更
+      summary: è¬›åº§å†…ãƒ­ãƒ¼ãƒ«å¤‰æ›´
 
-      description: コースメンバーのロールを変更する。
+      description: ã‚³ãƒ¼ã‚¹ãƒ¡ãƒ³ãƒãƒ¼ã®ãƒ­ãƒ¼ãƒ«ã‚’å¤‰æ›´ã™ã‚‹ã€‚
 
       operationId: API_046
       x-api-id: API-046
@@ -1398,9 +1398,9 @@ paths:
     post:
       tags:
       - Submission Management
-      summary: 受講権限剥奪
+      summary: å—è¬›æ¨©é™å‰¥å¥ª
 
-      description: 受講権限を剥奪する。
+      description: å—è¬›æ¨©é™ã‚’å‰¥å¥ªã™ã‚‹ã€‚
 
       operationId: API_047
       x-api-id: API-047
@@ -1438,9 +1438,9 @@ paths:
     get:
       tags:
       - Submission Management
-      summary: 受講者CSV出力
+      summary: å—è¬›è€…CSVå‡ºåŠ›
 
-      description: 受講者一覧をCSVエクスポートする。
+      description: å—è¬›è€…ä¸€è¦§ã‚’CSVã‚¨ã‚¯ã‚¹ãƒãƒ¼ãƒˆã™ã‚‹ã€‚
 
       operationId: API_048
       x-api-id: API-048
@@ -1465,9 +1465,9 @@ paths:
     get:
       tags:
       - Communication
-      summary: チャンネル一覧取得
+      summary: ãƒãƒ£ãƒ³ãƒãƒ«ä¸€è¦§å–å¾—
 
-      description: チャンネル一覧を取得する。
+      description: ãƒãƒ£ãƒ³ãƒãƒ«ä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_049
       x-api-id: API-049
@@ -1491,9 +1491,9 @@ paths:
     post:
       tags:
       - Communication
-      summary: チャンネル作成
+      summary: ãƒãƒ£ãƒ³ãƒãƒ«ä½œæˆ
 
-      description: チャンネルを作成する。
+      description: ãƒãƒ£ãƒ³ãƒãƒ«ã‚’ä½œæˆã™ã‚‹ã€‚
 
       operationId: API_050
       x-api-id: API-050
@@ -1526,9 +1526,9 @@ paths:
     put:
       tags:
       - Communication
-      summary: チャンネル編集
+      summary: ãƒãƒ£ãƒ³ãƒãƒ«ç·¨é›†
 
-      description: チャンネルを編集する。
+      description: ãƒãƒ£ãƒ³ãƒãƒ«ã‚’ç·¨é›†ã™ã‚‹ã€‚
 
       operationId: API_051
       x-api-id: API-051
@@ -1560,9 +1560,9 @@ paths:
     delete:
       tags:
       - Communication
-      summary: チャンネル削除
+      summary: ãƒãƒ£ãƒ³ãƒãƒ«å‰Šé™¤
 
-      description: チャンネルを削除する。
+      description: ãƒãƒ£ãƒ³ãƒãƒ«ã‚’å‰Šé™¤ã™ã‚‹ã€‚
 
       operationId: API_052
       x-api-id: API-052
@@ -1589,14 +1589,14 @@ paths:
     get:
       tags:
       - Communication
-      summary: メッセージ履歴取得
+      summary: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å±¥æ­´å–å¾—
 
-      description: メッセージ履歴を取得する。
+      description: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å±¥æ­´ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_053
       x-api-id: API-053
       x-roles: all_in_course
-      x-policy: é–²è¦§ã®ã¿
+      x-policy: Ã©â€“Â²Ã¨Â¦Â§Ã£Â®Ã£Â¿
       responses:
         '200':
           description: OK
@@ -1615,9 +1615,9 @@ paths:
     post:
       tags:
       - Communication
-      summary: メッセージ投稿
+      summary: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸æŠ•ç¨¿
 
-      description: メッセージを投稿する。
+      description: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’æŠ•ç¨¿ã™ã‚‹ã€‚
 
       operationId: API_054
       x-api-id: API-054
@@ -1648,9 +1648,9 @@ paths:
     get:
       tags:
       - Communication
-      summary: スレッド詳細取得
+      summary: ã‚¹ãƒ¬ãƒƒãƒ‰è©³ç´°å–å¾—
 
-      description: スレッド詳細を取得する。
+      description: ã‚¹ãƒ¬ãƒƒãƒ‰è©³ç´°ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_055
       x-api-id: API-055
@@ -1675,9 +1675,9 @@ paths:
     post:
       tags:
       - Communication
-      summary: スレッド返信投稿
+      summary: ã‚¹ãƒ¬ãƒƒãƒ‰è¿”ä¿¡æŠ•ç¨¿
 
-      description: スレッドに返信する。
+      description: ã‚¹ãƒ¬ãƒƒãƒ‰ã«è¿”ä¿¡ã™ã‚‹ã€‚
 
       operationId: API_056
       x-api-id: API-056
@@ -1708,9 +1708,9 @@ paths:
     patch:
       tags:
       - Communication
-      summary: メッセージ編集
+      summary: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ç·¨é›†
 
-      description: メッセージを編集する。
+      description: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’ç·¨é›†ã™ã‚‹ã€‚
 
       operationId: API_057
       x-api-id: API-057
@@ -1742,9 +1742,9 @@ paths:
     delete:
       tags:
       - Communication
-      summary: メッセージ削除
+      summary: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸å‰Šé™¤
 
-      description: メッセージを削除する。
+      description: ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å‰Šé™¤ã™ã‚‹ã€‚
 
       operationId: API_058
       x-api-id: API-058
@@ -1771,9 +1771,9 @@ paths:
     post:
       tags:
       - Communication
-      summary: リアクション追加
+      summary: ãƒªã‚¢ã‚¯ã‚·ãƒ§ãƒ³è¿½åŠ 
 
-      description: リアクションを追加する。
+      description: ãƒªã‚¢ã‚¯ã‚·ãƒ§ãƒ³ã‚’è¿½åŠ ã™ã‚‹ã€‚
 
       operationId: API_059
       x-api-id: API-059
@@ -1806,9 +1806,9 @@ paths:
     get:
       tags:
       - Communication
-      summary: スレッド一覧取得
+      summary: ã‚¹ãƒ¬ãƒƒãƒ‰ä¸€è¦§å–å¾—
 
-      description: スレッド一覧を取得する。
+      description: ã‚¹ãƒ¬ãƒƒãƒ‰ä¸€è¦§ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_060
       x-api-id: API-060
@@ -1837,9 +1837,9 @@ paths:
     post:
       tags:
       - Communication
-      summary: スレッド作成
+      summary: ã‚¹ãƒ¬ãƒƒãƒ‰ä½œæˆ
 
-      description: スレッドを作成する。
+      description: ã‚¹ãƒ¬ãƒƒãƒ‰ã‚’ä½œæˆã™ã‚‹ã€‚
 
       operationId: API_061
       x-api-id: API-061
@@ -1875,9 +1875,9 @@ paths:
     get:
       tags:
       - Communication
-      summary: スレッド内メッセージ一覧
+      summary: ã‚¹ãƒ¬ãƒƒãƒ‰å†…ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ä¸€è¦§
 
-      description: スレッド内メッセージを取得する。
+      description: ã‚¹ãƒ¬ãƒƒãƒ‰å†…ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å–å¾—ã™ã‚‹ã€‚
 
       operationId: API_062
       x-api-id: API-062
@@ -1911,9 +1911,9 @@ paths:
     post:
       tags:
       - Communication
-      summary: スレッド返信
+      summary: ã‚¹ãƒ¬ãƒƒãƒ‰è¿”ä¿¡
 
-      description: スレッドに返信する。
+      description: ã‚¹ãƒ¬ãƒƒãƒ‰ã«è¿”ä¿¡ã™ã‚‹ã€‚
 
       operationId: API_063
       x-api-id: API-063
@@ -1956,12 +1956,12 @@ paths:
       - ' Infrastructure'
       summary: Stripe Webhook
 
-      description: Stripe Webhookを受信する。
+      description: Stripe Webhookã‚’å—ä¿¡ã™ã‚‹ã€‚
 
       operationId: API_064
       x-api-id: API-064
       x-roles: public(Stripe)
-      x-policy: Webhook専用
+      x-policy: Webhookå°‚ç”¨
       responses:
         '200':
           description: OK
@@ -1981,9 +1981,9 @@ paths:
     get:
       tags:
       - System
-      summary: ヘルスチェック
+      summary: ãƒ˜ãƒ«ã‚¹ãƒã‚§ãƒƒã‚¯
 
-      description: サーバーの死活監視。
+      description: ã‚µãƒ¼ãƒãƒ¼ã®æ­»æ´»ç›£è¦–ã€‚
 
       operationId: API_065
       x-api-id: API-065
@@ -2110,7 +2110,7 @@ components:
           format: date-time
         createdByUserId:
           type: string
-          description: ä½œæˆè€…ãƒ¦ãƒ¼ã‚¶ãƒ¼IDï¼ˆinstructor or operator/root_operatorï¼‰
+          description: Ã¤Â½Å“Ã¦Ë†Ã¨â‚¬â€¦Ã£Æ’Â¦Ã£Æ’Â¼Ã£â€šÂ¶Ã£Æ’Â¼IDÃ¯Â¼Ë†instructor or operator/root_operatorÃ¯Â¼â€°
         status:
           type: string
           enum:

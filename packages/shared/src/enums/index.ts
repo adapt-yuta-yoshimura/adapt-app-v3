@@ -1,5 +1,4 @@
 export * from './global-role.enum';
-export * from './platform-role.enum';
 export * from './course-member-role.enum';
 export * from './lesson-type.enum';
 export * from './course-catalog-visibility.enum';

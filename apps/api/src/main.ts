@@ -12,7 +12,9 @@ async function bootstrap(): Promise<void> {
   app.enableCors({
     origin: [
       process.env.APP_URL ?? 'http://app.localhost.adapt:3000',
+      'http://localhost:3000',
       process.env.ADMIN_URL ?? 'http://admin.localhost.adapt:3001',
+      'http://localhost:3001',
       process.env.AUTH_URL ?? 'http://auth.localhost.adapt:3002',
     ],
     credentials: true,

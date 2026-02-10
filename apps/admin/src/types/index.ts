@@ -15,8 +15,8 @@ export type AdminApiOperations = AdminApi.operations;
 export type AdminApiComponents = AdminApi.components;
 
 // API レスポンス型のエイリアス
-export type UserListResponse = AdminApi.operations['API_074']['responses']['200']['content']['application/json'];
-export type OperatorListResponse = AdminApi.operations['API_076']['responses']['200']['content']['application/json'];
+export type UserListResponse = AdminApi.operations['API_ADMIN_09']['responses']['200']['content']['application/json'];
+export type OperatorListResponse = AdminApi.operations['API_ADMIN_15']['responses']['200']['content']['application/json'];
 export type GenericWriteRequest = AdminApi.components['schemas']['GenericWriteRequest'];
 export type SuccessResponse = AdminApi.components['schemas']['SuccessResponse'];
 export type ErrorResponse = AdminApi.components['schemas']['ErrorResponse'];

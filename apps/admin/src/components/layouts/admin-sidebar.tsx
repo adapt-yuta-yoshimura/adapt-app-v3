@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@adapt/ui';
-import { PlatformRole } from '@adapt/shared';
+import { GlobalRole } from '@adapt/shared';
 
 import { useAdminAuth } from '@/hooks/use-admin-auth';
 
@@ -26,7 +26,7 @@ interface NavItemConfig {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles: readonly PlatformRole[];
+  roles: readonly GlobalRole[];
 }
 
 interface NavGroup {
@@ -42,31 +42,31 @@ const adminNavGroups: NavGroup[] = [
         href: '/dashboard',
         label: 'ダッシュボード',
         icon: LayoutDashboard,
-        roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR],
+        roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR],
       },
     ],
   },
   {
     group: '管理',
     items: [
-      { href: '/users', label: 'ユーザー管理', icon: Users, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
-      { href: '/courses', label: 'コース管理', icon: BookOpen, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
-      { href: '/payments', label: '決済管理', icon: CreditCard, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
-      { href: '/channels', label: 'チャンネル管理', icon: MessageSquare, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
+      { href: '/users', label: 'ユーザー管理', icon: Users, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
+      { href: '/courses', label: 'コース管理', icon: BookOpen, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
+      { href: '/payments', label: '決済管理', icon: CreditCard, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
+      { href: '/channels', label: 'チャンネル管理', icon: MessageSquare, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
     ],
   },
   {
     group: 'システム',
     items: [
-      { href: '/operators', label: '運営スタッフ', icon: Key, roles: [PlatformRole.ROOT_OPERATOR] },
-      { href: '/audit', label: '監査ログ', icon: ClipboardList, roles: [PlatformRole.OPERATOR, PlatformRole.ROOT_OPERATOR] },
+      { href: '/operators', label: '運営スタッフ', icon: Key, roles: [GlobalRole.ROOT_OPERATOR] },
+      { href: '/audit', label: '監査ログ', icon: ClipboardList, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
     ],
   },
 ];
 
-const CURRENT_ADMIN_ROLE: PlatformRole = PlatformRole.ROOT_OPERATOR;
+const CURRENT_ADMIN_ROLE: GlobalRole = GlobalRole.ROOT_OPERATOR;
 
-function canShowItem(roles: readonly PlatformRole[]): boolean {
+function canShowItem(roles: readonly GlobalRole[]): boolean {
   return roles.includes(CURRENT_ADMIN_ROLE);
 }
 

@@ -15,7 +15,7 @@ const Table = React.forwardRef<
   <div className="relative w-full overflow-auto rounded-card border border-border">
     <table
       ref={ref}
-      className={cn('w-full caption-bottom text-body-sm', className)}
+      className={cn('w-full caption-bottom text-body-sm text-text-primary', className)}
       {...props}
     />
   </div>
@@ -98,7 +98,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      'px-4 py-3.5 align-middle [&:has([role=checkbox])]:pr-0',
+      'px-4 py-3.5 align-middle text-text-primary [&:has([role=checkbox])]:pr-0',
       className,
     )}
     {...props}

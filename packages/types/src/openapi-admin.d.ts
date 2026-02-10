@@ -8,130 +8,141 @@ export interface paths {
   "/api/v1/admin/courses": {
     /**
      * 全講座一覧
-     * @description システム全体の全コース検索。ステータスや売上規模でのソートが可能。
+     * @description システム全体の全コース検索。ステータスや売上情報でのソートも可能。
      */
-    get: operations["API_069"];
+    get: operations["API_ADMIN_01"];
     /**
-     * 講座新規作成（運営）
-     * @description operator/root_operator が講座を作成し、ownerUserId（=指定講師）を必須指定する。初期status=draft（非公開）。承認免除。公開は講師側のpublish操作で行う（publish時にCourseMember.role=instructor→instructor_ownerへ昇格）。
+     * 講座代理作成（運営）
+     * @description operator/root_operator が講座を代理作成。ownerUserId（=指定講師）を必須指定する。初期status=draft（非公開）。承認免除。公開は講師側のpublish操作で行う（publish時にCourseMember.role=instructor→instructor_ownerへ昇格）。
      */
-    post: {
-      requestBody: {
-        content: {
-          "application/json": components["schemas"]["AdminCourseCreateRequest"];
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          content: {
-            "application/json": components["schemas"]["Course"];
-          };
-        };
-        /** @description Bad Request */
-        400: {
-          content: {
-            "application/json": components["schemas"]["ErrorResponse"];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          content: {
-            "application/json": components["schemas"]["ErrorResponse"];
-          };
-        };
-        /** @description Forbidden */
-        403: {
-          content: {
-            "application/json": components["schemas"]["ErrorResponse"];
-          };
-        };
-      };
-    };
+    post: operations["API_ADMIN_02"];
+  };
+  "/api/v1/admin/courses/{courseId}": {
+    /**
+     * 講座削除（運営）
+     * @description コースの論理削除。status=archivedに変更。受講者への影響を考慮し、既存受講データは保持。
+     */
+    delete: operations["API_ADMIN_04"];
+    /**
+     * 講座代理編集（運営）
+     * @description 運営によるコース情報の代理編集。title, description, catalogVisibility, visibility, ownerUserId を変更可能。
+     */
+    patch: operations["API_ADMIN_03"];
   };
   "/api/v1/admin/courses/{courseId}/approve": {
     /**
-     * 講座審査・承認
-     * @description 公開申請中の講座を承認。statusをactiveにしLPを公開する。
+     * 講座承認・審査
+     * @description 公開審査中の講座を承認。statusをactiveに変更しLPを公開する。
      */
-    post: operations["API_070"];
+    post: operations["API_ADMIN_05"];
   };
   "/api/v1/admin/courses/{courseId}/freeze": {
     /**
      * コース凍結（運営）
      * @description 規約違反等の際に発動。全更新APIを423 Lockedにする。
+     *
      * ---
-     * コースを凍結し、全ユーザーのアクセスを423 Lockedにする
+     *
+     * コースを凍結すると、全ユーザーのアクセスを423 Lockedにする
      */
-    post: operations["API_079"];
-  };
-  "/api/v1/admin/audit/courses/{courseId}": {
-    /**
-     * [監査]凍結講座閲覧
-     * @description 凍結中の秘匿コンテンツを精査。誰が閲覧したかのログを強制記録。
-     */
-    get: operations["API_073"];
-  };
-  "/api/v1/admin/users": {
-    /**
-     * 全ユーザー一覧
-     * @description プラットフォーム上の全アカウントを横断検索。
-     */
-    get: operations["API_074"];
-  };
-  "/api/v1/admin/users/{userId}/freeze": {
-    /**
-     * ユーザー凍結(BAN)
-     * @description 悪質ユーザーのシステム全体へのアクセス禁止処理。
-     */
-    post: operations["API_075"];
-  };
-  "/api/v1/admin/users/{userId}/unfreeze": {
-    /**
-     * ユーザー凍結解除
-     * @description ユーザーの凍結(BAN)を解除し、システムアクセスを復帰させる。
-     */
-    post: operations["API_075B"];
-  };
-  "/api/v1/admin/operators": {
-    /**
-     * 運営スタッフ一覧
-     * @description 運営アカウント(GlobalRole: operator/root)の管理。
-     */
-    get: operations["API_076"];
-    /**
-     * 運営スタッフ追加
-     * @description 新規運営アカウントの発行。監査ログ対象。
-     */
-    post: operations["API_077"];
-  };
-  "/api/v1/admin/payments": {
-    /**
-     * 決済履歴一覧
-     * @description Stripe経由の全決済ログ、返金対応状況、売上分配を監視。
-     */
-    get: operations["API_078"];
+    post: operations["API_ADMIN_06"];
   };
   "/api/v1/admin/courses/{courseId}/unfreeze": {
     /**
      * コース凍結解除（運営）
      * @description コースの凍結を解除し、通常アクセスを復帰させる
      */
-    post: operations["API_080"];
+    post: operations["API_ADMIN_07"];
+  };
+  "/api/v1/admin/audit/courses/{courseId}": {
+    /**
+     * [監査]凍結講座閲覧
+     * @description 凍結中の秘匿コンテンツを精査。誰が閲覧したかのログを強制記録。
+     */
+    get: operations["API_ADMIN_08"];
+  };
+  "/api/v1/admin/users": {
+    /**
+     * 全ユーザー一覧
+     * @description プラットフォーム上の全アカウントを横断検索。globalRole, isActive, deletedAt でフィルタ可能。
+     */
+    get: operations["API_ADMIN_09"];
+    /**
+     * ユーザー作成（受講者/講師）
+     * @description 運営による受講者/講師の代理登録。globalRoleはlearnerまたはinstructorのみ指定可能。operator/root_operatorの登録は /api/v1/admin/operators 経由で行う。
+     */
+    post: operations["API_ADMIN_10"];
+  };
+  "/api/v1/admin/users/{userId}": {
+    /**
+     * ユーザー論理削除
+     * @description ユーザーの論理削除。deletedAtをセットしisActive=falseに変更。物理削除は行わない。
+     */
+    delete: operations["API_ADMIN_12"];
+    /**
+     * ユーザー編集
+     * @description 運営による受講者/講師情報の代理編集。email, name, globalRole(learner/instructor), isActive を変更可能。
+     */
+    patch: operations["API_ADMIN_11"];
+  };
+  "/api/v1/admin/users/{userId}/freeze": {
+    /**
+     * ユーザー凍結(BAN)
+     * @description 悪質ユーザーのシステム全体へのアクセス禁止処理。
+     */
+    post: operations["API_ADMIN_13"];
+  };
+  "/api/v1/admin/users/{userId}/unfreeze": {
+    /**
+     * ユーザー凍結解除
+     * @description 凍結中ユーザーのシステム全体へのアクセス禁止を解除する。
+     */
+    post: operations["API_ADMIN_14"];
+  };
+  "/api/v1/admin/operators": {
+    /**
+     * 運営スタッフ一覧
+     * @description globalRoleがoperator/root_operatorのユーザー一覧。
+     */
+    get: operations["API_ADMIN_15"];
+    /**
+     * 運営スタッフ追加
+     * @description 既存ユーザーのglobalRoleをoperator/root_operatorに変更し、運営スタッフとして登録。監査ログ対象。
+     */
+    post: operations["API_ADMIN_16"];
+  };
+  "/api/v1/admin/operators/{userId}": {
+    /**
+     * 運営スタッフ削除（論理削除）
+     * @description 運営スタッフの論理削除。deletedAtをセットしisActive=falseに変更。globalRoleは変更しない（復帰時の参考情報として保持）。
+     */
+    delete: operations["API_ADMIN_18"];
+    /**
+     * 運営スタッフ編集（ロール変更）
+     * @description 運営スタッフのglobalRoleをoperator⇔root_operatorで変更。
+     */
+    patch: operations["API_ADMIN_17"];
+  };
+  "/api/v1/admin/payments": {
+    /**
+     * 決済履歴一覧
+     * @description Stripe経由の全決済ログ、返金対応状況、売上動向を監視。
+     */
+    get: operations["API_ADMIN_19"];
   };
   "/api/v1/admin/channels/{channelId}/freeze": {
     /**
      * チャンネル凍結（運営）
      * @description チャンネルを凍結
      */
-    post: operations["API_081"];
+    post: operations["API_ADMIN_20"];
   };
   "/api/v1/admin/channels/{channelId}/unfreeze": {
     /**
      * チャンネル凍結解除（運営）
      * @description チャンネルの凍結を解除
      */
-    post: operations["API_082"];
+    post: operations["API_ADMIN_21"];
   };
 }
 
@@ -141,8 +152,8 @@ export interface components {
   schemas: {
     User: {
       id: string;
-      email?: string | null;
-      name?: string | null;
+      email: string | null;
+      name: string | null;
       isActive: boolean;
       /** Format: date-time */
       deletedAt?: string | null;
@@ -150,42 +161,74 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
-      /** @enum {unknown} */
       globalRole: components["schemas"]["GlobalRole"];
     };
     UserCreateRequest: {
-      email?: string;
-      name?: string;
-      isActive?: boolean;
-      /** Format: date-time */
-      deletedAt?: string;
+      /** Format: email */
+      email: string;
+      name: string;
+      /**
+       * @description 受講者(learner)または講師(instructor)のみ指定可能。operator/root_operatorは /operators 経由。
+       * @enum {string}
+       */
+      globalRole: "learner" | "instructor";
     };
     UserUpdateRequest: {
+      /** Format: email */
       email?: string;
       name?: string;
+      /**
+       * @description 受講者(learner)または講師(instructor)のみ指定可能。
+       * @enum {string}
+       */
+      globalRole?: "learner" | "instructor";
       isActive?: boolean;
-      /** Format: date-time */
-      deletedAt?: string;
     };
-    PlatformMembership: {
+    UserAdminView: {
+      user: components["schemas"]["User"];
+      status: string;
+      /** Format: date-time */
+      lastLoginAt?: string | null;
+    };
+    UserListResponse: {
+      items: components["schemas"]["UserAdminView"][];
+      meta?: components["schemas"]["ListMeta"];
+    };
+    OperatorAdminView: {
+      /** @description User.id */
       id: string;
-      userId: string;
-      /** @enum {string} */
-      role: "operator" | "root_operator";
+      email?: string | null;
+      name?: string | null;
+      /**
+       * @description operator または root_operator
+       * @enum {string}
+       */
+      globalRole: "operator" | "root_operator";
+      isActive: boolean;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
     };
-    PlatformMembershipCreateRequest: {
-      userId: string;
-      /** @enum {string} */
-      role: "operator" | "root_operator";
+    OperatorListResponse: {
+      items: components["schemas"]["OperatorAdminView"][];
+      meta?: components["schemas"]["ListMeta"];
     };
-    PlatformMembershipUpdateRequest: {
-      userId?: string;
-      /** @enum {string} */
-      role?: "operator" | "root_operator";
+    OperatorCreateRequest: {
+      /** @description 運営スタッフに昇格させる既存ユーザーのID */
+      userId: string;
+      /**
+       * @description operator または root_operator
+       * @enum {string}
+       */
+      globalRole: "operator" | "root_operator";
+    };
+    OperatorUpdateRequest: {
+      /**
+       * @description operator または root_operator
+       * @enum {string}
+       */
+      globalRole: "operator" | "root_operator";
     };
     Course: {
       id: string;
@@ -205,7 +248,7 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
-      /** @description 作成者ユーザーID（instructor 作成 or operator/root 作成） */
+      /** @description 作成者ユーザーID（instructor or operator/root_operator） */
       createdByUserId: string;
       /**
        * @description 講座ステータス
@@ -218,21 +261,17 @@ export interface components {
       approvedAt?: string | null;
       approvedByUserId?: string | null;
     };
-    CourseCreateRequest: {
+    AdminCourseCreateRequest: {
       title: string;
       description?: string;
+      /** @description このコースのオーナー講師（必須）。初期CourseMemberロールはinstructorとして仮与。公開（publish）時にinstructor_ownerへ昇格する。 */
       ownerUserId: string;
       /** @enum {string} */
       catalogVisibility?: "public_listed" | "public_unlisted" | "private";
       /** @enum {string} */
       visibility?: "public" | "instructors_only";
-      isFrozen?: boolean;
-      /** Format: date-time */
-      frozenAt?: string;
-      frozenByUserId?: string;
-      freezeReason?: string;
     };
-    CourseUpdateRequest: {
+    AdminCourseUpdateRequest: {
       title?: string;
       description?: string;
       ownerUserId?: string;
@@ -240,89 +279,11 @@ export interface components {
       catalogVisibility?: "public_listed" | "public_unlisted" | "private";
       /** @enum {string} */
       visibility?: "public" | "instructors_only";
-      isFrozen?: boolean;
-      /** Format: date-time */
-      frozenAt?: string;
-      frozenByUserId?: string;
-      freezeReason?: string;
     };
-    CourseMember: {
-      id: string;
-      courseId: string;
-      userId: string;
-      /** @enum {string} */
-      role: "instructor_owner" | "learner" | "instructor" | "assistant";
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseMemberCreateRequest: {
-      courseId: string;
-      userId: string;
-      /** @enum {string} */
-      role: "instructor_owner" | "learner" | "instructor" | "assistant";
-    };
-    CourseMemberUpdateRequest: {
-      courseId?: string;
-      userId?: string;
-      /** @enum {string} */
-      role?: "instructor_owner" | "learner" | "instructor" | "assistant";
-    };
-    Lesson: {
-      id: string;
-      courseId: string;
-      /** @enum {string} */
-      type: "text" | "video" | "live" | "assignment";
-      title: string;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    LessonCreateRequest: {
-      courseId: string;
-      /** @enum {string} */
-      type: "text" | "video" | "live" | "assignment";
-      title: string;
-    };
-    LessonUpdateRequest: {
-      courseId?: string;
-      /** @enum {string} */
-      type?: "text" | "video" | "live" | "assignment";
-      title?: string;
-    };
-    Assignment: {
-      id: string;
-      courseId: string;
-      title: string;
-      description?: string | null;
-      /** Format: date-time */
-      dueAt?: string | null;
-      allowResubmission: boolean;
-      isPublished: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    AssignmentCreateRequest: {
-      courseId: string;
-      title: string;
-      description?: string;
-      /** Format: date-time */
-      dueAt?: string;
-      allowResubmission?: boolean;
-      isPublished?: boolean;
-    };
-    AssignmentUpdateRequest: {
-      courseId?: string;
-      title?: string;
-      description?: string;
-      /** Format: date-time */
-      dueAt?: string;
-      allowResubmission?: boolean;
-      isPublished?: boolean;
+    CourseDetailView: components["schemas"]["Course"];
+    CourseListResponse: {
+      items: components["schemas"]["Course"][];
+      meta?: components["schemas"]["ListMeta"];
     };
     CourseChannel: {
       id: string;
@@ -331,918 +292,29 @@ export interface components {
       type: "assignment" | "one_on_one" | "announcement" | "general";
       /** @enum {string} */
       postingMode: "mixed" | "threads_only";
-      /** @enum {string} */
-      visibility: "public" | "instructors_only";
       isFrozen: boolean;
-      /** Format: date-time */
-      frozenAt?: string | null;
-      frozenByUserId?: string | null;
-      freezeReason?: string | null;
       name?: string | null;
-      isManual: boolean;
-      systemKey?: string | null;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
     };
-    CourseChannelCreateRequest: {
-      courseId: string;
-      /** @enum {string} */
-      type: "assignment" | "one_on_one" | "announcement" | "general";
-      /** @enum {string} */
-      postingMode?: "mixed" | "threads_only";
-      /** @enum {string} */
-      visibility?: "public" | "instructors_only";
-      isFrozen?: boolean;
-      /** Format: date-time */
-      frozenAt?: string;
-      frozenByUserId?: string;
-      freezeReason?: string;
-      name?: string;
-      isManual?: boolean;
-      systemKey?: string;
-    };
-    CourseChannelUpdateRequest: {
-      courseId?: string;
-      /** @enum {string} */
-      type?: "assignment" | "one_on_one" | "announcement" | "general";
-      /** @enum {string} */
-      postingMode?: "mixed" | "threads_only";
-      /** @enum {string} */
-      visibility?: "public" | "instructors_only";
-      isFrozen?: boolean;
-      /** Format: date-time */
-      frozenAt?: string;
-      frozenByUserId?: string;
-      freezeReason?: string;
-      name?: string;
-      isManual?: boolean;
-      systemKey?: string;
-    };
-    CourseChannelMember: {
-      id: string;
-      channelId: string;
-      courseMemberId: string;
-      /** @enum {string} */
-      status: "invited" | "joined" | "declined";
-      /** Format: date-time */
-      invitedAt?: string | null;
-      /** Format: date-time */
-      joinedAt?: string | null;
-      /** Format: date-time */
-      declinedAt?: string | null;
-      lastReadMessageId?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseChannelMemberCreateRequest: {
-      channelId: string;
-      courseMemberId: string;
-      /** @enum {string} */
-      status?: "invited" | "joined" | "declined";
-      /** Format: date-time */
-      invitedAt?: string;
-      /** Format: date-time */
-      joinedAt?: string;
-      /** Format: date-time */
-      declinedAt?: string;
-      lastReadMessageId?: string;
-    };
-    CourseChannelMemberUpdateRequest: {
-      channelId?: string;
-      courseMemberId?: string;
-      /** @enum {string} */
-      status?: "invited" | "joined" | "declined";
-      /** Format: date-time */
-      invitedAt?: string;
-      /** Format: date-time */
-      joinedAt?: string;
-      /** Format: date-time */
-      declinedAt?: string;
-      lastReadMessageId?: string;
-    };
-    CourseThread: {
-      id: string;
-      channelId: string;
-      /** @enum {string} */
-      type: "submission" | "message_thread";
-      rootMessageId?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseThreadCreateRequest: {
-      channelId: string;
-      /** @enum {string} */
-      type: "submission" | "message_thread";
-      rootMessageId?: string;
-    };
-    CourseThreadUpdateRequest: {
-      channelId?: string;
-      /** @enum {string} */
-      type?: "submission" | "message_thread";
-      rootMessageId?: string;
-    };
-    CourseThreadReadState: {
-      id: string;
-      threadId: string;
-      courseMemberId: string;
-      lastReadMessageId?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseThreadReadStateCreateRequest: {
-      threadId: string;
-      courseMemberId: string;
-      lastReadMessageId?: string;
-    };
-    CourseThreadReadStateUpdateRequest: {
-      threadId?: string;
-      courseMemberId?: string;
-      lastReadMessageId?: string;
-    };
-    CourseMessage: {
-      id: string;
-      channelId: string;
-      threadId?: string | null;
-      authorCourseMemberId?: string | null;
-      text: string;
-      isEmergency: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseMessageCreateRequest: {
-      channelId: string;
-      threadId?: string;
-      authorCourseMemberId?: string;
-      text: string;
-      isEmergency?: boolean;
-    };
-    CourseMessageUpdateRequest: {
-      channelId?: string;
-      threadId?: string;
-      authorCourseMemberId?: string;
-      text?: string;
-      isEmergency?: boolean;
-    };
-    CourseMessageAttachment: {
-      id: string;
-      courseMessageId: string;
-      type: string;
-      storageKey: string;
-      fileName: string;
-      mimeType: string;
-      /** Format: int32 */
-      size: number;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    CourseMessageAttachmentCreateRequest: {
-      courseMessageId: string;
-      type: string;
-      storageKey: string;
-      fileName: string;
-      mimeType: string;
-      /** Format: int32 */
-      size: number;
-    };
-    CourseMessageAttachmentUpdateRequest: {
-      courseMessageId?: string;
-      type?: string;
-      storageKey?: string;
-      fileName?: string;
-      mimeType?: string;
-      /** Format: int32 */
-      size?: number;
-    };
-    CourseNotificationPreference: {
-      id: string;
-      courseMemberId: string;
-      announcementNormalEnabled: boolean;
-      submissionEnabled: boolean;
-      submissionCommentEnabled: boolean;
-      threadReplyEnabled: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseNotificationPreferenceCreateRequest: {
-      courseMemberId: string;
-      announcementNormalEnabled?: boolean;
-      submissionEnabled?: boolean;
-      submissionCommentEnabled?: boolean;
-      threadReplyEnabled?: boolean;
-    };
-    CourseNotificationPreferenceUpdateRequest: {
-      courseMemberId?: string;
-      announcementNormalEnabled?: boolean;
-      submissionEnabled?: boolean;
-      submissionCommentEnabled?: boolean;
-      threadReplyEnabled?: boolean;
-    };
-    CourseChannelNotificationPreference: {
-      id: string;
-      courseMemberId: string;
-      channelId: string;
-      muted: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseChannelNotificationPreferenceCreateRequest: {
-      courseMemberId: string;
-      channelId: string;
-      muted?: boolean;
-    };
-    CourseChannelNotificationPreferenceUpdateRequest: {
-      courseMemberId?: string;
-      channelId?: string;
-      muted?: boolean;
-    };
-    CourseEnrollment: {
-      id: string;
-      courseId: string;
-      userId: string;
-      /** @enum {string} */
-      status: "applied" | "active" | "revoked";
-      /** Format: date-time */
-      grantedAt?: string | null;
-      /** Format: date-time */
-      revokedAt?: string | null;
-      /** Format: date-time */
-      paidAt?: string | null;
-      /** @enum {string} */
-      source: "stripe" | "manual";
-      paymentId?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseEnrollmentCreateRequest: {
-      courseId: string;
-      userId: string;
-      /** @enum {string} */
-      status?: "applied" | "active" | "revoked";
-      /** Format: date-time */
-      grantedAt?: string;
-      /** Format: date-time */
-      revokedAt?: string;
-      /** Format: date-time */
-      paidAt?: string;
-      /** @enum {string} */
-      source?: "stripe" | "manual";
-      paymentId?: string;
-    };
-    CourseEnrollmentUpdateRequest: {
-      courseId?: string;
-      userId?: string;
-      /** @enum {string} */
-      status?: "applied" | "active" | "revoked";
-      /** Format: date-time */
-      grantedAt?: string;
-      /** Format: date-time */
-      revokedAt?: string;
-      /** Format: date-time */
-      paidAt?: string;
-      /** @enum {string} */
-      source?: "stripe" | "manual";
-      paymentId?: string;
-    };
-    Payment: {
-      id: string;
-      /** @enum {string} */
-      provider: "stripe" | "manual";
-      providerRef?: string | null;
-      userId: string;
-      courseId?: string | null;
-      /** Format: int32 */
-      amount: number;
-      currency: string;
-      /** @enum {string} */
-      status: "pending" | "succeeded" | "failed" | "canceled" | "refunded";
-      /** Format: date-time */
-      paidAt?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    PaymentCreateRequest: {
-      /** @enum {string} */
-      provider?: "stripe" | "manual";
-      providerRef?: string;
-      userId: string;
-      courseId?: string;
-      /** Format: int32 */
-      amount: number;
-      currency?: string;
-      /** @enum {string} */
-      status?: "pending" | "succeeded" | "failed" | "canceled" | "refunded";
-      /** Format: date-time */
-      paidAt?: string;
-    };
-    PaymentUpdateRequest: {
-      /** @enum {string} */
-      provider?: "stripe" | "manual";
-      providerRef?: string;
-      userId?: string;
-      courseId?: string;
-      /** Format: int32 */
-      amount?: number;
-      currency?: string;
-      /** @enum {string} */
-      status?: "pending" | "succeeded" | "failed" | "canceled" | "refunded";
-      /** Format: date-time */
-      paidAt?: string;
-    };
-    Refund: {
-      id: string;
-      paymentId: string;
-      providerRef?: string | null;
-      /** Format: int32 */
-      amount: number;
-      /** @enum {string} */
-      status: "pending" | "succeeded" | "failed" | "canceled";
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    RefundCreateRequest: {
-      paymentId: string;
-      providerRef?: string;
-      /** Format: int32 */
-      amount: number;
-      /** @enum {string} */
-      status?: "pending" | "succeeded" | "failed" | "canceled";
-    };
-    RefundUpdateRequest: {
-      paymentId?: string;
-      providerRef?: string;
-      /** Format: int32 */
-      amount?: number;
-      /** @enum {string} */
-      status?: "pending" | "succeeded" | "failed" | "canceled";
-    };
-    Coupon: {
-      id: string;
-      code: string;
-      /** @enum {string} */
-      discountType: "amount_fixed" | "amount_percent";
-      /** Format: int32 */
-      discountValue: number;
-      currency?: string | null;
-      /** Format: date-time */
-      expiresAt?: string | null;
-      /** Format: int32 */
-      usageLimit?: number | null;
-      /** Format: int32 */
-      usedCount: number;
-      isActive: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CouponCreateRequest: {
-      code: string;
-      /** @enum {string} */
-      discountType: "amount_fixed" | "amount_percent";
-      /** Format: int32 */
-      discountValue: number;
-      currency?: string;
-      /** Format: date-time */
-      expiresAt?: string;
-      /** Format: int32 */
-      usageLimit?: number;
-      /** Format: int32 */
-      usedCount?: number;
-      isActive?: boolean;
-    };
-    CouponUpdateRequest: {
-      code?: string;
-      /** @enum {string} */
-      discountType?: "amount_fixed" | "amount_percent";
-      /** Format: int32 */
-      discountValue?: number;
-      currency?: string;
-      /** Format: date-time */
-      expiresAt?: string;
-      /** Format: int32 */
-      usageLimit?: number;
-      /** Format: int32 */
-      usedCount?: number;
-      isActive?: boolean;
-    };
-    CouponRedemption: {
-      id: string;
-      couponId: string;
-      userId: string;
-      courseId?: string | null;
-      paymentId?: string | null;
-      /** Format: date-time */
-      redeemedAt: string;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CouponRedemptionCreateRequest: {
-      couponId: string;
-      userId: string;
-      courseId?: string;
-      paymentId?: string;
-      /** Format: date-time */
-      redeemedAt?: string;
-    };
-    CouponRedemptionUpdateRequest: {
-      couponId?: string;
-      userId?: string;
-      courseId?: string;
-      paymentId?: string;
-      /** Format: date-time */
-      redeemedAt?: string;
-    };
-    AuditEvent: {
-      id: string;
-      /** Format: date-time */
-      occurredAt: string;
-      actorUserId: string;
-      /** @enum {string} */
-      actorGlobalRole: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
-      /** @enum {string} */
-      eventType: components["schemas"]["AuditEventType"];
-      courseId?: string | null;
-      channelId?: string | null;
-      messageId?: string | null;
-      reason: string;
-      metaJson?: Record<string, unknown> | null;
-      requestId?: string | null;
-      ipHash?: string | null;
-      userAgentHash?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    AuditEventCreateRequest: {
-      /** Format: date-time */
-      occurredAt?: string;
-      actorUserId: string;
-      /** @enum {string} */
-      actorGlobalRole: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
-      /** @enum {string} */
-      eventType: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted";
-      courseId?: string;
-      channelId?: string;
-      messageId?: string;
-      reason: string;
-      metaJson?: Record<string, never>;
-      requestId?: string;
-      ipHash?: string;
-      userAgentHash?: string;
-    };
-    AuditEventUpdateRequest: {
-      /** Format: date-time */
-      occurredAt?: string;
-      actorUserId?: string;
-      /** @enum {string} */
-      actorGlobalRole?: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
-      /** @enum {string} */
-      eventType?: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted";
-      courseId?: string;
-      channelId?: string;
-      messageId?: string;
-      reason?: string;
-      metaJson?: Record<string, never>;
-      requestId?: string;
-      ipHash?: string;
-      userAgentHash?: string;
-    };
-    Order: {
-      id: string;
-      userId: string;
-      courseId: string;
-      /** Format: int32 */
-      amount: number;
-      currency: string;
-      /** @enum {unknown} */
-      status: components["schemas"]["OrderStatus"];
-      paymentProvider: string;
-      paymentIntentId?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    OrderCreateRequest: {
-      userId: string;
-      courseId: string;
-      /** Format: int32 */
-      amount: number;
-      currency: string;
-      /** @enum {string} */
-      status: "pending" | "paid" | "cancelled" | "failed" | "refunded";
-      paymentProvider: string;
-      paymentIntentId?: string;
-    };
-    OrderUpdateRequest: {
-      userId?: string;
-      courseId?: string;
-      /** Format: int32 */
-      amount?: number;
-      currency?: string;
-      /** @enum {string} */
-      status?: "pending" | "paid" | "cancelled" | "failed" | "refunded";
-      paymentProvider?: string;
-      paymentIntentId?: string;
-    };
-    OAuthIdentity: {
-      id: string;
-      userId: string;
-      provider: string;
-      providerUserId: string;
-      email?: string | null;
-      /** Format: date-time */
-      lastLoginAt?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    OAuthIdentityCreateRequest: {
-      userId: string;
-      provider: string;
-      providerUserId: string;
-      email?: string;
-      /** Format: date-time */
-      lastLoginAt?: string;
-    };
-    OAuthIdentityUpdateRequest: {
-      userId?: string;
-      provider?: string;
-      providerUserId?: string;
-      email?: string;
-      /** Format: date-time */
-      lastLoginAt?: string;
-    };
-    PasswordCredential: {
-      id: string;
-      userId: string;
-      passwordHash: string;
-      algorithm: string;
-      /** Format: date-time */
-      passwordUpdatedAt: string;
-      isDisabled: boolean;
-      /** Format: int32 */
-      failedCount: number;
-      /** Format: date-time */
-      lastFailedAt?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    PasswordCredentialCreateRequest: {
-      userId: string;
-      passwordHash: string;
-      algorithm: string;
-      /** Format: date-time */
-      passwordUpdatedAt: string;
-      isDisabled?: boolean;
-      /** Format: int32 */
-      failedCount?: number;
-      /** Format: date-time */
-      lastFailedAt?: string;
-    };
-    PasswordCredentialUpdateRequest: {
-      userId?: string;
-      passwordHash?: string;
-      algorithm?: string;
-      /** Format: date-time */
-      passwordUpdatedAt?: string;
-      isDisabled?: boolean;
-      /** Format: int32 */
-      failedCount?: number;
-      /** Format: date-time */
-      lastFailedAt?: string;
-    };
-    FileObject: {
-      id: string;
-      storageKey: string;
-      bucket: string;
-      fileName: string;
-      mimeType: string;
-      /** Format: int32 */
-      size: number;
-      checksum?: string | null;
-      isScanned: boolean;
-      isMalicious: boolean;
-      createdByUserId?: string | null;
-      /** Format: date-time */
-      deletedAt?: string | null;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    FileObjectCreateRequest: {
-      storageKey: string;
-      bucket: string;
-      fileName: string;
-      mimeType: string;
-      /** Format: int32 */
-      size: number;
-      checksum?: string;
-      isScanned?: boolean;
-      isMalicious?: boolean;
-      createdByUserId?: string;
-      /** Format: date-time */
-      deletedAt?: string;
-    };
-    FileObjectUpdateRequest: {
-      storageKey?: string;
-      bucket?: string;
-      fileName?: string;
-      mimeType?: string;
-      /** Format: int32 */
-      size?: number;
-      checksum?: string;
-      isScanned?: boolean;
-      isMalicious?: boolean;
-      createdByUserId?: string;
-      /** Format: date-time */
-      deletedAt?: string;
-    };
-    Submission: {
-      id: string;
-      assignmentId: string;
-      courseId: string;
-      userId: string;
-      threadId: string;
-      /** Format: date-time */
-      submittedAt: string;
-      /** @enum {unknown} */
-      status: components["schemas"]["SubmissionStatus"];
-      /** Format: date-time */
-      gradedAt?: string | null;
-    };
-    SubmissionCreateRequest: {
-      assignmentId: string;
-      courseId: string;
-      userId: string;
-      threadId: string;
-      /** Format: date-time */
-      submittedAt?: string;
-      /** @enum {string} */
-      status: "draft" | "submitted" | "returned" | "graded";
-      /** Format: date-time */
-      gradedAt?: string;
-    };
-    SubmissionUpdateRequest: {
-      assignmentId?: string;
-      courseId?: string;
-      userId?: string;
-      threadId?: string;
-      /** Format: date-time */
-      submittedAt?: string;
-      /** @enum {string} */
-      status?: "draft" | "submitted" | "returned" | "graded";
-      /** Format: date-time */
-      gradedAt?: string;
-    };
-    UserProfile: {
-      id: string;
-      userId: string;
-      displayName: string;
-      avatarFileObjectId?: string | null;
-      bio?: string | null;
-      isPublic: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    UserProfileCreateRequest: {
-      userId: string;
-      displayName: string;
-      avatarFileObjectId?: string;
-      bio?: string;
-      isPublic?: boolean;
-    };
-    UserProfileUpdateRequest: {
-      userId?: string;
-      displayName?: string;
-      avatarFileObjectId?: string;
-      bio?: string;
-      isPublic?: boolean;
-    };
-    GradingComment: {
-      id: string;
-      courseId: string;
-      threadId: string;
-      authorUserId: string;
-      targetUserId: string;
-      body: string;
-      /** Format: int32 */
-      score?: number | null;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    GradingCommentCreateRequest: {
-      courseId: string;
-      threadId: string;
-      authorUserId: string;
-      targetUserId: string;
-      body: string;
-      /** Format: int32 */
-      score?: number;
-    };
-    GradingCommentUpdateRequest: {
-      courseId?: string;
-      threadId?: string;
-      authorUserId?: string;
-      targetUserId?: string;
-      body?: string;
-      /** Format: int32 */
-      score?: number;
-    };
-    SuccessResponse: {
-      success: boolean;
-    };
-    ErrorResponse: {
-      message: string;
-      code?: string;
-    };
-    LoginRequest: {
-      /** Format: email */
-      email: string;
-      password: string;
-    };
-    LoginResponse: {
-      accessToken: string;
-      refreshToken: string;
-    };
-    RegisterRequest: {
-      /** Format: email */
-      email: string;
-      password: string;
-      name: string;
-    };
-    RegisterResponse: components["schemas"]["User"];
-    RefreshResponse: {
-      accessToken: string;
-    };
-    CheckoutRequest: {
-      courseId: string;
-      couponCode?: string;
-    };
-    CheckoutResponse: {
-      sessionId: string;
-      /** Format: uri */
-      url: string;
-    };
-    Notification: {
-      id: string;
-      type: string;
-      title: string;
-      body?: string;
-      isRead: boolean;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    NotificationListResponse: {
-      items: components["schemas"]["Notification"][];
-    };
-    CourseSideMenuResponse: {
-      items: Record<string, never>[];
-    };
-    CursorPageInfo: {
-      nextCursor?: string | null;
-      hasMore: boolean;
-    };
-    OffsetPageInfo: {
-      page: number;
-      pageSize: number;
-      total?: number | null;
-    };
-    ListMeta: {
-      page?: components["schemas"]["OffsetPageInfo"];
-      cursor?: components["schemas"]["CursorPageInfo"];
-    };
-    UserPublicView: {
-      id: string;
-      displayName: string;
-      avatarUrl?: string | null;
-    };
-    FileObjectView: {
-      file: components["schemas"]["FileObject"];
-      url: string;
-      mimeType?: string | null;
-      size?: number | null;
-    };
-    MessageReactionView: {
-      emoji: string;
-      count: number;
-      reactedByMe: boolean;
-    };
-    CourseMessageView: {
-      message: components["schemas"]["CourseMessage"];
-      sender: components["schemas"]["UserPublicView"];
-      attachments: components["schemas"]["FileObjectView"][];
-      reactions: components["schemas"]["MessageReactionView"][];
-    };
-    CourseChannelSummaryView: {
-      channel: components["schemas"]["CourseChannel"];
-      /** Format: date-time */
-      lastMessageAt?: string | null;
-      unreadCount: number;
-    };
-    CourseStatsView: {
-      learnerCount: number;
-      assignmentCount: number;
-      lessonCount: number;
-      activeChannelCount: number;
-    };
-    CourseSummaryView: {
-      course: components["schemas"]["Course"];
-      channelCount: number;
-      memberCount: number;
-      isFrozen: boolean;
-    };
-    CourseDetailView: {
-      course: components["schemas"]["Course"];
-      channels: components["schemas"]["CourseChannelSummaryView"][];
-      stats: components["schemas"]["CourseStatsView"];
-    };
-    ThreadSummaryView: {
-      threadId: string;
-      rootMessage: components["schemas"]["CourseMessageView"];
-      replyCount: number;
-      /** Format: date-time */
-      lastReplyAt?: string | null;
-    };
-    AssignmentSummaryView: {
-      assignment: components["schemas"]["Assignment"];
-      /** Format: date-time */
-      dueAt?: string | null;
-      status: string;
-    };
-    AssignmentDetailView: {
-      assignment: components["schemas"]["Assignment"];
-      mySubmission?: components["schemas"]["Submission"];
-      rubric?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    SubmissionView: {
-      submission: components["schemas"]["Submission"];
-      attachments: components["schemas"]["FileObjectView"][];
-    };
+    CourseChannelDetailView: components["schemas"]["CourseChannel"];
     PaymentSummaryView: {
-      payment: components["schemas"]["Payment"];
-      course: components["schemas"]["Course"];
-      buyer: components["schemas"]["UserPublicView"];
-    };
-    CourseListResponse: {
-      items: components["schemas"]["CourseSummaryView"][];
-      meta?: components["schemas"]["ListMeta"];
-    };
-    CourseChannelListResponse: {
-      items: components["schemas"]["CourseChannelSummaryView"][];
-      meta?: components["schemas"]["ListMeta"];
-    };
-    ThreadListResponse: {
-      items: components["schemas"]["ThreadSummaryView"][];
-      meta?: components["schemas"]["ListMeta"];
-    };
-    MessageListResponse: {
-      items: components["schemas"]["CourseMessageView"][];
-      meta?: components["schemas"]["ListMeta"];
-    };
-    AssignmentListResponse: {
-      items: components["schemas"]["AssignmentSummaryView"][];
-      meta?: components["schemas"]["ListMeta"];
+      id: string;
+      userId: string;
+      courseId?: string | null;
+      amount: number;
+      currency: string;
+      status: string;
+      provider: string;
+      /** Format: date-time */
+      paidAt?: string | null;
+      /** Format: date-time */
+      createdAt: string;
     };
     PaymentListResponse: {
       items: components["schemas"]["PaymentSummaryView"][];
-      meta?: components["schemas"]["ListMeta"];
-    };
-    UserAdminView: {
-      user: components["schemas"]["User"];
-      status: string;
-      /** Format: date-time */
-      lastLoginAt?: string | null;
-    };
-    UserListResponse: {
-      items: components["schemas"]["UserAdminView"][];
       meta?: components["schemas"]["ListMeta"];
     };
     GenericWriteRequest: {
@@ -1255,46 +327,30 @@ export interface components {
       items: Record<string, never>[];
       meta?: components["schemas"]["ListMeta"];
     };
-    OperatorAdminView: {
-      id: string;
-      userId: string;
-      role: components["schemas"]["PlatformRole"];
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      user?: ({
-        name?: string | null;
-        email?: string | null;
-        isActive: boolean;
-      }) | null;
+    SuccessResponse: {
+      success: boolean;
+      message?: string;
     };
-    OperatorListResponse: {
-      items: components["schemas"]["OperatorAdminView"][];
-      meta?: components["schemas"]["ListMeta"];
+    ErrorResponse: {
+      statusCode: number;
+      message: string;
+      error?: string;
+    };
+    ListMeta: {
+      totalCount: number;
+      page: number;
+      perPage: number;
+      totalPages: number;
     };
     UserMeView: components["schemas"]["User"];
-    CourseChannelDetailView: components["schemas"]["CourseChannel"];
-    AdminCourseCreateRequest: {
-      title: string;
-      description?: string;
-      /** @description このコースのオーナー講師（必須）。初期CourseMemberロールはinstructorとして付与。公開（publish）時にinstructor_ownerへ昇格する。 */
-      ownerUserId: string;
-      /** @enum {string} */
-      catalogVisibility?: "public_listed" | "public_unlisted" | "private";
-      /** @enum {string} */
-      visibility?: "public" | "instructors_only";
-    };
     /** @enum {string} */
-    GlobalRole: "guest" | "learner" | "instructor" | "assistant" | "operator" | "root_operator";
-    /** @enum {string} */
-    PlatformRole: "operator" | "root_operator";
+    GlobalRole: "guest" | "learner" | "instructor" | "operator" | "root_operator";
     /** @enum {string} */
     OrderStatus: "pending" | "paid" | "cancelled" | "failed" | "refunded";
     /** @enum {string} */
     SubmissionStatus: "draft" | "submitted" | "returned" | "graded";
     /** @enum {string} */
-    AuditEventType: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted";
+    AuditEventType: "announcement_emergency_posted" | "course_frozen" | "course_unfrozen" | "channel_frozen" | "channel_unfrozen" | "dm_viewed_by_root_operator" | "course_created" | "course_approval_requested" | "course_approved" | "course_published" | "course_member_role_promoted" | "user_frozen" | "user_unfrozen" | "user_created" | "user_updated" | "user_deleted" | "operator_role_changed";
   };
   responses: never;
   parameters: never;
@@ -1311,9 +367,9 @@ export interface operations {
 
   /**
    * 全講座一覧
-   * @description システム全体の全コース検索。ステータスや売上規模でのソートが可能。
+   * @description システム全体の全コース検索。ステータスや売上情報でのソートも可能。
    */
-  API_069: {
+  API_ADMIN_01: {
     responses: {
       /** @description OK */
       200: {
@@ -1324,10 +380,102 @@ export interface operations {
     };
   };
   /**
-   * 講座審査・承認
-   * @description 公開申請中の講座を承認。statusをactiveにしLPを公開する。
+   * 講座代理作成（運営）
+   * @description operator/root_operator が講座を代理作成。ownerUserId（=指定講師）を必須指定する。初期status=draft（非公開）。承認免除。公開は講師側のpublish操作で行う（publish時にCourseMember.role=instructor→instructor_ownerへ昇格）。
    */
-  API_070: {
+  API_ADMIN_02: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdminCourseCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["Course"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * 講座削除（運営）
+   * @description コースの論理削除。status=archivedに変更。受講者への影響を考慮し、既存受講データは保持。
+   */
+  API_ADMIN_04: {
+    parameters: {
+      path: {
+        courseId: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SuccessResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * 講座代理編集（運営）
+   * @description 運営によるコース情報の代理編集。title, description, catalogVisibility, visibility, ownerUserId を変更可能。
+   */
+  API_ADMIN_03: {
+    parameters: {
+      path: {
+        courseId: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdminCourseUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CourseDetailView"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * 講座承認・審査
+   * @description 公開審査中の講座を承認。statusをactiveに変更しLPを公開する。
+   */
+  API_ADMIN_05: {
     parameters: {
       path: {
         courseId: string;
@@ -1350,10 +498,36 @@ export interface operations {
   /**
    * コース凍結（運営）
    * @description 規約違反等の際に発動。全更新APIを423 Lockedにする。
+   *
    * ---
-   * コースを凍結し、全ユーザーのアクセスを423 Lockedにする
+   *
+   * コースを凍結すると、全ユーザーのアクセスを423 Lockedにする
    */
-  API_079: {
+  API_ADMIN_06: {
+    parameters: {
+      path: {
+        courseId: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["GenericWriteRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      201: {
+        content: {
+          "application/json": components["schemas"]["CourseDetailView"];
+        };
+      };
+    };
+  };
+  /**
+   * コース凍結解除（運営）
+   * @description コースの凍結を解除し、通常アクセスを復帰させる
+   */
+  API_ADMIN_07: {
     parameters: {
       path: {
         courseId: string;
@@ -1377,7 +551,7 @@ export interface operations {
    * [監査]凍結講座閲覧
    * @description 凍結中の秘匿コンテンツを精査。誰が閲覧したかのログを強制記録。
    */
-  API_073: {
+  API_ADMIN_08: {
     parameters: {
       path: {
         courseId: string;
@@ -1394,9 +568,9 @@ export interface operations {
   };
   /**
    * 全ユーザー一覧
-   * @description プラットフォーム上の全アカウントを横断検索。
+   * @description プラットフォーム上の全アカウントを横断検索。globalRole, isActive, deletedAt でフィルタ可能。
    */
-  API_074: {
+  API_ADMIN_09: {
     responses: {
       /** @description OK */
       200: {
@@ -1407,10 +581,102 @@ export interface operations {
     };
   };
   /**
+   * ユーザー作成（受講者/講師）
+   * @description 運営による受講者/講師の代理登録。globalRoleはlearnerまたはinstructorのみ指定可能。operator/root_operatorの登録は /api/v1/admin/operators 経由で行う。
+   */
+  API_ADMIN_10: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UserCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["User"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict (email重複) */
+      409: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * ユーザー論理削除
+   * @description ユーザーの論理削除。deletedAtをセットしisActive=falseに変更。物理削除は行わない。
+   */
+  API_ADMIN_12: {
+    parameters: {
+      path: {
+        userId: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SuccessResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * ユーザー編集
+   * @description 運営による受講者/講師情報の代理編集。email, name, globalRole(learner/instructor), isActive を変更可能。
+   */
+  API_ADMIN_11: {
+    parameters: {
+      path: {
+        userId: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UserUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["User"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict (email重複) */
+      409: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
    * ユーザー凍結(BAN)
    * @description 悪質ユーザーのシステム全体へのアクセス禁止処理。
    */
-  API_075: {
+  API_ADMIN_13: {
     parameters: {
       path: {
         userId: string;
@@ -1432,9 +698,9 @@ export interface operations {
   };
   /**
    * ユーザー凍結解除
-   * @description ユーザーの凍結(BAN)を解除し、システムアクセスを復帰させる。
+   * @description 凍結中ユーザーのシステム全体へのアクセス禁止を解除する。
    */
-  API_075B: {
+  API_ADMIN_14: {
     parameters: {
       path: {
         userId: string;
@@ -1456,9 +722,9 @@ export interface operations {
   };
   /**
    * 運営スタッフ一覧
-   * @description 運営アカウント(GlobalRole: operator/root)の管理。
+   * @description globalRoleがoperator/root_operatorのユーザー一覧。
    */
-  API_076: {
+  API_ADMIN_15: {
     responses: {
       /** @description OK */
       200: {
@@ -1470,28 +736,89 @@ export interface operations {
   };
   /**
    * 運営スタッフ追加
-   * @description 新規運営アカウントの発行。監査ログ対象。
+   * @description 既存ユーザーのglobalRoleをoperator/root_operatorに変更し、運営スタッフとして登録。監査ログ対象。
    */
-  API_077: {
+  API_ADMIN_16: {
     requestBody: {
       content: {
-        "application/json": components["schemas"]["GenericWriteRequest"];
+        "application/json": components["schemas"]["OperatorCreateRequest"];
       };
     };
     responses: {
       /** @description OK */
       201: {
         content: {
+          "application/json": components["schemas"]["OperatorAdminView"];
+        };
+      };
+      /** @description Not Found（対象ユーザーが存在しない） */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * 運営スタッフ削除（論理削除）
+   * @description 運営スタッフの論理削除。deletedAtをセットしisActive=falseに変更。globalRoleは変更しない（復帰時の参考情報として保持）。
+   */
+  API_ADMIN_18: {
+    parameters: {
+      path: {
+        userId: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
           "application/json": components["schemas"]["SuccessResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * 運営スタッフ編集（ロール変更）
+   * @description 運営スタッフのglobalRoleをoperator⇔root_operatorで変更。
+   */
+  API_ADMIN_17: {
+    parameters: {
+      path: {
+        userId: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OperatorUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["OperatorAdminView"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
         };
       };
     };
   };
   /**
    * 決済履歴一覧
-   * @description Stripe経由の全決済ログ、返金対応状況、売上分配を監視。
+   * @description Stripe経由の全決済ログ、返金対応状況、売上動向を監視。
    */
-  API_078: {
+  API_ADMIN_19: {
     responses: {
       /** @description OK */
       200: {
@@ -1502,34 +829,10 @@ export interface operations {
     };
   };
   /**
-   * コース凍結解除（運営）
-   * @description コースの凍結を解除し、通常アクセスを復帰させる
-   */
-  API_080: {
-    parameters: {
-      path: {
-        courseId: string;
-      };
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["GenericWriteRequest"];
-      };
-    };
-    responses: {
-      /** @description OK */
-      201: {
-        content: {
-          "application/json": components["schemas"]["CourseDetailView"];
-        };
-      };
-    };
-  };
-  /**
    * チャンネル凍結（運営）
    * @description チャンネルを凍結
    */
-  API_081: {
+  API_ADMIN_20: {
     parameters: {
       path: {
         channelId: string;
@@ -1553,7 +856,7 @@ export interface operations {
    * チャンネル凍結解除（運営）
    * @description チャンネルの凍結を解除
    */
-  API_082: {
+  API_ADMIN_21: {
     parameters: {
       path: {
         channelId: string;

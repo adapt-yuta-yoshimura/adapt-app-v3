@@ -1,8 +1,8 @@
 // schema.prisma（adapt V1 完璧版 - 基本設計書完全準拠）
 //
 // 【設計書準拠】
-// - テーブル数: 27個（基本設計書 09_DB_テーブル一覧 準拠）
-// - Enum数: 19個
+// - テーブル数: 26個（基本設計書 09_DB_テーブル一覧 準拠）
+// - Enum数: 18個
 // - 全モデルに @@map() でsnake_caseテーブル名を明示
 //
 // 【技術スタック】
@@ -19,8 +19,10 @@
 // 【認証・認可】
 // - ロール: root_operator統一（rootは廃止）
 // - 認証: OIDC + Google OAuth（auth.adapt-co.io）
-// - グローバルロール: GlobalRole（guest, learner, instructor, assistant, operator, root_operator）
-// - プラットフォームロール: PlatformRole（operator, root_operator）
+// - グローバルロール: GlobalRole（guest, learner, instructor, operator, root_operator）
+//   ※ assistant はコース内ロール（CourseMemberRole）のみ。GlobalRoleには含まない
+// - 運営スタッフ判定: User.globalRole が operator / root_operator かで判定
+//   ※ PlatformMembership / PlatformRole は廃止（User.globalRole に統合）
 // - 監査イベント: AuditEventType（dm_viewed_by_root_operator 等）
 // - チャンネル投稿モード: CourseChannelPostingMode（threads_only 等）
 //
@@ -36,6 +38,15 @@
 //   - CourseEnrollment @@unique制約追加済み
 //   - AuditEventType にコース管理イベント追加
 //   - ヘッダコメント整合性修正（Enum数19個、重複コメント除去）
+// - 2026-02-07: Phase 0 完了時の設計差分反映
+//   - AuditEventType に user_frozen / user_unfrozen を追加（API-075/075B対応）
+// - 2026-02-10: ユーザー管理CRUD・運営スタッフ管理・API ID再採番対応
+//   - PlatformMembership モデル削除（User.globalRole に統合）
+//   - PlatformRole enum 削除（User.globalRole に統合）
+//   - GlobalRole から assistant を除外（コース内ロール CourseMemberRole のみに限定）
+//   - AuditEventType に user_created / user_updated / user_deleted / operator_role_changed を追加
+//   - テーブル数: 27→26（-1）、Enum数: 19→18（-1）
+//   - API ID 再採番: app側 API-001〜、admin側 API-ADMIN-01〜
 //
 generator client {
   provider = "prisma-client-js"
@@ -51,16 +62,8 @@ enum GlobalRole {
   guest // 未ログイン/ゲスト（閲覧のみ想定）
   learner // 受講者（学習者）
   instructor // 講師（一般）
-  assistant // 講師アシスタント/TA
   operator // 運営（通常）
   root_operator // 運営（特権：DM閲覧等）
-}
-
-/// 運営（プラットフォーム）ロール（adminスコープ）
-/// - CourseMemberRole と責務分離する（同一ユーザーが両方持ち得る）
-enum PlatformRole {
-  operator // 運営（通常）
-  root_operator // 運営（特権）
 }
 
 enum CourseMemberRole {
@@ -88,14 +91,12 @@ enum CourseVisibility {
   instructors_only // 講師のみ閲覧（operatorは閲覧可能）
 }
 
-
 enum CourseStatus {
   draft // 下書き
   pending_approval // 承認待ち（審査申請済み）
   active // 承認済み・運用中
   archived // アーカイブ
 }
-
 
 enum CourseChannelType {
   assignment // 課題チャンネル（THREADS_ONLY想定）
@@ -132,6 +133,12 @@ enum AuditEventType {
   course_approved // コース承認
   course_published // コース公開（講師によるpublish）
   course_member_role_promoted // CourseMemberロール昇格（instructor→instructor_owner）
+  user_frozen // ユーザー凍結（BAN）
+  user_unfrozen // ユーザー凍結解除
+  user_created // ユーザー新規作成（運営による代理登録）
+  user_updated // ユーザー情報更新（運営による代理編集）
+  user_deleted // ユーザー論理削除（運営による代理削除）
+  operator_role_changed // 運営スタッフロール変更（operator⇔root_operator）
 }
 
 /// 受講ステータス（受講権限）
@@ -189,7 +196,7 @@ enum SubmissionStatus {
 
 /// ユーザー（基本情報）
 /// - システム全体で共有される認証主体
-/// - 運営ロールは PlatformMembership で管理
+/// - 運営スタッフ判定: globalRole が operator / root_operator かで判定
 /// - コース内ロールは CourseMember で管理
 
 model User {
@@ -202,15 +209,6 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   @@map("user")
-}
-
-model PlatformMembership {
-  id String @id @default(cuid())
-  userId String @map("user_id")
-  role PlatformRole @default(operator) @map("role")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  @@map("platform_membership")
 }
 
 model Course {
@@ -271,7 +269,7 @@ model Assignment {
 model CourseChannel {
   id String @id @default(cuid())
   courseId String @map("course_id")
-  type CourseChannelType @map("type")
+  type CourseChannelType @default(general) @map("type")
   postingMode CourseChannelPostingMode @default(mixed) @map("posting_mode")
   visibility CourseVisibility @default(public) @map("visibility")
   isFrozen Boolean @default(false) @map("is_frozen")

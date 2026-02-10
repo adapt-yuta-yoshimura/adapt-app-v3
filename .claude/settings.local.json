@@ -43,7 +43,10 @@
       "Bash(docker volume:*)",
       "Bash(until curl -sf http://localhost:8080/realms/adapt/.well-known/openid-configuration)",
       "Bash(do echo \"Waiting for Keycloak...\")",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(git checkout:*)",
+      "Bash(grep:*)",
+      "Bash(git add:*)"
     ]
   }
 }

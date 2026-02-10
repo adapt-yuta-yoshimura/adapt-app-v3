@@ -39,6 +39,15 @@ export class AdminUserRepository {
   }
 
   /**
+   * Email でユーザーを取得する
+   */
+  async findByEmail(email: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
+  }
+
+  /**
    * ユーザーの isActive を更新する（凍結/解除）
    */
   async updateIsActive(id: string, isActive: boolean): Promise<User> {

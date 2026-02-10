@@ -32,20 +32,20 @@ export default function AdminOperatorsPage(): React.ReactNode {
       {
         accessorKey: 'name',
         header: '名前',
-        accessorFn: (row) => row.user?.name ?? '-',
-        cell: ({ row }) => row.original.user?.name ?? '-',
+        accessorFn: (row: OperatorAdminView) => row.name ?? '-',
+        cell: ({ row }) => row.original.name ?? '-',
       },
       {
         accessorKey: 'email',
         header: 'メール',
-        accessorFn: (row) => row.user?.email ?? '-',
-        cell: ({ row }) => row.original.user?.email ?? '-',
+        accessorFn: (row: OperatorAdminView) => row.email ?? '-',
+        cell: ({ row }) => row.original.email ?? '-',
       },
       {
-        accessorKey: 'role',
+        accessorKey: 'globalRole',
         header: 'ロール',
         cell: ({ row }) => (
-          <Badge variant="role" value={row.original.role} />
+          <Badge variant="role" value={row.original.globalRole} />
         ),
       },
       {
