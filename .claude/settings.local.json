@@ -46,7 +46,10 @@
       "Bash(docker exec:*)",
       "Bash(git checkout:*)",
       "Bash(grep:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix\\(admin\\): PlatformMembership 参照をすべて User.globalRole に置換\n\n- PlatformMembership モデル・PlatformRole enum は schema.prisma で廃止済み\n- 運営スタッフ管理は User.globalRole（operator/root_operator）で判定\n\n## Backend \\(API\\)\n- AdminOperatorRepository: PlatformMembership テーブル参照を User テーブルに変更\n- AddOperatorUseCase: ユーザーの globalRole を更新する実装に変更\n- ListOperatorsUseCase: User テーブルから運営スタッフ一覧を取得\n- OperatorAdminView: User エンティティベースに変更（id, email, name, globalRole）\n- ListMeta: ページネーション構造を修正（totalCount, page, perPage, totalPages）\n\n## Frontend \\(Admin\\)\n- AdminSidebar: PlatformRole → GlobalRole に変更\n- OperatorsPage: user.name → name に変更（ネストしたuser削除）\n- UsersPage: pageInfo構造の修正（meta.totalCount使用）\n- types/index.ts: 操作ID修正（API_074 → API_ADMIN_09, API_076 → API_ADMIN_15）\n\n## Shared\n- PlatformRole enum 削除\n- OperatorAdminView型定義を User ベースに更新\n\nRefs: PlatformMembership廃止 2026-02-10\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(# コード内のAPI ID参照箇所を検索 grep -rn \"\"API-031\\\\|API-032\\\\|API-033\\\\|API-034\\\\|API-035\\\\|API-036\\\\|API-037\\\\|API-038\\\\|API-039\\\\|API-040\\\\|API-041\\\\|API-042\\\\|API-043\\\\|API-044\\\\|API-045\\\\|API-046\\\\|API-047\\\\|API-048\\\\|API-049\\\\|API-050\\\\|API-051\\\\|API-052\\\\|API-053\\\\|API-054\\\\|API-055\\\\|API-056\\\\|API-057\\\\|API-058\\\\|API-059\\\\|API-060\\\\|API-061\\\\|API-062\\\\|API-063\\\\|API-064\\\\|API-065\"\" \\\\ apps/ packages/ tickets/ \\\\ --include=\"\"*.ts\"\" --include=\"\"*.tsx\"\" --include=\"\"*.md\"\" \\\\)"
     ]
   }
 }
