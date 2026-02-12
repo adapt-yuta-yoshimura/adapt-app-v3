@@ -11,6 +11,4 @@ dist/
 # Keycloak
 keycloak/data/
 
-# pnpm store (never commit)
-.pnpm-store/
-**/.pnpm-store/
+.claude/settings.local.json
