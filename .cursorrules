@@ -12,7 +12,7 @@
 - 基本設計書（Excel・最終版）
 - openapi_app.yaml（65 エンドポイント）
 - openapi_admin.yaml（21 エンドポイント）
-- schema.prisma（26 モデル・18 Enum）
+- schema.prisma（35 モデル・21 Enum）
 
 これらに無い API / Model / Enum / Role / Status は
 「存在しないもの」として扱ってください。
@@ -88,6 +88,7 @@ Frontend:
 - `console.log` / `console.error`（logger 必須）
 - 機密情報のハードコード
 - 生成型（openapi-typescript / prisma client）の手編集
+- modules 内に `services/` ディレクトリを新規作成すること（`usecases/` を使用）
 
 ---
 
@@ -127,6 +128,28 @@ PostgreSQL
 - Controller 層で Repository を直接呼び出し → **禁止**
 - Prisma Model を API レスポンスで直接返す → **禁止**
 - OpenAPI 生成型を Controller の戻り値型に使用 → **必須**
+- modules 内に `services/` ディレクトリを作成 → **禁止**
+- 技術サービス（JWT等）は `common/` に配置 → **必須**
+
+### UseCase 粒度ルール
+
+| 区分 | 方針 |
+|---|---|
+| 既存モジュール（auth / chat / course） | Facade 型（1クラス多メソッド）を許容 |
+| 新規モジュール | 1 UseCase 1 ファイルを原則 |
+| 分割トリガー | 規模超過 / 責務分岐 / テスト困難 |
+
+### 共通層（common/）
+
+```
+apps/api/src/common/
+└── auth/
+    ├── jwt-token.service.ts  # JWT署名・検証（技術サービス）
+    └── index.ts
+```
+
+- `common/` のクラスは `〜Service` のまま命名（`〜UseCase` にしない）
+- UseCase から DI で利用する（Repository と同列の扱い）
 
 ---
 
