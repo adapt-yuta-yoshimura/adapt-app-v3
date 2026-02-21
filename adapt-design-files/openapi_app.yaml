@@ -191,7 +191,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericListResponse'
+                $ref: '#/components/schemas/NotificationListResponse'
       security:
       - bearerAuth: []
   /api/v1/notifications/{notificationId}/read:
@@ -272,7 +272,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericListResponse'
+                $ref: '#/components/schemas/UserNotificationSettingView'
       security:
       - bearerAuth: []
     put:
@@ -691,7 +691,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericDetailView'
+                $ref: '#/components/schemas/SurveyDetailView'
       security:
       - bearerAuth: []
       parameters:
@@ -734,7 +734,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenericWriteRequest'
+              $ref: '#/components/schemas/SurveyResponseCreateRequest'
   /api/v1/instructor/courses:
     get:
       tags:
@@ -4628,3 +4628,142 @@ components:
       - user_updated
       - user_deleted
       - operator_role_changed
+    UserNotificationSettingView:
+      type: object
+      additionalProperties: false
+      required:
+        - emailEnabled
+        - pushEnabled
+        - threadReplyEnabled
+        - submissionCommentEnabled
+        - gradingCompletedEnabled
+        - liveReservedEnabled
+        - adminAnnouncementEnabled
+      properties:
+        emailEnabled:
+          type: boolean
+        pushEnabled:
+          type: boolean
+        threadReplyEnabled:
+          type: boolean
+        submissionCommentEnabled:
+          type: boolean
+        gradingCompletedEnabled:
+          type: boolean
+        liveReservedEnabled:
+          type: boolean
+        adminAnnouncementEnabled:
+          type: boolean
+    SurveyQuestionType:
+      type: string
+      enum:
+        - rating
+        - score
+        - short_text
+        - long_text
+        - single_choice
+        - multi_choice
+    SurveyOptionView:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - order
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        value:
+          type: string
+          nullable: true
+        order:
+          type: integer
+    SurveyQuestionView:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - type
+        - prompt
+        - isRequired
+        - order
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        prompt:
+          type: string
+        isRequired:
+          type: boolean
+        order:
+          type: integer
+        minValue:
+          type: integer
+          nullable: true
+        maxValue:
+          type: integer
+          nullable: true
+        stepValue:
+          type: integer
+          nullable: true
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyOptionView'
+    SurveyDetailView:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - courseId
+        - isActive
+        - questions
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyQuestionView'
+    SurveyAnswerCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - questionId
+      properties:
+        questionId:
+          type: string
+        valueText:
+          type: string
+          nullable: true
+        valueNumber:
+          type: integer
+          nullable: true
+        optionIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+    SurveyResponseCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - answers
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyAnswerCreateRequest'

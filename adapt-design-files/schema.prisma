@@ -194,6 +194,25 @@ enum SubmissionStatus {
   graded     // 採点済み
 }
 
+/// 通知種別
+enum NotificationType {
+  thread_reply
+  submission_comment
+  grading_completed
+  live_reserved
+  admin_announcement
+}
+
+/// アンケート設問種別
+enum SurveyQuestionType {
+  rating         // 1〜n（上限は question 側で保持）
+  score          // 0〜n（上限は question 側で保持）
+  short_text
+  long_text
+  single_choice
+  multi_choice
+}
+
 /// ユーザー（基本情報）
 /// - システム全体で共有される認証主体
 /// - 運営スタッフ判定: globalRole が operator / root_operator かで判定
@@ -541,4 +560,121 @@ model GradingComment {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   @@map("grading_comment")
+}
+
+/// 通知（システム通知・プッシュ通知の永続化）
+model Notification {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  type NotificationType @map("type")
+  title String? @map("title")
+  body String? @map("body")
+  linkUrl String? @map("link_url")
+  dataJson String? @map("data_json")
+  readAt DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notification")
+}
+
+/// ユーザー通知設定
+model UserNotificationSetting {
+  id String @id @default(cuid())
+  userId String @unique @map("user_id")
+  emailEnabled Boolean @default(true) @map("email_enabled")
+  pushEnabled Boolean @default(true) @map("push_enabled")
+  threadReplyEnabled Boolean @default(true) @map("thread_reply_enabled")
+  submissionCommentEnabled Boolean @default(true) @map("submission_comment_enabled")
+  gradingCompletedEnabled Boolean @default(true) @map("grading_completed_enabled")
+  liveReservedEnabled Boolean @default(true) @map("live_reserved_enabled")
+  adminAnnouncementEnabled Boolean @default(true) @map("admin_announcement_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@map("user_notification_setting")
+}
+
+/// アンケート定義
+model Survey {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  title String? @map("title")
+  description String? @map("description")
+  isActive Boolean @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([courseId])
+  @@map("survey")
+}
+
+/// アンケート設問
+model SurveyQuestion {
+  id String @id @default(cuid())
+  surveyId String @map("survey_id")
+  type SurveyQuestionType @map("type")
+  prompt String @map("prompt")
+  isRequired Boolean @default(false) @map("is_required")
+  order Int @default(0) @map("order")
+  minValue Int? @map("min_value")
+  maxValue Int? @map("max_value")
+  stepValue Int? @map("step_value")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([surveyId, order])
+  @@map("survey_question")
+}
+
+/// アンケート選択肢
+model SurveyOption {
+  id String @id @default(cuid())
+  questionId String @map("question_id")
+  label String @map("label")
+  value String? @map("value")
+  order Int @default(0) @map("order")
+  
+  @@index([questionId, order])
+  @@map("survey_option")
+}
+
+/// アンケート回答セット
+model SurveyResponse {
+  id String @id @default(cuid())
+  surveyId String @map("survey_id")
+  userId String @map("user_id")
+  submittedAt DateTime @default(now()) @map("submitted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@unique([surveyId, userId])
+  @@index([surveyId, submittedAt])
+  @@map("survey_response")
+}
+
+/// アンケート回答値
+model SurveyAnswer {
+  id String @id @default(cuid())
+  responseId String @map("response_id")
+  questionId String @map("question_id")
+  valueText String? @map("value_text")
+  valueNumber Int? @map("value_number")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@unique([responseId, questionId])
+  @@map("survey_answer")
+}
+
+/// アンケート複数選択回答
+model SurveyAnswerOption {
+  id String @id @default(cuid())
+  answerId String @map("answer_id")
+  optionId String @map("option_id")
+  
+  @@unique([answerId, optionId])
+  @@map("survey_answer_option")
 }
