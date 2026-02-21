@@ -4571,6 +4571,8 @@ components:
           type: string
         description:
           type: string
+        style:
+          $ref: '#/components/schemas/CourseStyle'
         catalogVisibility:
           type: string
           enum:
@@ -4585,6 +4587,20 @@ components:
       additionalProperties: false
       required:
       - title
+      - style
+    CourseStyle:
+      type: string
+      enum:
+      - one_on_one
+      - seminar
+      - bootcamp
+      - lecture
+      description: |
+        コーススタイル。
+        - one_on_one: 1対1
+        - seminar: セミナー
+        - bootcamp: ブートキャンプ
+        - lecture: 将来用（現時点では作成不可）
     GlobalRole:
       type: string
       enum:

@@ -91,6 +91,13 @@ enum CourseVisibility {
   instructors_only // 講師のみ閲覧（operatorは閲覧可能）
 }
 
+enum CourseStyle {
+  one_on_one
+  seminar
+  bootcamp
+  lecture
+}
+
 enum CourseStatus {
   draft // 下書き
   pending_approval // 承認待ち（審査申請済み）
@@ -237,6 +244,7 @@ model Course {
   ownerUserId String @map("owner_user_id")
   createdByUserId String @map("created_by_user_id")
   status CourseStatus @default(draft) @map("status")
+  style CourseStyle @map("style")
   approvalRequestedAt DateTime? @map("approval_requested_at")
   approvedAt DateTime? @map("approved_at")
   approvedByUserId String? @map("approved_by_user_id")
@@ -248,6 +256,9 @@ model Course {
   updatedAt DateTime @updatedAt @map("updated_at")
   catalogVisibility CourseCatalogVisibility @default(public_listed) @map("catalog_visibility")
   visibility CourseVisibility @default(public) @map("visibility")
+
+  sections CourseSection[]
+
   @@map("course")
 }
 
@@ -262,13 +273,34 @@ model CourseMember {
   @@map("course_member")
 }
 
+model CourseSection {
+  id        String   @id @default(cuid()) @map("id")
+  courseId  String   @map("course_id")
+  title     String   @map("title")
+  order     Int      @map("order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@index([courseId], map: "idx_course_section_course_id")
+  @@unique([courseId, order], map: "uq_course_section_course_id_order")
+  @@map("course_section")
+}
+
 model Lesson {
   id String @id @default(cuid())
   courseId String @map("course_id")
+  courseSectionId String? @map("course_section_id")
   title String
   type LessonType @default(text) @map("type")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  courseSection CourseSection? @relation(fields: [courseSectionId], references: [id], onDelete: SetNull)
+
+  @@index([courseSectionId], map: "idx_lesson_course_section_id")
   @@map("lesson")
 }
 
@@ -290,7 +322,6 @@ model CourseChannel {
   courseId String @map("course_id")
   type CourseChannelType @default(general) @map("type")
   postingMode CourseChannelPostingMode @default(mixed) @map("posting_mode")
-  visibility CourseVisibility @default(public) @map("visibility")
   isFrozen Boolean @default(false) @map("is_frozen")
   frozenAt DateTime? @map("frozen_at")
   frozenByUserId String? @map("frozen_by_user_id")
@@ -300,6 +331,7 @@ model CourseChannel {
   systemKey String? @map("system_key")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  visibility CourseVisibility @default(public) @map("visibility")
   @@map("course_channel")
 }
 
