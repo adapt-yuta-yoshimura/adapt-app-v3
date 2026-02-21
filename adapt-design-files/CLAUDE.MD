@@ -18,7 +18,7 @@ Claude の判断基準・人格は
 - 基本設計書（Excel・最終版）
 - openapi_app.yaml（65 エンドポイント）
 - openapi_admin.yaml（21 エンドポイント）
-- schema.prisma（26 モデル・18 Enum）
+- schema.prisma（35 モデル・21 Enum）
 
 これらに無い API / Model / Enum / Role / Status を
 **Claude Code が生成・補完・仮定してはならない**。
@@ -111,6 +111,20 @@ apps/api/src/modules/{module}/
 ├── gateways/          # WebSocket（必要に応じて）
 └── {module}.module.ts
 ```
+
+### 共通層（modules 外）
+
+```
+apps/api/src/common/
+└── auth/
+    ├── jwt-token.service.ts  # JWT署名・検証（技術サービス・クラス名維持）
+    ├── jwt.types.ts          # JWT関連の型定義
+    └── index.ts              # barrel export
+```
+
+> `common/` は **モジュール横断の技術サービス** を配置する層である。
+> UseCase から DI で利用する。Repository と同様に「実装詳細の隠蔽」として扱う。
+> UseCase ではないため `〜UseCase` と命名しない。
 
 ---
 
@@ -323,6 +337,25 @@ PostgreSQL
 - Controller 層で Repository を直接呼び出し → **禁止**
 - Prisma Model を API レスポンスで直接返す → **禁止**
 - OpenAPI 生成型を Controller の戻り値型に使用 → **必須**
+
+### UseCase 粒度ルール（確定）
+
+| 区分 | 方針 | 例 |
+|---|---|---|
+| 既存モジュール（auth / chat / course） | Facade 型 UseCase（1クラス多メソッド）を許容 | `AuthUseCase`（複数メソッド） |
+| 新規モジュール（admin 等） | 1 UseCase 1 ファイルを原則 | `AddOperatorUseCase` |
+| 分割トリガー | クラス規模超過 / 責務分岐 / テスト困難 のいずれかで分割 | ― |
+
+### UseCase と技術サービスの責務境界
+
+| 層 | 責務 | 命名 | 配置 |
+|---|---|---|---|
+| UseCase | **何をするか**（業務フローの指揮） | `〜UseCase` | `modules/{module}/usecases/` |
+| 技術サービス | **どうやるか**（暗号・署名・設定等） | `〜Service`（維持） | `common/{domain}/` |
+| Repository | **どこから取るか**（DB操作） | `〜Repository` | `modules/{module}/repositories/` |
+
+- 技術サービス（`common/`）は UseCase から DI で利用する
+- `services/` ディレクトリを modules 内に作成してはならない
 
 ---
 
