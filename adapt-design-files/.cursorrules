@@ -12,7 +12,7 @@
 - 基本設計書（Excel・最終版）
 - openapi_app.yaml（65 エンドポイント）
 - openapi_admin.yaml（21 エンドポイント）
-- schema.prisma（26 モデル・18 Enum）
+- schema.prisma（35 モデル・21 Enum）
 
 これらに無い API / Model / Enum / Role / Status は
 「存在しないもの」として扱ってください。
