@@ -247,6 +247,22 @@ Claude Codeは、以下のフローで判定する：
 - 外部2件以上：即停止（異常状態）
 - 移動判断は人間が行う（Claude Codeは検出・停止のみ）
 
+#### 既知の許容状態（ケースCの例外：schema.prisma のみ）
+
+**本例外は schema.prisma にのみ適用する。他のSoTファイル（openapi_admin.yaml, openapi_app.yaml, adapt_基本設計_最終版.xlsx）は従来通りケースCで停止する。**
+
+schema.prisma でケースCが発生した場合、以下の条件をすべて満たすときは停止せず継続する：
+
+1. 検出パスが `apps/api/prisma/schema.prisma` である
+2. 両ファイルの内容差分が Prisma 7 の `datasource.url` 移動（prisma.config.ts）に起因するもののみ
+3. 上記以外の差分がある場合は停止
+
+#### schema.prisma の正と写像
+
+- **正（SoT）：** `/docs/api/schema.prisma`
+- **写像（運用版）：** `apps/api/prisma/schema.prisma`（Prisma CLI 用）
+- 設計変更は必ず SoT を先に更新し、運用版に同一コミット内で反映する
+
 #### /adapt-design-files の扱い（SoT更新：2026-02-25）
 
 - `/adapt-design-files/` は廃止された旧正規配置
@@ -304,6 +320,35 @@ Frontend:
   - admin.adapt-co.io    # 運営者向け
   - auth.adapt-co.io     # 認証基盤
 ```
+
+---
+
+### 3-1. Prisma プロバイダー移行計画（prisma-client-js → prisma-client）
+
+#### 現状
+
+- Prisma 7.4.1 で `prisma-client-js`（旧プロバイダー）を使用中
+- Prisma 7 では非推奨だが動作する
+- 最小限アップグレード方針により、移行は先送り
+
+#### 移行ゲート条件（以下のいずれかを満たした場合に移行を検討）
+
+1. **Prisma のメジャーアップデート時：** prisma-client-js が削除・動作不能になった場合
+2. **実装進捗 50% 超過時：** インポートパス変更の影響範囲が確定した段階
+3. **CI/CD 本格導入時：** ビルドパイプラインの安定化と合わせて実施
+4. **prisma generate の出力差異検出時：** 旧プロバイダーの生成物に問題が発生した場合
+
+#### 移行時の影響範囲（見込み）
+
+- インポートパス変更（`@prisma/client` → 新パス）
+- ドライバーアダプター追加
+- PrismaService の書き換え
+- ESM 対応の確認
+
+#### 重要
+
+- 上記ゲート条件に該当しない限り、移行を提案・実施してはならない
+- ゲート条件該当時は SoT更新宣言を経て移行計画を策定する
 
 ---
 
