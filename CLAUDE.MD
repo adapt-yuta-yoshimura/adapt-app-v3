@@ -9,6 +9,119 @@ Claude の判断基準・人格は
 **「Adapt プロジェクト指示設定（Claude用・最終完全版）」**を最優先とする。
 本ファイルはそれを **緩和・上書きしてはならない**。
 
+### 契約階層（確定）
+```
+【最上位】Project Instructions（思想・判断基準）
+    ↓ 引用・参照
+【下位】  CLAUDE.MD（実装ガード・Claude Code専用）
+    ↓ 実行
+【実行層】Claude Code（骨格生成AI）
+```
+
+本文書はProject Instructionsの**下位契約**であり、思想・原則はProject Instructionsから引用する。
+
+---
+
+## 0-1. Project Instructions参照の整合性保証
+
+本文書は Project Instructions（最上位契約）の思想を前提とする。
+
+### 参照ルールの存在確認
+
+- CLAUDE.MD内で `※ Project Instructions「〇〇ルール」を前提とする` と記載された箇所について
+- 該当ルール名がProject Instructions内に存在しない場合
+- **即座に停止し、このチャットへ報告すること**
+
+### 停止時の報告フォーマット
+```
+⚠️ 参照エラー検知（CLAUDE.MD → Project Instructions）
+
+- 検知者：Claude Code
+- 参照元：CLAUDE.MD [該当セクション名]
+- 参照先：Project Instructions「〇〇ルール」
+- 状態：参照先ルールが存在しません
+
+【推定原因】
+- Project Instructions側でルール名が変更された
+- CLAUDE.MD側の参照名が古い
+
+【必要な対応】
+1. Project Instructions内で該当ルールの現在名を確認
+2. CLAUDE.MD内の参照名を更新
+3. 参照先ルール名一覧表を更新
+```
+
+### 更新時の相互チェック
+
+- Project Instructions更新時：CLAUDE.MD内の参照先が全て有効か確認
+- CLAUDE.MD更新時：参照先ルールがProject Instructions内に存在するか確認
+
+---
+
+## 0-2. 参照先ルール名一覧表
+
+本文書が参照するProject Instructionsのルール名（最終更新：2026-02-24）
+
+| ルール名 | 参照箇所（CLAUDE.MD内） | 状態 |
+|---------|----------------------|------|
+| SoT定義 | §1 Single Source of Truth | 有効 |
+| 推測断定禁止ルール | §4 実装前提条件 | 有効 |
+| ツール分担方針 | §6 Claude Codeの役割 | 有効 |
+
+**運用ルール：**
+- 新規参照追加時は、必ず本一覧も更新すること
+- 一覧表の最終更新日も同時に更新すること
+- 一覧にない参照を検知した場合は即座に停止
+
+**陳腐化警告：**
+- 最終更新日が3ヶ月以上前の場合、警告を出す
+
+---
+
+## 0-3. ドラフト参照の運用
+
+※ Project Instructions「推測断定禁止ルール」を前提とする
+
+### ドラフト段階の参照明示
+
+ドラフト段階の参照は、以下のように明示すること：
+```markdown
+※ Project Instructions「〇〇ルール（ドラフト参照）」を前提とする
+```
+
+### 段階別の運用
+
+| 段階 | 一覧未登録参照の扱い | 動作 |
+|------|-------------------|------|
+| **ドラフト開発** | 「（ドラフト参照）」明示で許容 | ⚠️ 警告のみ |
+| **レビュー** | 一覧登録を促す | ⚠️ 警告 + 指摘 |
+| **正式反映** | 禁止 | ❌ 停止 |
+
+### 判定ロジック
+```
+【参照検知時の判定フロー】
+
+1. CLAUDE.MD内で参照を検知
+   ↓
+2. 「（ドラフト参照）」の記載があるか？
+   ↓
+   Yes → ⚠️ 警告出力（停止しない）
+          「ドラフト参照が残っています。正式反映前に一覧登録してください」
+   ↓
+   No → 一覧表に登録されているか？
+         ↓
+         Yes → ✅ 正常実行
+         ↓
+         No → ❌ 停止 + 報告
+              「参照エラー検知：一覧未登録の参照が存在します」
+```
+
+### 正式反映時の必須作業
+
+- すべての「（ドラフト参照）」マーカーを削除
+- 参照先ルール名一覧表へ登録
+- 一覧表の最終更新日を更新
+
 ---
 
 ## 1. Single Source of Truth（絶対遵守）
@@ -16,12 +129,129 @@ Claude の判断基準・人格は
 以下 4 点のみが正であり、これ以外は存在しない。
 
 - 基本設計書（Excel・最終版）
-- openapi_app.yaml（65 エンドポイント）
-- openapi_admin.yaml（21 エンドポイント）
-- schema.prisma（35 モデル・21 Enum）
+- openapi_app.yaml
+- openapi_admin.yaml
+- schema.prisma
 
 これらに無い API / Model / Enum / Role / Status を
 **Claude Code が生成・補完・仮定してはならない**。
+
+---
+
+### 1-1. SoTファイルの正規配置（契約固定）
+
+※ Project Instructions「SoT定義」を前提とする
+
+以下のSoTファイルは、契約上の正規配置として固定する：
+
+| ファイル名 | 正規配置 |
+|-----------|---------|
+| 基本設計書（Excel・最終版） | `/docs/design/adapt_基本設計_最終版.xlsx` |
+| openapi_app.yaml | `/docs/api/openapi_app.yaml` |
+| openapi_admin.yaml | `/docs/api/openapi_admin.yaml` |
+| schema.prisma | `/docs/api/schema.prisma` |
+
+**配置変更履歴：**
+- 2026-02-25：`/adapt-design-files/` から `/docs/` へ変更（Phase 3 実施）
+
+**配置変更時の契約更新：**
+- 正規配置を変更する場合、本セクションの更新が必須
+- 配置変更はリポジトリ構造の大規模変更を伴うため、慎重に実施
+
+---
+
+### 1-2. SoTファイル探索時の安全装置
+
+Claude Codeは、以下のフローで判定する：
+
+#### 判定フロー
+
+1. **正規配置に存在するか？**
+   - `/docs/` 配下を確認（`/docs/api/` または `/docs/design/`）
+   - No → ❌ **ケースB：停止＋報告**
+   - Yes → 次へ
+
+2. **正規配置外の件数は？**
+   - **※ 正規配置外の件数：リポジトリ全体から正規配置パスを除いた件数**
+   - 0件 → ✅ **ケースA：正常実行**
+   - 1件 → ❌ **ケースC：停止＋報告（旧正規配置の可能性）**
+   - 2件以上 → ❌ **ケースD：停止＋報告**
+
+#### ケース別動作
+
+| ケース | 正規配置 | 正規配置外 | 合計 | 動作 |
+|--------|---------|-----------|------|------|
+| A | 1件 | 0件 | 1件 | ✅ 正常実行 |
+| B | 0件 | 任意 | 任意 | ❌ 停止「正規配置にSoTファイルが存在しません」 |
+| C | 1件 | 1件 | 2件 | ❌ 停止「正規配置外に1件検出（旧正規配置の可能性）」 |
+| D | 1件 | 2件以上 | 3件以上 | ❌ 停止「正規配置外に複数検出（整理が必要）」 |
+
+#### 報告フォーマット
+
+**ケースB：正規配置不在**
+```
+⚠️ SoTファイル探索失敗（正規配置不在）
+
+- 検索対象：[ファイル名]
+- 正規配置：/docs/api/[ファイル名] または /docs/design/[ファイル名]
+- 状態：正規配置にファイルが存在しません
+
+【必要な対応】
+- ファイルが削除されていないか確認
+- 正規配置が変更されていないか確認
+- CLAUDE.MD §1-1 の正規配置定義を確認
+```
+
+**ケースC：正規配置外に1件検出**
+```
+⚠️ SoTファイル探索失敗（正規配置外に1件検出）
+
+- 使用ファイル：/docs/[api|design]/[ファイル名]（正規配置）
+- 検出ファイル：[パス]
+
+【状態】
+- 正規配置外に同名ファイルが存在しています
+
+【必要な対応】
+- 検出ファイルの用途を確認（運用版・バックアップ等）
+- 正規配置は `/docs/` のみ
+- 探索安全装置により停止します
+```
+
+**ケースD：正規配置外に複数検出**
+```
+⚠️ SoTファイル探索失敗（複数候補検出）
+
+- 検索対象：[ファイル名]
+- 正規配置：/docs/[api|design]/[ファイル名]
+- 検出件数：[N]件
+- 検出パス：
+  1. /docs/[api|design]/[ファイル名]（正規配置）
+  2. [パス2]
+  3. [パス3]
+
+【リスク】
+複数候補が存在する状態は誤参照のリスクが高いです。
+
+【必要な対応】
+- 正しいSoTファイルのパスを特定
+- 不要なコピー・バックアップを削除または別名化
+- SoTファイルが正規配置のみになるよう整理
+- 整理後、再実行
+```
+
+#### 設計原則
+
+- 判定は合計件数ではなく「正規配置外の件数」で一意に決定
+- 外部1件：停止（旧正規配置の可能性、二重存在は契約違反）
+- 外部2件以上：即停止（異常状態）
+- 移動判断は人間が行う（Claude Codeは検出・停止のみ）
+
+#### /adapt-design-files の扱い（SoT更新：2026-02-25）
+
+- `/adapt-design-files/` は廃止された旧正規配置
+- Phase 3 完了後に削除済み（コミット: a49a152）
+- 正規配置は `/docs/` のみ
 
 ---
 
@@ -50,7 +280,6 @@ Claude の判断基準・人格は
 以下は SoT / 既存設定から取得した技術情報の要約である。
 実体は package.json / schema.prisma / tsconfig.json 等にあり、
 乖離がある場合はそちらを正とすること。
-
 ```
 Backend:
   - NestJS 10.3+
@@ -79,7 +308,6 @@ Frontend:
 ---
 
 ## 4. ディレクトリ構成（確定・逸脱禁止）
-
 ```
 adapt/
 ├── apps/
@@ -100,7 +328,6 @@ adapt/
 ```
 
 ### NestJS モジュール構成（1モジュールあたり）
-
 ```
 apps/api/src/modules/{module}/
 ├── controllers/       # APIエンドポイント（薄い層）
@@ -113,7 +340,6 @@ apps/api/src/modules/{module}/
 ```
 
 ### 共通層（modules 外）
-
 ```
 apps/api/src/common/
 └── auth/
@@ -170,7 +396,6 @@ Claude Code が **やってよいことは以下のみ**。
 Claude Code が生成してよい「枠」と、踏み込んではならない「実装」の境界を示す。
 
 ### ✅ 許可：枠（この範囲まで）
-
 ```typescript
 import type { paths } from '@adapt/types/openapi-app';
 
@@ -193,7 +418,6 @@ export class CourseController {
   }
 }
 ```
-
 ```typescript
 @Injectable()
 export class CourseUseCase {
@@ -212,7 +436,6 @@ export class CourseUseCase {
   }
 }
 ```
-
 ```typescript
 @Injectable()
 export class CourseRepository {
@@ -226,7 +449,6 @@ export class CourseRepository {
 ```
 
 ### ❌ 禁止：実装（ここから先は Cursor）
-
 ```typescript
 // ❌ ビジネスロジックの記述
 async getCourse(userId: string, courseId: string): Promise<GetCourseResponse> {
@@ -265,7 +487,6 @@ return this.prisma.course.findUnique({
 ## 9. 実装チケットテンプレート（固定）
 
 `tickets/API-xxx.md` は以下のフォーマットで生成すること。
-
 ```markdown
 # API-xxx: [エンドポイント名]
 
@@ -320,7 +541,6 @@ return this.prisma.course.findUnique({
 
 以下は SoT で確定しているアーキテクチャ制約である。
 Claude Code は枠生成時にこれに従うこと。
-
 ```
 Controller（薄い層）
     ↓ HTTPリクエスト/レスポンス処理のみ
