@@ -10,12 +10,28 @@
 以下 4 点のみが正です。
 
 - 基本設計書（Excel・最終版）
-- openapi_app.yaml（65 エンドポイント）
-- openapi_admin.yaml（21 エンドポイント）
-- schema.prisma（35 モデル・21 Enum）
+- openapi_app.yaml
+- openapi_admin.yaml
+- schema.prisma
 
 これらに無い API / Model / Enum / Role / Status は
 「存在しないもの」として扱ってください。
+
+### SoTファイルの正規配置
+
+| ファイル名 | 正規配置 |
+|-----------|---------|
+| 基本設計書（Excel・最終版） | `/docs/design/adapt_基本設計_最終版.xlsx` |
+| openapi_app.yaml | `/docs/api/openapi_app.yaml` |
+| openapi_admin.yaml | `/docs/api/openapi_admin.yaml` |
+| schema.prisma | `/docs/api/schema.prisma` |
+
+### schema.prisma の正と写像
+
+- **正（SoT）：** `/docs/api/schema.prisma`
+- **写像（運用版）：** `apps/api/prisma/schema.prisma`（Prisma CLI 用）
+- `apps/api/prisma/schema.prisma` は SoT ではない。実装時の参照元は常に `/docs/api/schema.prisma`
+- 設計変更は必ず SoT を先に更新し、運用版に同一コミット内で反映する
 
 ---
 
