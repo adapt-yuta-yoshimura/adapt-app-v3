@@ -912,6 +912,19 @@ components:
       - updatedAt
       - createdByUserId
       - status
+    CourseStyle:
+      type: string
+      enum:
+      - one_on_one
+      - seminar
+      - bootcamp
+      - lecture
+      description: |
+        コーススタイル。
+        - one_on_one: 1対1
+        - seminar: セミナー
+        - bootcamp: ブートキャンプ
+        - lecture: 将来用（現時点では作成不可）
     AdminCourseCreateRequest:
       type: object
       properties:
@@ -919,6 +932,8 @@ components:
           type: string
         description:
           type: string
+        style:
+          $ref: '#/components/schemas/CourseStyle'
         ownerUserId:
           type: string
           description: このコースのオーナー講師（必須）。初期CourseMemberロールはinstructorとして仮与。公開（publish）時にinstructor_ownerへ昇格する。
@@ -931,6 +946,7 @@ components:
       additionalProperties: false
       required:
       - title
+      - style
       - ownerUserId
     AdminCourseUpdateRequest:
       type: object

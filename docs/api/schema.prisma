@@ -1,0 +1,712 @@
+// schema.prisma（adapt V1 完璧版 - 基本設計書完全準拠）
+//
+// 【設計書準拠】
+// - テーブル数: 26個（基本設計書 09_DB_テーブル一覧 準拠）
+// - Enum数: 18個
+// - 全モデルに @@map() でsnake_caseテーブル名を明示
+//
+// 【技術スタック】
+// - DB: PostgreSQL
+// - ORM: Prisma 7
+// - Docker/AWS対応: binaryTargets設定済み
+//
+// 【アーキテクチャ】
+// - Repository Pattern必須（Service層はORM非依存）
+// - 本schemaはAPI内部のみで使用
+// - Prisma ModelはDTOとして公開しない
+// - packages/sharedのDTOが契約の正
+//
+// 【認証・認可】
+// - ロール: root_operator統一（rootは廃止）
+// - 認証: OIDC + Google OAuth（auth.adapt-co.io）
+// - グローバルロール: GlobalRole（guest, learner, instructor, operator, root_operator）
+//   ※ assistant はコース内ロール（CourseMemberRole）のみ。GlobalRoleには含まない
+// - 運営スタッフ判定: User.globalRole が operator / root_operator かで判定
+//   ※ PlatformMembership / PlatformRole は廃止（User.globalRole に統合）
+// - 監査イベント: AuditEventType（dm_viewed_by_root_operator 等）
+// - チャンネル投稿モード: CourseChannelPostingMode（threads_only 等）
+//
+// - コース内ロール: CourseMemberRole（instructor_owner, learner, instructor, assistant）
+//
+// 【変更履歴】
+// - 2026-02-04: 基本設計書準拠の完全版作成（27モデル、19 Enum）
+// - 2026-02-07: コース作成・ロール・承認フロー再設計反映
+//   - Course.ownerUserId を維持（講師側責任者）
+//   - operator/root_operatorによるコース作成対応（ownerUserId=指定講師）
+//   - operator作成は承認免除（draft→講師publish→active+instructor_owner昇格）
+//   - GlobalRole, CourseStatus, 承認フィールド追加済み
+//   - CourseEnrollment @@unique制約追加済み
+//   - AuditEventType にコース管理イベント追加
+//   - ヘッダコメント整合性修正（Enum数19個、重複コメント除去）
+// - 2026-02-07: Phase 0 完了時の設計差分反映
+//   - AuditEventType に user_frozen / user_unfrozen を追加（API-075/075B対応）
+// - 2026-02-10: ユーザー管理CRUD・運営スタッフ管理・API ID再採番対応
+//   - PlatformMembership モデル削除（User.globalRole に統合）
+//   - PlatformRole enum 削除（User.globalRole に統合）
+//   - GlobalRole から assistant を除外（コース内ロール CourseMemberRole のみに限定）
+//   - AuditEventType に user_created / user_updated / user_deleted / operator_role_changed を追加
+//   - テーブル数: 27→26（-1）、Enum数: 19→18（-1）
+//   - API ID 再採番: app側 API-001〜、admin側 API-ADMIN-01〜
+//
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // Docker/AWS対応
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GlobalRole {
+  guest // 未ログイン/ゲスト（閲覧のみ想定）
+  learner // 受講者（学習者）
+  instructor // 講師（一般）
+  operator // 運営（通常）
+  root_operator // 運営（特権：DM閲覧等）
+}
+
+enum CourseMemberRole {
+  instructor_owner // 主催講師（1コース=1名、権限上位）
+  learner // 受講者
+  instructor // 講師（共同講師等）
+  assistant // アシスタント/TA
+}
+
+enum LessonType {
+  text // テキスト/記事型レッスン
+  video // 動画レッスン
+  live // ライブ/配信/集合型
+  assignment // 課題（提出導線あり）
+}
+
+enum CourseCatalogVisibility {
+  public_listed // 公開（カタログ掲載あり・検索露出あり）
+  public_unlisted // 公開（直リンクのみ・検索露出なし）
+  private // 非公開（カタログ/未ログインには非露出）
+}
+
+enum CourseVisibility {
+  public // コース/チャンネル内の基本公開
+  instructors_only // 講師のみ閲覧（operatorは閲覧可能）
+}
+
+enum CourseStyle {
+  one_on_one
+  seminar
+  bootcamp
+  lecture
+}
+
+enum CourseStatus {
+  draft // 下書き
+  pending_approval // 承認待ち（審査申請済み）
+  active // 承認済み・運用中
+  archived // アーカイブ
+}
+
+enum CourseChannelType {
+  assignment // 課題チャンネル（THREADS_ONLY想定）
+  one_on_one // 1on1/DM相当（限定メンバー）
+  announcement // 告知チャンネル（THREADS_ONLY想定）
+  general // 通常チャンネル
+}
+
+enum CourseChannelPostingMode {
+  mixed // スレッド/単発投稿の混在可
+  threads_only // スレッドのみ（ルートはthreadId=null）
+}
+
+enum CourseChannelMemberStatus {
+  invited // 招待済み
+  joined // 参加中
+  declined // 辞退
+}
+
+enum CourseThreadType {
+  submission // 課題提出スレッド（提出時に自動生成）
+  message_thread // 通常のメッセージスレッド
+}
+
+enum AuditEventType {
+  announcement_emergency_posted // 緊急アナウンス投稿
+  course_frozen // コース凍結
+  course_unfrozen // コース凍結解除
+  channel_frozen // チャンネル凍結
+  channel_unfrozen // チャンネル凍結解除
+  dm_viewed_by_root_operator // root_operatorによるDM閲覧（監査対象）
+  course_created // コース新規作成
+  course_approval_requested // コース承認申請
+  course_approved // コース承認
+  course_published // コース公開（講師によるpublish）
+  course_member_role_promoted // CourseMemberロール昇格（instructor→instructor_owner）
+  user_frozen // ユーザー凍結（BAN）
+  user_unfrozen // ユーザー凍結解除
+  user_created // ユーザー新規作成（運営による代理登録）
+  user_updated // ユーザー情報更新（運営による代理編集）
+  user_deleted // ユーザー論理削除（運営による代理削除）
+  operator_role_changed // 運営スタッフロール変更（operator⇔root_operator）
+}
+
+/// 受講ステータス（受講権限）
+enum CourseEnrollmentStatus {
+  applied // 申込/審査待ち（受講権未付与）
+  active // 受講権有効
+  revoked // 受講権取り消し
+}
+
+/// 決済事業者
+enum PaymentProvider {
+  stripe // Stripe決済
+  manual // 手動（請求書/振込等）
+}
+
+/// 決済ステータス
+enum PaymentStatus {
+  pending // 決済処理中
+  succeeded // 決済成功
+  failed // 決済失敗
+  canceled // キャンセル
+  refunded // 返金済み（全額/一部含む）
+}
+
+/// 返金ステータス
+enum RefundStatus {
+  pending // 返金処理中
+  succeeded // 返金成功
+  failed // 返金失敗
+  canceled // 返金キャンセル
+}
+
+/// クーポン割引種別
+enum CouponDiscountType {
+  amount_fixed // 固定額割引（通貨最小単位）
+  amount_percent // %割引（0-100）
+}
+
+/// 注文ステータス
+enum OrderStatus {
+  pending    // 決済待ち
+  paid       // 支払済み（決済完了）
+  cancelled  // キャンセル
+  failed     // 決済失敗
+  refunded   // 返金済み
+}
+
+/// 提出ステータス
+enum SubmissionStatus {
+  draft      // 下書き（未提出）
+  submitted  // 提出済み（採点待ち）
+  returned   // 差戻し（再提出が必要）
+  graded     // 採点済み
+}
+
+/// 通知種別
+enum NotificationType {
+  thread_reply
+  submission_comment
+  grading_completed
+  live_reserved
+  admin_announcement
+}
+
+/// アンケート設問種別
+enum SurveyQuestionType {
+  rating         // 1〜n（上限は question 側で保持）
+  score          // 0〜n（上限は question 側で保持）
+  short_text
+  long_text
+  single_choice
+  multi_choice
+}
+
+/// ユーザー（基本情報）
+/// - システム全体で共有される認証主体
+/// - 運営スタッフ判定: globalRole が operator / root_operator かで判定
+/// - コース内ロールは CourseMember で管理
+
+model User {
+  id String @id @default(cuid())
+  email String? @unique
+  name String?
+  globalRole GlobalRole @default(learner) @map("global_role")
+  isActive Boolean @default(true) @map("is_active")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("user")
+}
+
+model Course {
+  id String @id @default(cuid())
+  title String
+  description String?
+  ownerUserId String @map("owner_user_id")
+  createdByUserId String @map("created_by_user_id")
+  status CourseStatus @default(draft) @map("status")
+  style CourseStyle @map("style")
+  approvalRequestedAt DateTime? @map("approval_requested_at")
+  approvedAt DateTime? @map("approved_at")
+  approvedByUserId String? @map("approved_by_user_id")
+  isFrozen Boolean @default(false) @map("is_frozen")
+  frozenAt DateTime? @map("frozen_at")
+  frozenByUserId String? @map("frozen_by_user_id")
+  freezeReason String? @map("freeze_reason")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  catalogVisibility CourseCatalogVisibility @default(public_listed) @map("catalog_visibility")
+  visibility CourseVisibility @default(public) @map("visibility")
+
+  sections CourseSection[]
+
+  @@map("course")
+}
+
+model CourseMember {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  userId String @map("user_id")
+  role CourseMemberRole @default(learner) @map("role")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([courseId, userId])
+  @@map("course_member")
+}
+
+model CourseSection {
+  id        String   @id @default(cuid()) @map("id")
+  courseId  String   @map("course_id")
+  title     String   @map("title")
+  order     Int      @map("order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@index([courseId], map: "idx_course_section_course_id")
+  @@unique([courseId, order], map: "uq_course_section_course_id_order")
+  @@map("course_section")
+}
+
+model Lesson {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  courseSectionId String? @map("course_section_id")
+  title String
+  type LessonType @default(text) @map("type")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  courseSection CourseSection? @relation(fields: [courseSectionId], references: [id], onDelete: SetNull)
+
+  @@index([courseSectionId], map: "idx_lesson_course_section_id")
+  @@map("lesson")
+}
+
+model Assignment {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  title String
+  description String? @db.Text
+  dueAt DateTime? @map("due_at")
+  allowResubmission Boolean @default(false) @map("allow_resubmission")
+  isPublished Boolean @default(false) @map("is_published")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("assignment")
+}
+
+model CourseChannel {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  type CourseChannelType @default(general) @map("type")
+  postingMode CourseChannelPostingMode @default(mixed) @map("posting_mode")
+  isFrozen Boolean @default(false) @map("is_frozen")
+  frozenAt DateTime? @map("frozen_at")
+  frozenByUserId String? @map("frozen_by_user_id")
+  freezeReason String? @map("freeze_reason")
+  name String?
+  isManual Boolean @default(false) @map("is_manual")
+  systemKey String? @map("system_key")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  visibility CourseVisibility @default(public) @map("visibility")
+  @@map("course_channel")
+}
+
+model CourseChannelMember {
+  id String @id @default(cuid())
+  channelId String @map("channel_id")
+  courseMemberId String @map("course_member_id")
+  status CourseChannelMemberStatus @default(invited) @map("status")
+  invitedAt DateTime? @map("invited_at")
+  joinedAt DateTime? @map("joined_at")
+  declinedAt DateTime? @map("declined_at")
+  lastReadMessageId String? @map("last_read_message_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("course_channel_member")
+}
+
+model CourseThread {
+  id String @id @default(cuid())
+  channelId String @map("channel_id")
+  rootMessageId String? @unique @map("root_message_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  type CourseThreadType @default(message_thread) @map("type")
+  @@map("course_thread")
+}
+
+model CourseThreadReadState {
+  id String @id @default(cuid())
+  threadId String @map("thread_id")
+  courseMemberId String @map("course_member_id")
+  lastReadMessageId String? @map("last_read_message_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("course_thread_read_state")
+}
+
+model CourseMessage {
+  id String @id @default(cuid())
+  channelId String @map("channel_id")
+  threadId String? @map("thread_id")
+  authorCourseMemberId String? @map("author_course_member_id")
+  text String
+  isEmergency Boolean @default(false) @map("is_emergency")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("course_message")
+}
+
+model CourseMessageAttachment {
+  id String @id @default(cuid())
+  courseMessageId String @map("course_message_id")
+  type String
+  storageKey String @map("storage_key")
+  fileName String @map("file_name")
+  mimeType String @map("mime_type")
+  size Int
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("course_message_attachment")
+}
+
+model CourseNotificationPreference {
+  id String @id @default(cuid())
+  courseMemberId String @unique @map("course_member_id")
+  announcementNormalEnabled Boolean @default(true) @map("announcement_normal_enabled")
+  submissionEnabled Boolean @default(true) @map("submission_enabled")
+  submissionCommentEnabled Boolean @default(true) @map("submission_comment_enabled")
+  threadReplyEnabled Boolean @default(true) @map("thread_reply_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("course_notification_preference")
+}
+
+model CourseChannelNotificationPreference {
+  id String @id @default(cuid())
+  courseMemberId String @map("course_member_id")
+  channelId String @map("channel_id")
+  muted Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("course_channel_notification_preference")
+}
+
+model CourseEnrollment {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  userId String @map("user_id")
+  status CourseEnrollmentStatus @default(applied) @map("status")
+  source PaymentProvider @map("source")
+  grantedAt DateTime? @map("granted_at")
+  revokedAt DateTime? @map("revoked_at")
+  paidAt DateTime? @map("paid_at")
+  paymentId String? @map("payment_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@unique([courseId, userId])
+  @@map("course_enrollment")
+}
+
+model Payment {
+  id String @id @default(cuid())
+  providerRef String? @unique @map("provider_ref")
+  userId String @map("user_id")
+  courseId String? @map("course_id")
+  amount Int
+  currency String
+  paidAt DateTime? @map("paid_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  provider PaymentProvider @map("provider")
+  status PaymentStatus @default(pending) @map("status")
+  @@map("payment")
+}
+
+model Refund {
+  id String @id @default(cuid())
+  paymentId String @map("payment_id")
+  providerRef String? @unique @map("provider_ref")
+  amount Int
+  status RefundStatus @default(pending) @map("status")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("refund")
+}
+
+model Coupon {
+  id String @id @default(cuid())
+  code String @unique
+  discountType CouponDiscountType @map("discount_type")
+  discountValue Int @map("discount_value")
+  currency String?
+  expiresAt DateTime? @map("expires_at")
+  usageLimit Int? @map("usage_limit")
+  usedCount Int @map("used_count")
+  isActive Boolean @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("coupon")
+}
+
+model CouponRedemption {
+  id String @id @default(cuid())
+  couponId String @map("coupon_id")
+  userId String @map("user_id")
+  courseId String? @map("course_id")
+  paymentId String? @map("payment_id")
+  redeemedAt DateTime @default(now()) @map("redeemed_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("coupon_redemption")
+}
+
+model AuditEvent {
+  id String @id @default(cuid())
+  occurredAt DateTime @default(now()) @map("occurred_at")
+  actorUserId String @map("actor_user_id")
+  eventType AuditEventType @map("event_type")
+  actorGlobalRole GlobalRole @map("actor_global_role")
+  courseId String? @map("course_id")
+  channelId String? @map("channel_id")
+  messageId String? @map("message_id")
+  reason String
+  metaJson Json? @map("meta_json")
+  requestId String? @map("request_id")
+  ipHash String? @map("ip_hash")
+  userAgentHash String? @map("user_agent_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("audit_event")
+}
+
+model Order {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  courseId String @map("course_id")
+  amount Int
+  currency String
+  status OrderStatus
+  paymentProvider String @map("payment_provider")
+  paymentIntentId String? @map("payment_intent_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("order")
+}
+
+model OAuthIdentity {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  provider String
+  providerUserId String @map("provider_user_id")
+  email String?
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("o_auth_identity")
+}
+
+model PasswordCredential {
+  id String @id @default(cuid())
+  userId String @unique @map("user_id")
+  passwordHash String @map("password_hash")
+  algorithm String
+  passwordUpdatedAt DateTime @map("password_updated_at")
+  isDisabled Boolean @default(false) @map("is_disabled")
+  failedCount Int @map("failed_count")
+  lastFailedAt DateTime? @map("last_failed_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("password_credential")
+}
+
+model FileObject {
+  id String @id @default(cuid())
+  storageKey String @unique @map("storage_key")
+  bucket String
+  fileName String @map("file_name")
+  mimeType String @map("mime_type")
+  size Int
+  checksum String?
+  isScanned Boolean @default(false) @map("is_scanned")
+  isMalicious Boolean @default(false) @map("is_malicious")
+  createdByUserId String? @map("created_by_user_id")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("file_object")
+}
+
+model Submission {
+  id String @id @default(cuid())
+  assignmentId String @map("assignment_id")
+  courseId String @map("course_id")
+  userId String @map("user_id")
+  threadId String @map("thread_id")
+  submittedAt DateTime @default(now()) @map("submitted_at")
+  status SubmissionStatus
+  gradedAt DateTime? @map("graded_at")
+  @@map("submission")
+}
+
+model UserProfile {
+  id String @id @default(cuid())
+  userId String @unique @map("user_id")
+  displayName String @map("display_name")
+  avatarFileObjectId String? @map("avatar_file_object_id")
+  bio String?
+  isPublic Boolean @default(true) @map("is_public")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("user_profile")
+}
+
+model GradingComment {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  threadId String @map("thread_id")
+  authorUserId String @map("author_user_id")
+  targetUserId String @map("target_user_id")
+  body String @db.Text
+  score Int?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("grading_comment")
+}
+
+/// 通知（システム通知・プッシュ通知の永続化）
+model Notification {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  type NotificationType @map("type")
+  title String? @map("title")
+  body String? @map("body")
+  linkUrl String? @map("link_url")
+  dataJson String? @map("data_json")
+  readAt DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notification")
+}
+
+/// ユーザー通知設定
+model UserNotificationSetting {
+  id String @id @default(cuid())
+  userId String @unique @map("user_id")
+  emailEnabled Boolean @default(true) @map("email_enabled")
+  pushEnabled Boolean @default(true) @map("push_enabled")
+  threadReplyEnabled Boolean @default(true) @map("thread_reply_enabled")
+  submissionCommentEnabled Boolean @default(true) @map("submission_comment_enabled")
+  gradingCompletedEnabled Boolean @default(true) @map("grading_completed_enabled")
+  liveReservedEnabled Boolean @default(true) @map("live_reserved_enabled")
+  adminAnnouncementEnabled Boolean @default(true) @map("admin_announcement_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@map("user_notification_setting")
+}
+
+/// アンケート定義
+model Survey {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  title String? @map("title")
+  description String? @map("description")
+  isActive Boolean @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([courseId])
+  @@map("survey")
+}
+
+/// アンケート設問
+model SurveyQuestion {
+  id String @id @default(cuid())
+  surveyId String @map("survey_id")
+  type SurveyQuestionType @map("type")
+  prompt String @map("prompt")
+  isRequired Boolean @default(false) @map("is_required")
+  order Int @default(0) @map("order")
+  minValue Int? @map("min_value")
+  maxValue Int? @map("max_value")
+  stepValue Int? @map("step_value")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([surveyId, order])
+  @@map("survey_question")
+}
+
+/// アンケート選択肢
+model SurveyOption {
+  id String @id @default(cuid())
+  questionId String @map("question_id")
+  label String @map("label")
+  value String? @map("value")
+  order Int @default(0) @map("order")
+  
+  @@index([questionId, order])
+  @@map("survey_option")
+}
+
+/// アンケート回答セット
+model SurveyResponse {
+  id String @id @default(cuid())
+  surveyId String @map("survey_id")
+  userId String @map("user_id")
+  submittedAt DateTime @default(now()) @map("submitted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@unique([surveyId, userId])
+  @@index([surveyId, submittedAt])
+  @@map("survey_response")
+}
+
+/// アンケート回答値
+model SurveyAnswer {
+  id String @id @default(cuid())
+  responseId String @map("response_id")
+  questionId String @map("question_id")
+  valueText String? @map("value_text")
+  valueNumber Int? @map("value_number")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@unique([responseId, questionId])
+  @@map("survey_answer")
+}
+
+/// アンケート複数選択回答
+model SurveyAnswerOption {
+  id String @id @default(cuid())
+  answerId String @map("answer_id")
+  optionId String @map("option_id")
+  
+  @@unique([answerId, optionId])
+  @@map("survey_answer_option")
+}
