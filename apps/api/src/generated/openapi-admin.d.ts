@@ -68,8 +68,15 @@ export interface paths {
      */
     get: operations["API_ADMIN_09"];
     /**
-     * ユーザー作成（受講者/講師）
-     * @description 運営による受講者/講師の代理登録。globalRoleはlearnerまたはinstructorのみ指定可能。operator/root_operatorの登録は /api/v1/admin/operators 経由で行う。
+     * ユーザー招待（受講者/講師）
+     * @description メールアドレスで受講者または講師を招待する。Keycloakにユーザーを作成し、
+     * パスワード設定リンク付き招待メールを送信。globalRoleをlearnerまたはinstructorに設定。
+     * operator/root_operatorの登録は /api/v1/admin/operators 経由で行う。
+     * 招待されたユーザーはauth.adapt-co.io（Keycloak）でパスワード設定後、
+     * プロフィール設定画面へ誘導されログイン可能となる。
+     * 招待フローは運営スタッフ招待（API-ADMIN-16）と同一方式。
+     * 招待メール送信元はTBD（adapt API または Keycloak）。監査ログ対象。
+     * UI: ADM-UI-03（受講者一覧）/ ADM-UI-05（講師一覧）のモーダルダイアログから呼び出す。
      */
     post: operations["API_ADMIN_10"];
   };
@@ -106,8 +113,12 @@ export interface paths {
      */
     get: operations["API_ADMIN_15"];
     /**
-     * 運営スタッフ追加
-     * @description 既存ユーザーのglobalRoleをoperator/root_operatorに変更し、運営スタッフとして登録。監査ログ対象。
+     * 運営スタッフ招待
+     * @description メールアドレスで運営スタッフを招待する。Keycloakにユーザーを作成し、
+     * パスワード設定リンク付き招待メールを送信。globalRoleをoperator/root_operatorに設定。
+     * learner/instructorからの昇格ではなく、新規の運営スタッフ専用アカウントを作成する。
+     * 招待されたユーザーはauth.adapt-co.io（Keycloak）でパスワード設定を行いログイン可能となる。
+     * 招待メール送信元はTBD（adapt API または Keycloak）。監査ログ対象。
      */
     post: operations["API_ADMIN_16"];
   };
@@ -163,9 +174,18 @@ export interface components {
       updatedAt: string;
       globalRole: components["schemas"]["GlobalRole"];
     };
-    UserCreateRequest: {
-      /** Format: email */
+    /**
+     * @description メールアドレスによる受講者/講師招待リクエスト。
+     * Keycloakにユーザーを作成し、パスワード設定リンク付き招待メールを送信する。
+     * 招待フローは運営スタッフ招待（OperatorInviteRequest）と同一方式。
+     */
+    UserInviteRequest: {
+      /**
+       * Format: email
+       * @description 招待先メールアドレス
+       */
       email: string;
+      /** @description 招待するユーザーの表示名 */
       name: string;
       /**
        * @description 受講者(learner)または講師(instructor)のみ指定可能。operator/root_operatorは /operators 経由。
@@ -214,9 +234,18 @@ export interface components {
       items: components["schemas"]["OperatorAdminView"][];
       meta?: components["schemas"]["ListMeta"];
     };
-    OperatorCreateRequest: {
-      /** @description 運営スタッフに昇格させる既存ユーザーのID */
-      userId: string;
+    /**
+     * @description メールアドレスによる運営スタッフ招待リクエスト。
+     * 既存ユーザーからの昇格ではなく、新規の運営スタッフアカウントを作成する。
+     */
+    OperatorInviteRequest: {
+      /**
+       * Format: email
+       * @description 招待先メールアドレス
+       */
+      email: string;
+      /** @description 招待するスタッフの表示名 */
+      name: string;
       /**
        * @description operator または root_operator
        * @enum {string}
@@ -596,20 +625,27 @@ export interface operations {
     };
   };
   /**
-   * ユーザー作成（受講者/講師）
-   * @description 運営による受講者/講師の代理登録。globalRoleはlearnerまたはinstructorのみ指定可能。operator/root_operatorの登録は /api/v1/admin/operators 経由で行う。
+   * ユーザー招待（受講者/講師）
+   * @description メールアドレスで受講者または講師を招待する。Keycloakにユーザーを作成し、
+   * パスワード設定リンク付き招待メールを送信。globalRoleをlearnerまたはinstructorに設定。
+   * operator/root_operatorの登録は /api/v1/admin/operators 経由で行う。
+   * 招待されたユーザーはauth.adapt-co.io（Keycloak）でパスワード設定後、
+   * プロフィール設定画面へ誘導されログイン可能となる。
+   * 招待フローは運営スタッフ招待（API-ADMIN-16）と同一方式。
+   * 招待メール送信元はTBD（adapt API または Keycloak）。監査ログ対象。
+   * UI: ADM-UI-03（受講者一覧）/ ADM-UI-05（講師一覧）のモーダルダイアログから呼び出す。
    */
   API_ADMIN_10: {
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UserCreateRequest"];
+        "application/json": components["schemas"]["UserInviteRequest"];
       };
     };
     responses: {
-      /** @description Created */
+      /** @description Created（招待成功・Keycloakユーザー作成済み） */
       201: {
         content: {
-          "application/json": components["schemas"]["User"];
+          "application/json": components["schemas"]["UserAdminView"];
         };
       };
       /** @description Bad Request */
@@ -618,7 +654,7 @@ export interface operations {
           "application/json": components["schemas"]["ErrorResponse"];
         };
       };
-      /** @description Conflict (email重複) */
+      /** @description Conflict（メールアドレス重複） */
       409: {
         content: {
           "application/json": components["schemas"]["ErrorResponse"];
@@ -750,24 +786,28 @@ export interface operations {
     };
   };
   /**
-   * 運営スタッフ追加
-   * @description 既存ユーザーのglobalRoleをoperator/root_operatorに変更し、運営スタッフとして登録。監査ログ対象。
+   * 運営スタッフ招待
+   * @description メールアドレスで運営スタッフを招待する。Keycloakにユーザーを作成し、
+   * パスワード設定リンク付き招待メールを送信。globalRoleをoperator/root_operatorに設定。
+   * learner/instructorからの昇格ではなく、新規の運営スタッフ専用アカウントを作成する。
+   * 招待されたユーザーはauth.adapt-co.io（Keycloak）でパスワード設定を行いログイン可能となる。
+   * 招待メール送信元はTBD（adapt API または Keycloak）。監査ログ対象。
    */
   API_ADMIN_16: {
     requestBody: {
       content: {
-        "application/json": components["schemas"]["OperatorCreateRequest"];
+        "application/json": components["schemas"]["OperatorInviteRequest"];
       };
     };
     responses: {
-      /** @description OK */
+      /** @description Created（招待成功・Keycloakユーザー作成済み） */
       201: {
         content: {
           "application/json": components["schemas"]["OperatorAdminView"];
         };
       };
-      /** @description Not Found（対象ユーザーが存在しない） */
-      404: {
+      /** @description Conflict（メールアドレス重複） */
+      409: {
         content: {
           "application/json": components["schemas"]["ErrorResponse"];
         };

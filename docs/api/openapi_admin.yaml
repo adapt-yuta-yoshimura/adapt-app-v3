@@ -299,9 +299,16 @@ paths:
     post:
       tags:
       - Admin-User
-      summary: ユーザー作成（受講者/講師）
-      description: 運営による受講者/講師の代理登録。globalRoleはlearnerまたはinstructorのみ指定可能。operator/root_operatorの登録は /api/v1/admin/operators
-        経由で行う。
+      summary: ユーザー招待（受講者/講師）
+      description: |
+        メールアドレスで受講者または講師を招待する。Keycloakにユーザーを作成し、
+        パスワード設定リンク付き招待メールを送信。globalRoleをlearnerまたはinstructorに設定。
+        operator/root_operatorの登録は /api/v1/admin/operators 経由で行う。
+        招待されたユーザーはauth.adapt-co.io（Keycloak）でパスワード設定後、
+        プロフィール設定画面へ誘導されログイン可能となる。
+        招待フローは運営スタッフ招待（API-ADMIN-16）と同一方式。
+        招待メール送信元はTBD（adapt API または Keycloak）。監査ログ対象。
+        UI: ADM-UI-03（受講者一覧）/ ADM-UI-05（講師一覧）のモーダルダイアログから呼び出す。
       operationId: API_ADMIN_10
       x-api-id: API-ADMIN-10
       x-roles: operator, root_operator
@@ -311,14 +318,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserCreateRequest'
+              $ref: '#/components/schemas/UserInviteRequest'
       responses:
         '201':
-          description: Created
+          description: Created（招待成功・Keycloakユーザー作成済み）
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserAdminView'
         '400':
           description: Bad Request
           content:
@@ -326,7 +333,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Conflict (email重複)
+          description: Conflict（メールアドレス重複）
           content:
             application/json:
               schema:
@@ -490,8 +497,13 @@ paths:
     post:
       tags:
       - Admin-Operator
-      summary: 運営スタッフ追加
-      description: 既存ユーザーのglobalRoleをoperator/root_operatorに変更し、運営スタッフとして登録。監査ログ対象。
+      summary: 運営スタッフ招待
+      description: |
+        メールアドレスで運営スタッフを招待する。Keycloakにユーザーを作成し、
+        パスワード設定リンク付き招待メールを送信。globalRoleをoperator/root_operatorに設定。
+        learner/instructorからの昇格ではなく、新規の運営スタッフ専用アカウントを作成する。
+        招待されたユーザーはauth.adapt-co.io（Keycloak）でパスワード設定を行いログイン可能となる。
+        招待メール送信元はTBD（adapt API または Keycloak）。監査ログ対象。
       operationId: API_ADMIN_16
       x-api-id: API-ADMIN-16
       x-roles: root_operator
@@ -501,16 +513,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OperatorCreateRequest'
+              $ref: '#/components/schemas/OperatorInviteRequest'
       responses:
         '201':
-          description: OK
+          description: Created（招待成功・Keycloakユーザー作成済み）
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OperatorAdminView'
-        '404':
-          description: Not Found（対象ユーザーが存在しない）
+        '409':
+          description: Conflict（メールアドレス重複）
           content:
             application/json:
               schema:
@@ -706,14 +718,20 @@ components:
       - createdAt
       - updatedAt
       - globalRole
-    UserCreateRequest:
+    UserInviteRequest:
       type: object
+      description: |
+        メールアドレスによる受講者/講師招待リクエスト。
+        Keycloakにユーザーを作成し、パスワード設定リンク付き招待メールを送信する。
+        招待フローは運営スタッフ招待（OperatorInviteRequest）と同一方式。
       properties:
         email:
           type: string
           format: email
+          description: 招待先メールアドレス
         name:
           type: string
+          description: 招待するユーザーの表示名
         globalRole:
           type: string
           enum:
@@ -813,19 +831,27 @@ components:
           $ref: '#/components/schemas/ListMeta'
       required:
       - items
-    OperatorCreateRequest:
+    OperatorInviteRequest:
       type: object
+      description: |
+        メールアドレスによる運営スタッフ招待リクエスト。
+        既存ユーザーからの昇格ではなく、新規の運営スタッフアカウントを作成する。
       properties:
-        userId:
+        email:
           type: string
-          description: 運営スタッフに昇格させる既存ユーザーのID
+          format: email
+          description: 招待先メールアドレス
+        name:
+          type: string
+          description: 招待するスタッフの表示名
         globalRole:
           type: string
           enum: *id001
           description: operator または root_operator
       additionalProperties: false
       required:
-      - userId
+      - email
+      - name
       - globalRole
     OperatorUpdateRequest:
       type: object
