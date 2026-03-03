@@ -6,7 +6,7 @@ info:
     - **権限**: operator または root_operator のみ\n- **エンドポイント数**: 20個\n- **基本設計書**: 06_API一覧 完全準拠（100%）\n\n## 機能グループ\n\n### コース管理\n\
     - コース一覧・検索\n- コース代理作成・編集・削除\n- コース承認（審査）\n- コース凍結・凍結解除\n- 監査ログ閲覧\n\n### ユーザー・講師管理\n- ユーザー一覧・検索\n- ユーザー作成（受講者/講師）\n- ユーザー編集\n\
     - ユーザー論理削除\n- ユーザー凍結・凍結解除\n\n### チャンネル管理\n- チャンネル凍結・凍結解除\n- 不正コンテンツ対応\n\n### 決済管理\n- 決済一覧\n\n### 運営スタッフ管理\n- 運営スタッフ一覧\n\
-    - 運営スタッフ追加（globalRole変更）\n- 運営スタッフ編集（ロール変更）\n- 運営スタッフ削除（論理削除）\n- 権限管理（operator/root_operator）\n\n## 認証・認可\n\n### 認証方式\n\
+    - 運営スタッフ招待（メール招待）\n- 運営スタッフ編集（ロール変更）\n- 運営スタッフ削除（論理削除）\n- 権限管理（operator/root_operator）\n\n## 認証・認可\n\n### 認証方式\n\
     - **OIDC**: auth.adapt-co.ioでの認証\n- **Bearer Token**: JWTトークンをAuthorizationヘッダーに設定\n- **全エンドポイント**: 認証必須\n\n### ロール階層\n\
     - `root_operator`: すべての権限（DM閲覧、緊急凍結等）\n- `operator`: 通常の運営権限\n\n### x-roles 拡張プロパティ\n```yaml\nx-roles:\n  - operator \
     \ # operator以上（root_operatorにも可）\n  \nx-roles:\n  - root_operator      # root_operator のみ\n```\n\n## 監査ログ\n\n### 自動記録\n\
