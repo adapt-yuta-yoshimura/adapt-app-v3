@@ -261,9 +261,20 @@ export interface components {
       approvedAt?: string | null;
       approvedByUserId?: string | null;
     };
+    /**
+     * @description コーススタイル。
+     * - one_on_one: 1対1
+     * - seminar: セミナー
+     * - bootcamp: ブートキャンプ
+     * - lecture: 将来用（現時点では作成不可）
+     *
+     * @enum {string}
+     */
+    CourseStyle: "one_on_one" | "seminar" | "bootcamp" | "lecture";
     AdminCourseCreateRequest: {
       title: string;
       description?: string;
+      style: components["schemas"]["CourseStyle"];
       /** @description このコースのオーナー講師（必須）。初期CourseMemberロールはinstructorとして仮与。公開（publish）時にinstructor_ownerへ昇格する。 */
       ownerUserId: string;
       /** @enum {string} */
@@ -303,7 +314,11 @@ export interface components {
     PaymentSummaryView: {
       id: string;
       userId: string;
+      /** @description 決済ユーザーの表示名 */
+      userName: string;
       courseId?: string | null;
+      /** @description 決済対象講座のタイトル（courseIdがnullの場合null） */
+      courseTitle?: string | null;
       amount: number;
       currency: string;
       status: string;

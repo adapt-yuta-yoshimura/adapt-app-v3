@@ -1030,9 +1030,16 @@ components:
           type: string
         userId:
           type: string
+        userName:
+          type: string
+          description: 決済ユーザーの表示名
         courseId:
           type: string
           nullable: true
+        courseTitle:
+          type: string
+          nullable: true
+          description: 決済対象講座のタイトル（courseIdがnullの場合null）
         amount:
           type: integer
         currency:
@@ -1052,6 +1059,7 @@ components:
       required:
       - id
       - userId
+      - userName
       - amount
       - currency
       - status
