@@ -28,7 +28,8 @@ export type CourseCatalogVisibility =
 /** CourseVisibility enum（SoT: schema.prisma） */
 export type CourseVisibility = 'public' | 'instructors_only';
 
-/** Course（SoT: openapi_admin.yaml - Course schema） */
+/** Course（SoT: openapi_admin.yaml - Course schema）
+ * 一覧APIは style を返さないため、一覧用は CourseListItemView を使用 */
 export type CourseAdminView = {
   id: string;
   title: string;
@@ -36,7 +37,7 @@ export type CourseAdminView = {
   ownerUserId: string;
   createdByUserId: string;
   status: CourseStatus;
-  style: CourseStyle;
+  style?: CourseStyle;
   catalogVisibility: CourseCatalogVisibility;
   visibility: CourseVisibility;
   isFrozen: boolean;
@@ -89,6 +90,19 @@ export type SuccessResponse = {
   message?: string;
 };
 
+/** API-ADMIN-08 監査閲覧レスポンス（GenericDetailView） */
+export type CourseAuditView = {
+  course: CourseAdminView;
+  auditEvents: Array<{
+    id: string;
+    occurredAt: string;
+    actorUserId: string;
+    eventType: string;
+    reason: string;
+    metaJson: unknown;
+  }>;
+};
+
 // ---------------------------------------------------------------------------
 // API 定数
 // ---------------------------------------------------------------------------
@@ -108,12 +122,20 @@ export async function fetchCourseList(params?: {
   page?: number;
   perPage?: number;
   status?: string;
+  style?: string;
+  q?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }): Promise<CourseListResponse> {
   const search = new URLSearchParams();
   if (params?.page !== undefined) search.set('page', String(params.page));
   if (params?.perPage !== undefined)
     search.set('perPage', String(params.perPage));
   if (params?.status) search.set('status', params.status);
+  if (params?.style) search.set('style', params.style);
+  if (params?.q) search.set('q', params.q);
+  if (params?.sortBy) search.set('sortBy', params.sortBy);
+  if (params?.sortOrder) search.set('sortOrder', params.sortOrder);
   const q = search.toString();
   return adminApiFetch<CourseListResponse>(
     `${COURSES_BASE}${q ? `?${q}` : ''}`,
@@ -202,11 +224,10 @@ export async function unfreezeCourse(
 /**
  * API-ADMIN-08: [監査]凍結講座閲覧
  * GET /api/v1/admin/audit/courses/{courseId}
+ * 閲覧時に frozen_course_viewed が記録される
  */
 export async function fetchCourseAudit(
   courseId: string,
-): Promise<Record<string, unknown>> {
-  return adminApiFetch<Record<string, unknown>>(
-    `${AUDIT_BASE}/${courseId}`,
-  );
+): Promise<CourseAuditView> {
+  return adminApiFetch<CourseAuditView>(`${AUDIT_BASE}/${courseId}`);
 }

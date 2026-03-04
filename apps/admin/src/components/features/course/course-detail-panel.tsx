@@ -42,7 +42,11 @@ export function CourseDetailPanel({ course }: CourseDetailPanelProps) {
         <div className="flex items-center gap-2">
           <dt className="w-32 text-sm text-textSecondary">スタイル</dt>
           <dd>
-            <CourseStyleBadge style={course.style} />
+            {course.style != null ? (
+              <CourseStyleBadge style={course.style} />
+            ) : (
+              <span className="text-textTertiary">—</span>
+            )}
           </dd>
         </div>
 

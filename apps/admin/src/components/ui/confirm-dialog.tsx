@@ -15,6 +15,8 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   variant?: 'default' | 'danger';
   onConfirm: () => void | Promise<void>;
+  /** 説明とボタンの間に表示する任意の内容（例: 凍結理由入力） */
+  children?: React.ReactNode;
 }
 
 export function ConfirmDialog({
@@ -26,6 +28,7 @@ export function ConfirmDialog({
   cancelLabel = 'キャンセル',
   variant = 'default',
   onConfirm,
+  children,
 }: ConfirmDialogProps) {
   const [loading, setLoading] = React.useState(false);
 
@@ -60,6 +63,7 @@ export function ConfirmDialog({
         {description && (
           <p className="mt-2 text-sm text-textSecondary">{description}</p>
         )}
+        {children && <div className="mt-4">{children}</div>}
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"

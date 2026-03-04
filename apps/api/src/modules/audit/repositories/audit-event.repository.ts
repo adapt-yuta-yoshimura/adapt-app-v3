@@ -54,9 +54,40 @@ export class AuditEventRepository {
    * コース関連の監査イベント一覧を取得
    *
    * @param courseId - コースID
+   * @returns 発生時刻の降順
    */
-  async findByCourseId(courseId: string): Promise<unknown[]> {
-    // TODO(TBD): Cursor実装
-    throw new Error('Not implemented');
+  async findByCourseId(courseId: string): Promise<
+    {
+      id: string;
+      occurredAt: Date;
+      actorUserId: string;
+      eventType: AuditEventType;
+      actorGlobalRole: GlobalRole;
+      reason: string;
+      courseId: string | null;
+      channelId: string | null;
+      messageId: string | null;
+      metaJson: unknown;
+      createdAt: Date;
+    }[]
+  > {
+    const events = await this.prisma.auditEvent.findMany({
+      where: { courseId },
+      orderBy: { occurredAt: 'desc' },
+      take: 500,
+    });
+    return events.map((e) => ({
+      id: e.id,
+      occurredAt: e.occurredAt,
+      actorUserId: e.actorUserId,
+      eventType: e.eventType,
+      actorGlobalRole: e.actorGlobalRole,
+      reason: e.reason,
+      courseId: e.courseId,
+      channelId: e.channelId,
+      messageId: e.messageId,
+      metaJson: e.metaJson,
+      createdAt: e.createdAt,
+    }));
   }
 }

@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../common/guards/auth.guard';
@@ -14,9 +15,13 @@ import { Roles } from '../../../common/guards/roles.decorator';
 import { CurrentUser } from '../../../common/guards/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/auth/jwt.types';
 import { AdminCourseUseCase } from '../usecases/admin-course.usecase';
-
-// TODO(TBD): pnpm generate:types 実行後、以下の型を openapi-admin 生成型に置換
-// import type { paths } from '@adapt/types/openapi-admin';
+import type {
+  CourseListResponse,
+  CourseResponse,
+  SuccessResponse,
+} from '../usecases/admin-course.usecase';
+import type { CourseStatus, CourseStyle } from '@prisma/client';
+import type { GlobalRole } from '@prisma/client';
 
 /**
  * 講座管理コントローラ（Admin）
@@ -36,10 +41,25 @@ export class AdminCourseController {
    */
   @Get()
   @Roles('operator', 'root_operator')
-  async listCourses(@CurrentUser() user: AuthenticatedUser): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.listCourses
-    // Response: CourseListResponse（items: Course[], meta: ListMeta）
-    throw new Error('Not implemented');
+  async listCourses(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page') page?: string,
+    @Query('perPage') perPage?: string,
+    @Query('status') status?: CourseStatus,
+    @Query('style') style?: CourseStyle,
+    @Query('q') titleSearch?: string,
+    @Query('sortBy') sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'status',
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ): Promise<CourseListResponse> {
+    return this.usecase.listCourses({
+      page: page !== undefined ? Number(page) : undefined,
+      perPage: perPage !== undefined ? Number(perPage) : undefined,
+      status,
+      style,
+      titleSearch,
+      sortBy,
+      sortOrder,
+    });
   }
 
   /**
@@ -52,13 +72,28 @@ export class AdminCourseController {
   @Roles('operator', 'root_operator')
   async createCourse(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: unknown,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.createCourse
-    // Request: AdminCourseCreateRequest（title, style, ownerUserId, description?, catalogVisibility?, visibility?）
-    // Response: 201 Course / 400 / 401 / 403
-    // 処理: ownerUserId=指定講師、status=draft、承認免除
-    throw new Error('Not implemented');
+    @Body()
+    body: {
+      title: string;
+      style: CourseStyle;
+      ownerUserId: string;
+      description?: string;
+      catalogVisibility?: string;
+      visibility?: string;
+    },
+  ): Promise<CourseResponse> {
+    return this.usecase.createCourse(
+      user.userId,
+      user.globalRole as GlobalRole,
+      {
+        title: body.title,
+        style: body.style,
+        ownerUserId: body.ownerUserId,
+        description: body.description ?? null,
+        catalogVisibility: body.catalogVisibility as 'public_listed' | 'public_unlisted' | 'private' | undefined,
+        visibility: body.visibility as 'public' | 'instructors_only' | undefined,
+      },
+    );
   }
 
   /**
@@ -72,12 +107,27 @@ export class AdminCourseController {
   async updateCourse(
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
-    @Body() body: unknown,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.updateCourse
-    // Request: AdminCourseUpdateRequest（title?, description?, catalogVisibility?, visibility?, ownerUserId?）
-    // Response: 200 CourseDetailView / 404
-    throw new Error('Not implemented');
+    @Body()
+    body: {
+      title?: string;
+      description?: string;
+      ownerUserId?: string;
+      catalogVisibility?: string;
+      visibility?: string;
+    },
+  ): Promise<CourseResponse> {
+    return this.usecase.updateCourse(
+      user.userId,
+      user.globalRole as GlobalRole,
+      courseId,
+      {
+        title: body.title,
+        description: body.description !== undefined ? body.description : undefined,
+        ownerUserId: body.ownerUserId,
+        catalogVisibility: body.catalogVisibility as 'public_listed' | 'public_unlisted' | 'private' | undefined,
+        visibility: body.visibility as 'public' | 'instructors_only' | undefined,
+      },
+    );
   }
 
   /**
@@ -91,11 +141,12 @@ export class AdminCourseController {
   async deleteCourse(
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.deleteCourse
-    // Response: 200 SuccessResponse / 404
-    // 処理: status=archived に変更（論理削除）
-    throw new Error('Not implemented');
+  ): Promise<SuccessResponse> {
+    return this.usecase.deleteCourse(
+      user.userId,
+      user.globalRole as GlobalRole,
+      courseId,
+    );
   }
 
   /**
@@ -109,13 +160,13 @@ export class AdminCourseController {
   async approveCourse(
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
-    @Body() body: unknown,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.approveCourse
-    // Request: GenericWriteRequest
-    // Response: 201 CourseDetailView
-    // 処理: status → active、LP公開
-    throw new Error('Not implemented');
+    @Body() _body: Record<string, unknown>,
+  ): Promise<CourseResponse> {
+    return this.usecase.approveCourse(
+      user.userId,
+      user.globalRole as GlobalRole,
+      courseId,
+    );
   }
 
   /**
@@ -129,31 +180,29 @@ export class AdminCourseController {
   async freezeCourse(
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
-    @Body() body: unknown,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.freezeCourse
-    // Request: GenericWriteRequest
-    // Response: 201 CourseDetailView
-    // 処理: isFrozen=true、全更新APIを423 Locked
-    throw new Error('Not implemented');
+    @Body() body: { reason?: string },
+  ): Promise<CourseResponse> {
+    return this.usecase.freezeCourse(
+      user.userId,
+      user.globalRole as GlobalRole,
+      courseId,
+      body,
+    );
   }
 
   /**
    * API-ADMIN-07: コース凍結解除（運営）
    * POST /api/v1/admin/courses/{courseId}/unfreeze
-   * x-roles: root_operator
+   * x-roles: root_operator のみ
+   * x-policy: '-'
    */
   @Post(':courseId/unfreeze')
   @Roles('root_operator')
   async unfreezeCourse(
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
-    @Body() body: unknown,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.unfreezeCourse
-    // Request: GenericWriteRequest
-    // Response: 201 CourseDetailView
-    // x-roles: root_operator のみ
-    throw new Error('Not implemented');
+    @Body() _body: Record<string, unknown>,
+  ): Promise<CourseResponse> {
+    return this.usecase.unfreezeCourse(user.userId, courseId);
   }
 }

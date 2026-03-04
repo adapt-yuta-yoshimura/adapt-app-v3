@@ -5,6 +5,8 @@ import { Roles } from '../../../common/guards/roles.decorator';
 import { CurrentUser } from '../../../common/guards/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/auth/jwt.types';
 import { AdminCourseUseCase } from '../usecases/admin-course.usecase';
+import type { GenericDetailView } from '../usecases/admin-course.usecase';
+import type { GlobalRole } from '@prisma/client';
 
 /**
  * 監査コントローラ（Admin）
@@ -30,10 +32,11 @@ export class AdminAuditController {
   async auditCourse(
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminCourseUseCase.auditCourse
-    // Response: GenericDetailView
-    // 処理: 凍結中の秘匿コンテンツ精査、閲覧ログ強制記録
-    throw new Error('Not implemented');
+  ): Promise<GenericDetailView> {
+    return this.usecase.auditCourse(
+      user.userId,
+      user.globalRole as GlobalRole,
+      courseId,
+    );
   }
 }

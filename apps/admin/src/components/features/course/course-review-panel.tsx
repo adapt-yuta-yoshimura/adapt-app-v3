@@ -40,6 +40,7 @@ export function CourseReviewPanel({
   const [confirmAction, setConfirmAction] = React.useState<
     'approve' | 'freeze' | 'unfreeze' | 'delete' | null
   >(null);
+  const [freezeReason, setFreezeReason] = React.useState('');
 
   const invalidateAndRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['admin', 'courses'] });
@@ -53,8 +54,8 @@ export function CourseReviewPanel({
           await approveCourse(courseId);
           break;
         case 'freeze':
-          // TODO(TBD): Cursor実装 - 凍結理由の入力UI
-          await freezeCourse(courseId);
+          await freezeCourse(courseId, freezeReason.trim() || undefined);
+          setFreezeReason('');
           break;
         case 'unfreeze':
           await unfreezeCourse(courseId);
@@ -164,13 +165,36 @@ export function CourseReviewPanel({
         <ConfirmDialog
           open={!!confirmAction}
           onOpenChange={(open) => {
-            if (!open) setConfirmAction(null);
+            if (!open) {
+              setConfirmAction(null);
+              setFreezeReason('');
+            }
           }}
           title={confirmConfig[confirmAction].title}
           description={confirmConfig[confirmAction].description}
           confirmLabel={confirmConfig[confirmAction].confirmLabel}
           variant={confirmConfig[confirmAction].variant}
           onConfirm={handleConfirm}
+          children={
+            confirmAction === 'freeze' ? (
+              <div>
+                <label
+                  htmlFor="freeze-reason"
+                  className="block text-sm font-medium text-textSecondary"
+                >
+                  理由（任意）
+                </label>
+                <textarea
+                  id="freeze-reason"
+                  rows={2}
+                  value={freezeReason}
+                  onChange={(e) => setFreezeReason(e.target.value)}
+                  placeholder="凍結理由を入力..."
+                  className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+            ) : undefined
+          }
         />
       )}
     </div>

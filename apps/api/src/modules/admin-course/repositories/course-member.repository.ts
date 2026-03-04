@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { CourseMember } from '@prisma/client';
+import { CourseMemberRole } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 
 /**
@@ -14,10 +16,14 @@ export class CourseMemberRepository {
   async create(params: {
     courseId: string;
     userId: string;
-    role: string;
-  }): Promise<unknown> {
-    // TODO(TBD): Cursor実装
-    // - CourseMember 作成（@@unique([courseId, userId]) 制約あり）
-    throw new Error('Not implemented');
+    role: CourseMemberRole;
+  }): Promise<CourseMember> {
+    return this.prisma.courseMember.create({
+      data: {
+        courseId: params.courseId,
+        userId: params.userId,
+        role: params.role,
+      },
+    });
   }
 }

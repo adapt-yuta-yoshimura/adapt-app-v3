@@ -15,18 +15,25 @@
 import * as React from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { fetchCourseList } from '@/lib/admin-courses-api';
+import { fetchCourseList, fetchCourseAudit } from '@/lib/admin-courses-api';
 import { CourseDetailPanel } from '@/components/features/course/course-detail-panel';
 import { CourseReviewPanel } from '@/components/features/course/course-review-panel';
 
 export default function CourseDetailPage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params?.courseId as string | undefined;
+  const [showAudit, setShowAudit] = React.useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'courses', { page: 1, perPage: 100 }],
     queryFn: () => fetchCourseList({ page: 1, perPage: 100 }),
     enabled: !!courseId,
+  });
+
+  const { data: auditData, isLoading: auditLoading } = useQuery({
+    queryKey: ['admin', 'courses', 'audit', courseId],
+    queryFn: () => fetchCourseAudit(courseId!),
+    enabled: !!courseId && showAudit,
   });
 
   const course = data?.items.find((c) => c.id === courseId) ?? null;
@@ -63,6 +70,48 @@ export default function CourseDetailPage() {
 
       <CourseDetailPanel course={course} />
       <CourseReviewPanel course={course} courseId={courseId!} />
+
+      {/* 監査ログ（API-ADMIN-08 閲覧時に記録される） */}
+      <div className="rounded-lg border border-border bg-card p-6">
+        <h2 className="mb-4 text-lg font-semibold text-text">監査ログ</h2>
+        {!showAudit && (
+          <>
+            <p className="text-sm text-textSecondary">
+              監査ログを表示すると、閲覧が記録されます。
+            </p>
+            <button
+              className="mt-2 rounded-md border border-border px-4 py-2 text-sm hover:bg-bg"
+              onClick={() => setShowAudit(true)}
+            >
+              監査ログを表示
+            </button>
+          </>
+        )}
+        {showAudit && auditLoading && (
+          <p className="text-sm text-textMuted">読み込み中...</p>
+        )}
+        {showAudit && !auditLoading && auditData && (
+          <div className="space-y-2">
+            {auditData.auditEvents.length === 0 ? (
+              <p className="text-sm text-textMuted">イベントはありません</p>
+            ) : (
+              <ul className="divide-y divide-border text-sm">
+                {auditData.auditEvents.map((ev) => (
+                  <li key={ev.id} className="py-2">
+                    <span className="text-textTertiary">
+                      {new Date(ev.occurredAt).toLocaleString('ja-JP')}
+                    </span>
+                    {' — '}
+                    <span className="font-medium">{ev.eventType}</span>
+                    {' — '}
+                    <span className="text-textSecondary">{ev.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

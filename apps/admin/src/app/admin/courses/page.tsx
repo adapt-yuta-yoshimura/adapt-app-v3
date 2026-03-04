@@ -26,24 +26,30 @@ import { CatalogVisibilityBadge } from '@/components/features/course/catalog-vis
 export default function CoursesPage() {
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
+  const [styleFilter, setStyleFilter] = React.useState('');
   const [page, setPage] = React.useState(1);
   const [sortKey, setSortKey] = React.useState('createdAt');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'courses', { page, status: statusFilter }],
+    queryKey: [
+      'admin',
+      'courses',
+      { page, status: statusFilter, style: styleFilter, q: search, sortKey, sortOrder },
+    ],
     queryFn: () =>
       fetchCourseList({
         page,
         perPage: 20,
         status: statusFilter || undefined,
+        style: styleFilter || undefined,
+        q: search.trim() || undefined,
+        sortBy: sortKey,
+        sortOrder,
       }),
   });
 
-  // TODO(TBD): Cursor実装
-  // - クライアント側ソート
-  // - 検索フィルタリング
-
+  // ソートは API に委譲（sortKey / sortOrder を queryKey に含め済み）
   const handleSort = (key: string) => {
     if (sortKey === key) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -77,7 +83,12 @@ export default function CoursesPage() {
       key: 'style',
       label: 'スタイル',
       sortKey: 'style',
-      render: (row) => <CourseStyleBadge style={row.style} />,
+      render: (row) =>
+        row.style != null ? (
+          <CourseStyleBadge style={row.style} />
+        ) : (
+          <span className="text-textTertiary">—</span>
+        ),
     },
     {
       key: 'catalogVisibility',
@@ -115,25 +126,34 @@ export default function CoursesPage() {
       </div>
 
       <FilterBar
-        search={search}
-        onSearchChange={setSearch}
         searchPlaceholder="講座名で検索..."
-        filters={[
-          {
-            key: 'status',
-            label: 'ステータス',
-            value: statusFilter,
-            onChange: setStatusFilter,
-            options: [
-              { value: '', label: 'すべて' },
-              { value: 'draft', label: '下書き' },
-              { value: 'pending_approval', label: '承認待ち' },
-              { value: 'active', label: '運用中' },
-              { value: 'archived', label: 'アーカイブ' },
-            ],
-          },
+        searchValue={search}
+        onSearchChange={setSearch}
+        filterLabel="ステータス"
+        filterValue={statusFilter}
+        onFilterChange={setStatusFilter}
+        filterOptions={[
+          { value: '', label: 'すべて' },
+          { value: 'draft', label: '下書き' },
+          { value: 'pending_approval', label: '承認待ち' },
+          { value: 'active', label: '運用中' },
+          { value: 'archived', label: 'アーカイブ' },
         ]}
       />
+      <div className="mb-4 flex items-center gap-4">
+        <label className="text-sm text-textSecondary">スタイル</label>
+        <select
+          value={styleFilter}
+          onChange={(e) => setStyleFilter(e.target.value)}
+          className="rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none"
+        >
+          <option value="">すべて</option>
+          <option value="one_on_one">1対1</option>
+          <option value="seminar">セミナー</option>
+          <option value="bootcamp">ブートキャンプ</option>
+          <option value="lecture">レクチャー</option>
+        </select>
+      </div>
 
       <AdminTable<CourseAdminView>
         columns={columns}
