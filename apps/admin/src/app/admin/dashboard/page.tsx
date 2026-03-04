@@ -3,15 +3,19 @@
  *
  * - Path: /admin/dashboard
  * - ロール: operator, root_operator
+ * - Figma: https://www.figma.com/design/3nAHGGhB2dsyuMvYlrilWT/adapt-design-sot?node-id=8352-3
  *
- * ADMIN-01チケット参照
+ * ADMIN-01チケット
+ *
+ * API:
+ * - API-ADMIN-22: GET /api/v1/admin/dashboard/kpi
+ * - API-ADMIN-23: GET /api/v1/admin/dashboard/revenue-chart
+ * - API-ADMIN-24: GET /api/v1/admin/dashboard/activities
+ * - API-ADMIN-01: GET /api/v1/admin/courses (status=pending_approval)
  */
+
+import { DashboardClient } from './dashboard-client';
+
 export default function DashboardPage() {
-  // TODO(TBD): Cursor実装 - ダッシュボード画面
-  return (
-    <div>
-      <h1>ダッシュボード</h1>
-      {/* TODO(TBD): Cursor実装 */}
-    </div>
-  );
+  return <DashboardClient />;
 }

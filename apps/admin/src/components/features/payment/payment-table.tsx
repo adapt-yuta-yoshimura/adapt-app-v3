@@ -95,8 +95,17 @@ export function PaymentTable({
       render: (row) => <ProviderBadge provider={row.provider} />,
     },
     {
+      key: 'paidAt',
+      label: '決済日',
+      sortKey: 'paidAt',
+      render: (row) =>
+        row.paidAt
+          ? new Date(row.paidAt).toLocaleDateString('ja-JP')
+          : '-',
+    },
+    {
       key: 'createdAt',
-      label: '日時',
+      label: '作成日',
       sortKey: 'createdAt',
       render: (row) =>
         new Date(row.createdAt).toLocaleDateString('ja-JP'),

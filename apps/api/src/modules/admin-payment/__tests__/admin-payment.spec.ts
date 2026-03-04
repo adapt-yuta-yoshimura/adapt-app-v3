@@ -1,13 +1,43 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Payment } from '@prisma/client';
 import { AdminPaymentUseCase } from '../usecases/admin-payment.usecase';
 import { PaymentRepository } from '../repositories/payment.repository';
 
 /**
- * ADMIN-05: 決済管理 UseCase テスト骨格
+ * ADMIN-05: 決済管理 UseCase テスト
  *
  * SoT: openapi_admin.yaml - API-ADMIN-19
  * SoT: schema.prisma - Payment, PaymentStatus, PaymentProvider
  */
+
+const mockPaymentWithCourse: Payment = {
+  id: 'pay-1',
+  providerRef: 'ref-1',
+  userId: 'user-1',
+  courseId: 'course-1',
+  amount: 10000,
+  currency: 'jpy',
+  paidAt: new Date('2025-02-01T12:00:00Z'),
+  createdAt: new Date('2025-01-15T10:00:00Z'),
+  updatedAt: new Date('2025-01-15T10:00:00Z'),
+  provider: 'stripe',
+  status: 'succeeded',
+};
+
+const mockPaymentWithoutCourse: Payment = {
+  id: 'pay-2',
+  providerRef: null,
+  userId: 'user-2',
+  courseId: null,
+  amount: 5000,
+  currency: 'jpy',
+  paidAt: null,
+  createdAt: new Date('2025-01-10T08:00:00Z'),
+  updatedAt: new Date('2025-01-10T08:00:00Z'),
+  provider: 'manual',
+  status: 'pending',
+};
+
 describe('AdminPaymentUseCase', () => {
   let useCase: AdminPaymentUseCase;
   let paymentRepo: {
@@ -24,73 +54,166 @@ describe('AdminPaymentUseCase', () => {
     );
   });
 
-  // =========================================================================
-  // [API-ADMIN-19] GET /api/v1/admin/payments
-  // x-roles: operator, root_operator
-  // x-policy: -（監査ログ記録なし）
-  // =========================================================================
   describe('listPayments', () => {
     it('operator → 200: PaymentListResponse を返す', async () => {
-      // TODO(TBD): Cursor実装
-      // - paymentRepo.findManyWithRelations() モック設定
-      // - items: PaymentSummaryView[] + meta: ListMeta の構造を検証
-      expect(true).toBe(true);
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [mockPaymentWithCourse],
+        totalCount: 1,
+        userMap: { 'user-1': 'User One' },
+        courseMap: { 'course-1': 'Course Alpha' },
+      });
+
+      const result = await useCase.listPayments('operator-user-id', {
+        page: 1,
+        perPage: 20,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe('pay-1');
+      expect(result.items[0].userId).toBe('user-1');
+      expect(result.items[0].userName).toBe('User One');
+      expect(result.items[0].courseId).toBe('course-1');
+      expect(result.items[0].courseTitle).toBe('Course Alpha');
+      expect(result.items[0].amount).toBe(10000);
+      expect(result.items[0].currency).toBe('jpy');
+      expect(result.items[0].status).toBe('succeeded');
+      expect(result.items[0].provider).toBe('stripe');
+      expect(result.meta).toEqual({
+        totalCount: 1,
+        page: 1,
+        perPage: 20,
+        totalPages: 1,
+      });
+      expect(paymentRepo.findManyWithRelations).toHaveBeenCalledWith({
+        page: 1,
+        perPage: 20,
+      });
     });
 
     it('root_operator → 200: PaymentListResponse を返す', async () => {
-      // TODO(TBD): Cursor実装
-      expect(true).toBe(true);
-    });
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [mockPaymentWithCourse],
+        totalCount: 1,
+        userMap: { 'user-1': 'User One' },
+        courseMap: { 'course-1': 'Course Alpha' },
+      });
 
-    it('未認証 → 401（Controllerレベルで処理）', async () => {
-      // TODO(TBD): Cursor実装 - E2Eテストまたはコントローラテストで実施
-      expect(true).toBe(true);
+      const result = await useCase.listPayments('root-operator-user-id');
+
+      expect(result.items).toHaveLength(1);
+      expect(result.meta.totalCount).toBe(1);
     });
 
     it('items に userName（required）が含まれること', async () => {
-      // TODO(TBD): Cursor実装
-      // - User.name → PaymentSummaryView.userName のマッピング検証
-      expect(true).toBe(true);
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [mockPaymentWithCourse],
+        totalCount: 1,
+        userMap: { 'user-1': 'User One' },
+        courseMap: { 'course-1': 'Course Alpha' },
+      });
+
+      const result = await useCase.listPayments('actor-id');
+
+      expect(result.items[0].userName).toBe('User One');
     });
 
     it('items に courseTitle（nullable）が含まれること', async () => {
-      // TODO(TBD): Cursor実装
-      // - Course.title → PaymentSummaryView.courseTitle のマッピング検証
-      expect(true).toBe(true);
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [mockPaymentWithCourse],
+        totalCount: 1,
+        userMap: { 'user-1': 'User One' },
+        courseMap: { 'course-1': 'Course Alpha' },
+      });
+
+      const result = await useCase.listPayments('actor-id');
+
+      expect(result.items[0].courseTitle).toBe('Course Alpha');
     });
 
     it('courseId が null の場合 courseTitle も null', async () => {
-      // TODO(TBD): Cursor実装
-      // - courseId: null のPaymentの場合、courseTitle も null であることを検証
-      expect(true).toBe(true);
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [mockPaymentWithoutCourse],
+        totalCount: 1,
+        userMap: { 'user-2': 'User Two' },
+        courseMap: {},
+      });
+
+      const result = await useCase.listPayments('actor-id');
+
+      expect(result.items[0].courseId).toBeNull();
+      expect(result.items[0].courseTitle).toBeNull();
     });
 
     it('ページネーション: meta に totalCount, page, perPage, totalPages が含まれる', async () => {
-      // TODO(TBD): Cursor実装
-      // - meta: { totalCount, page, perPage, totalPages } の構造検証
-      expect(true).toBe(true);
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [],
+        totalCount: 50,
+        userMap: {},
+        courseMap: {},
+      });
+
+      const result = await useCase.listPayments('actor-id', {
+        page: 2,
+        perPage: 10,
+      });
+
+      expect(result.meta).toEqual({
+        totalCount: 50,
+        page: 2,
+        perPage: 10,
+        totalPages: 5,
+      });
     });
 
-    it('status フィルター: succeeded のみ返す', async () => {
-      // TODO(TBD): Cursor実装
-      // - query.status = 'succeeded' を指定した場合の動作検証
-      expect(true).toBe(true);
+    it('status フィルター: succeeded を渡すと repo に渡される', async () => {
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [mockPaymentWithCourse],
+        totalCount: 1,
+        userMap: { 'user-1': 'User One' },
+        courseMap: { 'course-1': 'Course Alpha' },
+      });
+
+      await useCase.listPayments('actor-id', { status: 'succeeded' });
+
+      expect(paymentRepo.findManyWithRelations).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'succeeded' }),
+      );
     });
 
-    it('status フィルター: 全ステータス対応（pending, succeeded, failed, canceled, refunded）', async () => {
-      // TODO(TBD): Cursor実装
-      expect(true).toBe(true);
-    });
+    it('ソート: sortBy / sortOrder を repo に渡す', async () => {
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [],
+        totalCount: 0,
+        userMap: {},
+        courseMap: {},
+      });
 
-    it('ソート: createdAt desc がデフォルト', async () => {
-      // TODO(TBD): Cursor実装
-      expect(true).toBe(true);
+      await useCase.listPayments('actor-id', {
+        sortBy: 'amount',
+        sortOrder: 'desc',
+      });
+
+      expect(paymentRepo.findManyWithRelations).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sortBy: 'amount',
+          sortOrder: 'desc',
+        }),
+      );
     });
 
     it('空一覧のとき items が空配列', async () => {
-      // TODO(TBD): Cursor実装
-      // - paymentRepo.findManyWithRelations() が空結果を返す場合
-      expect(true).toBe(true);
+      paymentRepo.findManyWithRelations.mockResolvedValue({
+        items: [],
+        totalCount: 0,
+        userMap: {},
+        courseMap: {},
+      });
+
+      const result = await useCase.listPayments('actor-id');
+
+      expect(result.items).toEqual([]);
+      expect(result.meta.totalCount).toBe(0);
+      expect(result.meta.totalPages).toBe(1);
     });
   });
 });
