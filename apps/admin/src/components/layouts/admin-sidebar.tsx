@@ -4,144 +4,71 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  BookOpen,
   Users,
-  MessageSquare,
-  CreditCard,
+  GraduationCap,
   Key,
-  ClipboardList,
-  LogOut,
+  BookOpen,
+  CreditCard,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { cn } from '@adapt/ui';
-import { GlobalRole } from '@adapt/shared';
 
-import { useAdminAuth } from '@/hooks/use-admin-auth';
+type GlobalRole = 'operator' | 'root_operator';
 
-/**
- * ナビ項目（§2-A-1 / Figma デザイン準拠）
- * 幅 240px、背景 #1E1E2D、テキスト #A2A3B7、アクティブ #4F46E5
- */
-interface NavItemConfig {
+const NAV_ITEMS: {
   href: string;
   label: string;
-  icon: LucideIcon;
-  roles: readonly GlobalRole[];
-}
-
-interface NavGroup {
-  group: string;
-  items: NavItemConfig[];
-}
-
-const adminNavGroups: NavGroup[] = [
-  {
-    group: 'メイン',
-    items: [
-      {
-        href: '/dashboard',
-        label: 'ダッシュボード',
-        icon: LayoutDashboard,
-        roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR],
-      },
-    ],
-  },
-  {
-    group: '管理',
-    items: [
-      { href: '/users', label: 'ユーザー管理', icon: Users, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
-      { href: '/courses', label: 'コース管理', icon: BookOpen, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
-      { href: '/payments', label: '決済管理', icon: CreditCard, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
-      { href: '/channels', label: 'チャンネル管理', icon: MessageSquare, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
-    ],
-  },
-  {
-    group: 'システム',
-    items: [
-      { href: '/operators', label: '運営スタッフ', icon: Key, roles: [GlobalRole.ROOT_OPERATOR] },
-      { href: '/audit', label: '監査ログ', icon: ClipboardList, roles: [GlobalRole.OPERATOR, GlobalRole.ROOT_OPERATOR] },
-    ],
-  },
+  icon: React.ComponentType<{ className?: string }>;
+  roles: GlobalRole[];
+}[] = [
+  { href: '/admin/dashboard', label: 'ダッシュボード', icon: LayoutDashboard, roles: ['operator', 'root_operator'] },
+  { href: '/admin/learners', label: '受講者管理', icon: Users, roles: ['operator', 'root_operator'] },
+  { href: '/admin/instructors', label: '講師管理', icon: GraduationCap, roles: ['operator', 'root_operator'] },
+  { href: '/admin/operators', label: '運営スタッフ', icon: Key, roles: ['root_operator'] },
+  { href: '/admin/courses', label: '講座管理', icon: BookOpen, roles: ['operator', 'root_operator'] },
+  { href: '/admin/finance/overview', label: '売上・決済', icon: CreditCard, roles: ['operator', 'root_operator'] },
 ];
 
-const CURRENT_ADMIN_ROLE: GlobalRole = GlobalRole.ROOT_OPERATOR;
-
-function canShowItem(roles: readonly GlobalRole[]): boolean {
-  return roles.includes(CURRENT_ADMIN_ROLE);
+interface AdminSidebarProps {
+  globalRole: GlobalRole | null;
 }
 
-export function AdminSidebar(): React.ReactNode {
+export function AdminSidebar({ globalRole }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { logout } = useAdminAuth();
+
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => globalRole && item.roles.includes(globalRole)
+  );
 
   return (
     <aside
-      className="fixed left-0 top-0 z-40 flex h-screen w-sidebar flex-col bg-sidebar-bg"
-      role="navigation"
+      className="fixed left-0 top-0 z-30 h-screen w-[240px] flex-shrink-0 bg-sidebar text-white"
       aria-label="管理メニュー"
     >
-      <div className="flex h-header shrink-0 items-center border-b border-white/10 px-6">
-        <Link
-          href="/dashboard"
-          className="text-heading font-bold text-white transition-colors hover:opacity-90"
-        >
-          adapt
-        </Link>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto p-4">
-        <ul className="space-y-6">
-          {adminNavGroups.map(({ group, items }) => {
-            const visibleItems = items.filter((item) => canShowItem(item.roles));
-            if (visibleItems.length === 0) return null;
-
+      <div className="flex h-full flex-col">
+        <div className="flex h-14 items-center border-b border-white/10 px-4">
+          <Link href="/admin/dashboard" className="font-semibold text-white">
+            adapt Admin
+          </Link>
+        </div>
+        <nav className="flex-1 space-y-0.5 p-2">
+          {visibleItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const Icon = item.icon;
             return (
-              <li key={group}>
-                <p
-                  className="mb-2 px-3 text-nav-group font-bold uppercase tracking-wider text-sidebar-text"
-                  aria-hidden
-                >
-                  {group}
-                </p>
-                <ul className="space-y-0.5">
-                  {visibleItems.map((item) => {
-                    const isActive =
-                      pathname === item.href || pathname.startsWith(`${item.href}/`);
-                    const Icon = item.icon;
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={cn(
-                            'flex items-center gap-3 rounded-input px-3 py-2.5 text-body-sm font-medium transition-colors',
-                            isActive
-                              ? 'bg-sidebar-active text-white'
-                              : 'text-sidebar-text hover:bg-white/5 hover:text-white',
-                          )}
-                          aria-current={isActive ? 'page' : undefined}
-                        >
-                          <Icon className="h-5 w-5 shrink-0" aria-hidden />
-                          {item.label}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </li>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  isActive
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {item.label}
+              </Link>
             );
           })}
-        </ul>
-      </nav>
-
-      <div className="shrink-0 border-t border-white/10 p-4">
-        <button
-          type="button"
-          onClick={() => void logout()}
-          className="flex w-full items-center gap-3 rounded-input px-3 py-2.5 text-body-sm font-medium text-sidebar-text transition-colors hover:bg-white/5 hover:text-white"
-        >
-          <LogOut className="h-5 w-5 shrink-0" aria-hidden />
-          ログアウト
-        </button>
+        </nav>
       </div>
     </aside>
   );

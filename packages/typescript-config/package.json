@@ -2,5 +2,5 @@
   "name": "@adapt/typescript-config",
   "version": "0.0.0",
   "private": true,
-  "files": ["base.json", "nextjs.json", "nest.json", "node.json"]
+  "files": ["base.json", "nextjs.json"]
 }

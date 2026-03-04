@@ -1,28 +1,21 @@
 import { Module } from '@nestjs/common';
-
-import { PrismaService } from './common/prisma/prisma.service';
-import { AuthModule } from './modules/auth/auth.module';
-import { UserModule } from './modules/user/user.module';
-import { CourseModule } from './modules/course/course.module';
-import { LessonModule } from './modules/lesson/lesson.module';
-import { AssignmentModule } from './modules/assignment/assignment.module';
-import { SubmissionModule } from './modules/submission/submission.module';
-import { ChatModule } from './modules/chat/chat.module';
-import { PaymentModule } from './modules/payment/payment.module';
-import { AdminModule } from './modules/admin/admin.module';
+import { PrismaModule } from './common/prisma/prisma.module';
+import { AuthModule } from './common/auth/auth.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { AdminUserModule } from './modules/admin-user/admin-user.module';
+import { AdminOperatorModule } from './modules/admin-operator/admin-operator.module';
+import { AdminCourseModule } from './modules/admin-course/admin-course.module';
+import { AdminPaymentModule } from './modules/admin-payment/admin-payment.module';
 
 @Module({
   imports: [
+    PrismaModule,
     AuthModule,
-    UserModule,
-    CourseModule,
-    LessonModule,
-    AssignmentModule,
-    SubmissionModule,
-    ChatModule,
-    PaymentModule,
-    AdminModule,
+    AuditModule,
+    AdminUserModule,
+    AdminOperatorModule,
+    AdminCourseModule,
+    AdminPaymentModule,
   ],
-  providers: [PrismaService],
 })
 export class AppModule {}

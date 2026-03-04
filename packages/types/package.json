@@ -1,10 +1,13 @@
 {
   "name": "@adapt/types",
-  "version": "1.0.0",
+  "version": "0.0.0",
+  "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "scripts": {
+    "generate": "openapi-typescript ../../docs/api/openapi_app.yaml -o src/openapi-app.d.ts && openapi-typescript ../../docs/api/openapi_admin.yaml -o src/openapi-admin.d.ts"
+  },
   "devDependencies": {
-    "@adapt/typescript-config": "workspace:*",
-    "typescript": "^5.3.3"
+    "openapi-typescript": "^6.7.0"
   }
 }

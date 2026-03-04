@@ -1,1 +1,28 @@
-{"extends":"@adapt/typescript-config/nest.json","compilerOptions":{"rootDir":"src","outDir":"dist","baseUrl":".","paths":{"@/*":["src/*"]},"types":["node"]},"include":["src/**/*.ts"],"exclude":["node_modules","dist","test"]}
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2022",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@adapt/types/*": ["../../packages/types/src/*"],
+      "@adapt/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

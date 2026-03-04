@@ -1,12 +1,29 @@
 {
-  "extends": "@adapt/typescript-config/nextjs.json",
+  "extends": "../../packages/typescript-config/nextjs.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@adapt/types/*": [
+        "../../packages/types/src/*"
+      ],
+      "@adapt/shared/*": [
+        "../../packages/shared/src/*"
+      ],
+      "@adapt/ui/*": [
+        "../../packages/ui/src/*"
+      ]
     },
-    "plugins": [{ "name": "next" }]
+    "isolatedModules": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
