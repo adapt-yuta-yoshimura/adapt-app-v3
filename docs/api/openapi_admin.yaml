@@ -1207,3 +1207,6 @@ components:
       - user_updated
       - user_deleted
       - operator_role_changed
+      - course_updated
+      - course_archived
+      - frozen_course_viewed

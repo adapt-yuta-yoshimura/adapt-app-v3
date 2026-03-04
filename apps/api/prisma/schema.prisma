@@ -146,6 +146,9 @@ enum AuditEventType {
   user_updated // ユーザー情報更新（運営による代理編集）
   user_deleted // ユーザー論理削除（運営による代理削除）
   operator_role_changed // 運営スタッフロール変更（operator⇔root_operator）
+  course_updated // 講座代理編集（運営）
+  course_archived // 講座削除=archived（運営）
+  frozen_course_viewed // 凍結講座の監査閲覧（強制記録）
 }
 
 /// 受講ステータス（受講権限）
