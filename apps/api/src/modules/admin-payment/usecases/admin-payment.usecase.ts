@@ -15,12 +15,19 @@ export class AdminPaymentUseCase {
    * - DB: Payment + User（userName結合）+ Course（courseTitle結合）
    * - PaymentSummaryView にマッピング
    */
-  async listPayments(): Promise<unknown> {
+  async listPayments(query?: {
+    page?: number;
+    perPage?: number;
+    status?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  }): Promise<unknown> {
     // TODO(TBD): Cursor実装
-    // - paymentRepo.findManyWithRelations() で決済一覧取得
+    // - paymentRepo.findManyWithRelations(query) で決済一覧取得
     // - User.name → userName、Course.title → courseTitle を結合
     // - PaymentSummaryView 形式に変換
-    // - ページネーション（ListMeta）
+    // - ページネーション（ListMeta: totalCount, page, perPage, totalPages）
+    // - courseId が null の場合 courseTitle も null
     throw new Error('Not implemented');
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../../common/guards/auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/guards/roles.decorator';
@@ -28,10 +28,19 @@ export class AdminPaymentController {
    */
   @Get()
   @Roles('operator', 'root_operator')
-  async listPayments(@CurrentUser() user: AuthenticatedUser): Promise<unknown> {
+  async listPayments(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page') pageStr?: string,
+    @Query('perPage') perPageStr?: string,
+    @Query('status') status?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+  ): Promise<unknown> {
     // TODO(TBD): Cursor実装 - AdminPaymentUseCase.listPayments
     // Response: PaymentListResponse（items: PaymentSummaryView[], meta: ListMeta）
     // PaymentSummaryView: id, userId, userName, courseId?, courseTitle?, amount, currency, status, provider, paidAt?, createdAt
+    const page = pageStr ? parseInt(pageStr, 10) : undefined;
+    const perPage = perPageStr ? parseInt(perPageStr, 10) : undefined;
     throw new Error('Not implemented');
   }
 }

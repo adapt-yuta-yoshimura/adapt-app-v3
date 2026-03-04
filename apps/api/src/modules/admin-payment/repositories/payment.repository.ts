@@ -19,10 +19,15 @@ export class PaymentRepository {
     provider?: string;
     page?: number;
     perPage?: number;
+    sortBy?: string;
+    sortOrder?: string;
   }): Promise<unknown> {
     // TODO(TBD): Cursor実装
     // - Payment + User（userId → userName）+ Course（courseId → courseTitle）を結合
     // - フィルタ: status, provider
+    // - ソート: sortBy（amount, createdAt, status 等）、sortOrder（asc/desc）
+    // - ページネーション: page, perPage
+    // - 戻り値: { items: PaymentWithRelations[], totalCount: number }
     throw new Error('Not implemented');
   }
 }
