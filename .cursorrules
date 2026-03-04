@@ -584,13 +584,13 @@ describe('API-xxx: [エンドポイント名]', () => {
 ```typescript
 describe('CourseUseCase', () => {
   let usecase: CourseUseCase;
-  let repository: jest.Mocked<CourseRepository>;
+  let repository: MockedObject<CourseRepository>; // vi.mocked() 使用
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
         CourseUseCase,
-        { provide: CourseRepository, useValue: createMock() },
+        { provide: CourseRepository, useValue: vi.mocked(createMock()) },
       ],
     }).compile();
 
@@ -714,3 +714,138 @@ Cursor は **「正しく書く」役割であり、
 「決める」役割ではありません。**
 
 決めるのは常に SoT です。
+
+---
+
+## 19. Frontend（Admin）実装指針
+
+### 19.1 Admin App の位置づけ
+
+- **配置**: `apps/admin/`（Next.js 15 App Router / ポート: 3001）
+- **ドメイン**: admin.adapt-co.io
+- **対象API**: openapi_admin.yaml（`@adapt/types/openapi-admin` から型参照）
+- **対象ロール**: operator, root_operator のみ
+
+### 19.2 UI基盤
+
+- **スタイリング**: Tailwind CSS + shadcn/ui（inline styles は使用しない）
+- **フォント**: Noto Sans JP
+- **アイコン**: lucide-react
+
+### 19.3 共通レイアウト
+
+Admin画面は全画面共通の `AdminLayout` を使用する。
+
+- サイドバー: 幅240px、背景 #0F172A（ダークネイビー）、固定配置
+- ヘッダー: 高さ56px、白背景、パンくず + アバター
+- コンテンツ: padding 24px、背景 #F8FAFC
+- サイドバーのナビゲーション項目とactive状態は SoT 07_画面一覧 の admin ドメインに準拠
+
+### 19.4 カラートークン（確定）
+
+Tailwind のカスタムカラーとして定義する。値の変更は禁止。
+
+```
+sidebar: #0F172A         accent: #3B82F6
+bg: #F8FAFC              card: #FFFFFF
+border: #E2E8F0          text: #0F172A
+textSecondary: #334155   textTertiary: #64748B
+textMuted: #94A3B8       success: #16A34A
+error: #DC2626           warning: #D97706
+```
+
+### 19.5 共通UIパターン
+
+- テーブル: shadcn/ui Table + ヘッダークリックソート + ページネーション
+- バッジ: 各SoT Enum値に対応した色分け（CourseStatus / PaymentStatus / GlobalRole 等）
+- フィルター: テーブル上部のフィルターバー（検索 + ステータスセレクト）
+- モーダル: shadcn/ui Dialog（招待・確認ダイアログ等）
+- フォーム: shadcn/ui Form + React Hook Form + Zod バリデーション
+
+### 19.6 Admin側の状態管理
+
+- Server Component: データ取得・ページレンダリング
+- Client Component: テーブル操作（ソート・フィルター・ページネーション）、フォーム
+- 状態管理: TanStack Query（API呼び出し） + useState（UI状態）
+- useEffect + fetch は禁止（§11.5 準拠）
+
+### 19.7 API クライアント
+
+```typescript
+// ✅ OpenAPI生成型を使用した型安全なAPIクライアント
+import type { paths } from '@adapt/types/openapi-admin';
+
+type CourseListResponse =
+  paths['/api/v1/admin/courses']['get']['responses']['200']['content']['application/json'];
+```
+
+Admin側のAPIクライアントは `openapi-admin` から型を取得する。
+`openapi-app` の型を Admin で使用してはならない。
+
+---
+
+## 20. Figma設計 → 実装変換ルール
+
+### 20.1 Figma設計の位置づけ
+
+Figma上の画面設計は **UIの視覚仕様** である。
+SoTではないが、実装時の画面構成・表示項目・操作フローの参照元として使用する。
+
+### 20.2 参照方法
+
+- 各チケット（ADM-UI-xx.md 等）に **Figma画面のURL** を記載する
+- Cursorは **Figma MCP（Dev Mode MCP Server）** 経由で画面を取得・参照する
+- batch JSXファイルはリポジトリに配置しない（Figmaが唯一のUI参照元）
+
+### 20.3 変換方針
+
+| Figma設計 | 実装（Next.js） |
+|---|---|
+| Figma上のスタイル定義 | Tailwind CSS ユーティリティクラス |
+| Figma上のアイコン | lucide-react |
+| Figma上のUIコンポーネント | shadcn/ui コンポーネント |
+| Figma上の画面遷移 | Next.js App Router ページ遷移 |
+| Figma上のダミーデータ | TanStack Query + Admin API |
+| Figma上の固定サイズ | レスポンシブ対応（min-width: 1024px） |
+
+### 20.4 変換時の優先順位
+
+1. **SoT**（OpenAPI / Prisma / Excel）が最優先
+2. **Figma設計**はUI構成・表示項目の参照
+3. SoTとFigma設計の間に矛盾がある場合は **SoTを採用しFigma側を修正対象として報告**
+
+### 20.5 変換禁止事項
+
+- Figma設計に存在するがSoTに無いフィールドを実装してはならない
+- Figma設計上のEnum値がSoTに無い場合は即停止
+- Figma MCPが利用できない場合は実装を停止し報告すること
+
+---
+
+## 21. Admin画面 ↔ API マッピング参照
+
+### 21.1 参照元
+
+画面とAPIの対応関係は以下の2箇所から確認する：
+
+1. **SoT: 07_画面一覧**（adapt_基本設計_最終版.xlsx）→ screen_id, description
+2. **SoT: openapi_admin.yaml** → x-api-id, description 内のUI参照記述
+
+### 21.2 確認フロー
+
+各画面の実装開始前に、以下を必ず確認する：
+
+1. 07_画面一覧で対象の `screen_id`（ADM-UI-xx）を特定
+2. openapi_admin.yaml で対応する API エンドポイント（API-ADMIN-xx）を特定
+3. x-roles と x-policy を確認
+4. Request / Response スキーマを確認
+5. Figma設計の該当画面と表示項目が一致するか照合
+
+### 21.3 画面実装時にAPIが未定義の場合
+
+SoT（openapi_admin.yaml）にAPIが存在しない画面は実装してはならない。
+§3（実装の前提条件）に従い、TODO(TBD) を記載して停止すること。
+
+現時点で該当する画面：
+- ADM-UI-15（システム設定）→ API未定義
+- ADM-UI-16（監査ログ）→ API未定義

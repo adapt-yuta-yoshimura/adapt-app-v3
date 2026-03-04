@@ -1,0 +1,92 @@
+---
+description: チケット実装時の共通フロー・完了判定・停止条件
+globs: ["apps/**", "packages/**"]
+---
+
+# チケット実装 共通ルール
+
+## 実装フロー（全チケット共通）
+
+チケットを受け取ったら、以下の順序で作業すること。
+
+### Step 1: SoT確認
+
+1. チケットの API一覧 を確認
+2. 対応する OpenAPI yaml で該当APIの定義を確認
+   - x-api-id, x-roles, x-policy
+   - Request / Response スキーマ
+3. schema.prisma で DB参照テーブルを確認
+4. チケットに Figma URL があれば Figma MCP で画面構成を確認
+5. SoTとチケットの記載に矛盾がないか確認
+   - 矛盾がある場合 → SoTを優先し、チケットの矛盾箇所を報告
+
+### Step 2: Backend実装
+
+1. Claude Codeが生成した枠（TODO(TBD)）を確認
+2. Repository: Prismaクエリを実装
+   - schema.prisma のモデル定義に準拠
+   - Prisma Modelを直接返さず、必要な型変換を行う
+3. UseCase: ビジネスロジックを実装
+   - 権限チェック（.cursorrules §9.3 のパターンに準拠）
+   - 凍結チェック（x-policy に応じて）
+   - AUDIT_LOG 対象操作の監査ログ記録
+   - Repository経由でデータ取得・更新
+4. Controller: UseCase呼び出しを実装
+   - OpenAPI生成型でレスポンスの型安全性を確保
+5. テスト: 正常系 + 異常系
+   - Vitest使用（.cursorrules §13 準拠・vi.mocked()）
+   - 権限NG / 404 / 409 / 凍結423 のテスト
+
+### Step 3: Frontend実装
+
+1. Figma MCP でチケットのFigma URLから画面デザインを取得
+2. ページコンポーネント作成（App Router）
+3. 変換ルール（.cursorrules §20 準拠）:
+   - Figmaのスタイル → Tailwind CSS
+   - Figmaのアイコン → lucide-react
+   - FigmaのUIコンポーネント → shadcn/ui
+   - Figmaのダミーデータ → TanStack Query + API呼び出し
+4. API呼び出し:
+   - TanStack Query
+   - 型: @adapt/types の OpenAPI生成型から取得
+5. 状態管理:
+   - Server Component: データ取得
+   - Client Component: テーブル操作・フォーム
+   - useEffect + fetch は禁止
+
+### Step 4: 受け入れ基準チェック
+
+チケット末尾の受け入れ基準をすべて確認する。
+
+## 完了判定ルール（必須）
+
+チケットは以下をすべて満たさない限り「完了」と報告してはならない。
+
+1. **Backend単体テストが存在し全通過する**（.cursorrules §13 準拠）
+   - 各 UseCase / Service / Guard に対応する `.spec.ts` が存在
+   - 正常系 + 異常系（権限NG / 404 / 409 / 凍結423）が網羅されている
+   - `vitest run` で全テスト PASS
+2. **受け入れ基準のチェックボックスが全件チェック可能である**
+3. **ビルドが通る**（`pnpm build` 成功）
+
+テスト未追加の状態で「完了」と報告した場合、差し戻しとなる。
+テスト追加が困難な場合は、その理由を報告し判断を仰ぐこと。
+
+## 停止条件（実装せず報告）
+
+以下の場合は実装を停止し、状況を報告すること。
+
+- SoTに存在しないEnum値/Role/Statusが必要
+- OpenAPI yamlにAPIが定義されていない
+- チケットとSoTの間に矛盾がある
+- Figma設計にあるフィールドがSoTに存在しない
+- Figma MCPが利用できない
+- Claude Codeの骨格が存在しない（枠がない状態で実装しない）
+
+## 禁止事項（.cursorrules §5 に追加）
+
+- SoTにない機能・API・Enumの追加
+- useEffect + fetch によるデータ取得（TanStack Query を使用）
+- inline styles（Tailwind CSS を使用すること）
+- 「一般的には」「よくある実装では」に基づく補完
+- テスト未追加での完了報告

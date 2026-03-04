@@ -369,7 +369,7 @@ adapt/
 │   ├── api/               # OpenAPI仕様ファイル
 │   ├── design/            # 基本設計書
 │   └── guides/            # 開発ガイド
-└── tickets/               # 実装チケット（API-xxx.md）
+└── tickets/               # 実装チケット（API-xxx.md / {DOMAIN}-xx-{slug}.md）
 ```
 
 ### NestJS モジュール構成（1モジュールあたり）
@@ -425,7 +425,7 @@ Claude Code が **やってよいことは以下のみ**。
 - OpenAPI 型生成・import までの配線
 - Controller / UseCase / Repository の **空構造（枠）生成**
 - 共通 Guard / Policy の **枠（中身なし）**
-- 実装チケット（API-xxx.md）の生成（§9 テンプレートに準拠）
+- 実装チケット（API-xxx.md / {DOMAIN}-xx-{slug}.md）の生成（§9 テンプレートに準拠）
 - 行番号・セル番号・path を固定した **自動編集パッチ**
 
 ### 6.2 必須ルール
@@ -531,7 +531,11 @@ return this.prisma.course.findUnique({
 
 ## 9. 実装チケットテンプレート（固定）
 
+### 9.1 APIエンドポイントチケット（従来）
+
 `tickets/API-xxx.md` は以下のフォーマットで生成すること。
+単一APIエンドポイントの実装チケット。
+
 ```markdown
 # API-xxx: [エンドポイント名]
 
@@ -568,6 +572,65 @@ return this.prisma.course.findUnique({
 - [ ] 凍結チェック実装（該当する場合）
 - [ ] threads-onlyチェック実装（該当する場合）
 - [ ] テスト全通過
+```
+
+### 9.2 ドメインチケット（Frontend + Backend セット）
+
+`tickets/{DOMAIN}-xx-{slug}.md` は以下のフォーマットで生成すること。
+画面ドメイン単位でFrontend（画面）+ Backend（API群）をセットにしたチケット。
+
+#### 命名規則
+- `{DOMAIN}`: ドメイン識別子（ADMIN, INS, STU, APP 等）
+- `{xx}`: 連番（00〜）
+- `{slug}`: kebab-case の簡潔な説明
+- 例: `ADMIN-00-auth-foundation.md`, `ADMIN-02-user-management.md`
+
+#### 使用条件
+- 関連する複数画面 + 複数APIを1つの機能ドメインとしてまとめる場合に使用
+- 単一APIエンドポイントの場合は §9.1（API-xxx.md）を使用
+- Figma URLは各画面の参照としてチケット内に記載する
+- SoTに存在しないAPI/画面は TODO(TBD) として明記し、実装しない
+
+#### テンプレート
+
+```markdown
+# {DOMAIN}-xx: [ドメイン名]
+
+## 概要
+（このチケットで実現すること）
+
+## 画面
+- **{screen_id}**: {screen_name}（{path}）
+
+## ロール
+（x-roles から転記）
+
+## API一覧
+| API ID | Method | Path | Summary | x-roles | x-policy |
+
+## スコープ
+
+### Backend（API）
+（各APIのRequest/Response/DB/処理を記述）
+
+### Frontend（Admin/App）
+（各画面のPath/Figma URL/機能/API参照を記述）
+
+## DB参照テーブル
+（schema.prisma から特定）
+
+## 実装手順
+### Backend
+### Frontend
+
+## 受け入れ基準
+- [ ] （チェックリスト形式）
+
+## 依存
+（先行チケットの ID）
+
+## ブロッカー/TBD
+（SoT未定義項目・未決定事項）
 ```
 
 ---

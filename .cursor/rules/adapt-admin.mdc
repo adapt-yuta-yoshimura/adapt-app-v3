@@ -1,262 +1,136 @@
 ---
-description: Adapt Admin 実装ルール（常時有効）
+description: Adapt Admin 実装ルール（Admin画面固有）
 globs: apps/admin/**/*
 alwaysApply: false
 ---
 
-# Adapt Phase 0 — Cursor 実装引き渡し仕様書
+# Adapt Admin — Cursor 実装ルール
 
-## 概要
+## 適用範囲
 
-本ドキュメントは、Adapt プロジェクトの共通デザイン基盤（Phase 0）を
-Cursor で実装するための引き渡し仕様書です。
+Admin画面（apps/admin + apps/api の admin モジュール）の実装に適用。
+共通フロー・完了判定は `.cursor/rules/ticket-workflow.mdc` を参照。
 
-**技術スタック**: Next.js (App Router) + Tailwind CSS + TypeScript
-**Backend**: NestJS + Prisma + PostgreSQL
-**デザインソース**: Figma (`hIWNItIPSUj2AGZdJu4q3F`)
-**SoT**: openapi_admin.yaml / openapi_app.yaml / schema.prisma
+## SoT（正規配置）
 
----
+| ファイル | 正規配置 |
+|---------|---------|
+| openapi_admin.yaml | `/docs/api/openapi_admin.yaml` |
+| openapi_app.yaml | `/docs/api/openapi_app.yaml` |
+| schema.prisma | `/docs/api/schema.prisma` |
+| 基本設計書 | `/docs/design/adapt_基本設計_最終版.xlsx` |
 
-## 1. ファイル構成（推奨）
+**重要**: `/adapt-design-files/` は廃止済み旧正規配置。参照禁止。
 
-```
-adapt/
-├── apps/
-│   ├── admin/                    # Admin (admin.adapt-co.io)
-│   │   ├── app/
-│   │   │   ├── layout.tsx        # AdminLayout (Sidebar + Header)
-│   │   │   ├── page.tsx          # Dashboard (redirect or landing)
-│   │   │   ├── login/
-│   │   │   │   └── page.tsx      # Admin Login (メール/PW のみ)
-│   │   │   ├── operators/
-│   │   │   │   ├── page.tsx      # 運営スタッフ一覧 (API-076)
-│   │   │   │   └── new/
-│   │   │   │       └── page.tsx  # スタッフ追加 (API-077)
-│   │   │   └── users/
-│   │   │       └── page.tsx      # ユーザー管理一覧 (API-074)
-│   │   ├── tailwind.config.ts    # ← Phase 0 成果物
-│   │   └── globals.css           # ← Phase 0 成果物
-│   │
-│   └── app/                      # App (app.adapt-co.io)
-│       ├── app/
-│       │   ├── layout.tsx        # AppLayout (Header variants)
-│       │   └── ...
-│       ├── tailwind.config.ts    # 共通 config を extend
-│       └── globals.css
-│
-├── packages/
-│   ├── shared/                   # DTO（契約の正）
-│   │   └── src/
-│   │       ├── types/
-│   │       │   ├── user.ts       # User, UserMeView, UserAdminView
-│   │       │   ├── operator.ts   # OperatorAdminView
-│   │       │   └── enums.ts      # GlobalRole, PlatformRole 等
-│   │       └── index.ts
-│   │
-│   └── ui/                       # 共通UIコンポーネント
-│       └── src/
-│           ├── Button.tsx
-│           ├── Input.tsx
-│           ├── Badge.tsx
-│           ├── Table.tsx
-│           └── Card.tsx
-│
-└── backend/                      # NestJS (既存想定)
-```
+### schema.prisma の正と写像
 
----
+- **正（SoT）**: `/docs/api/schema.prisma`
+- **写像（運用版）**: `apps/api/prisma/schema.prisma`（Prisma CLI 用）
+- 設計変更は必ず SoT を先に更新し、運用版に同一コミット内で反映する
 
-## 2. 共通UIコンポーネント仕様
+## Admin API
 
-### 2.1 Button
+- OpenAPI定義: `openapi_admin.yaml`（API-ADMIN-01〜21）
+- 型: `@adapt/types/openapi-admin` から取得
+- **openapi-app の型を Admin で使用することは禁止**
 
-```tsx
-// packages/ui/src/Button.tsx
-type ButtonVariant = "primary" | "outline" | "danger-outline" | "ghost";
-type ButtonSize = "sm" | "md" | "lg";
+## Figma
 
-interface ButtonProps {
-  variant?: ButtonVariant;    // default: "primary"
-  size?: ButtonSize;          // default: "md"
-  children: React.ReactNode;
-  disabled?: boolean;
-  onClick?: () => void;
-}
-```
+- ファイル: `3nAHGGhB2dsyuMvYlrilWT`（adapt-design-sot）
+- 各画面のFigma URLはチケット（tickets/ADMIN-xx-*.md）に記載済み
+- Figma MCP で取得して実装すること
 
-| Variant | Background | Border | Text | 用途 |
-|---------|-----------|--------|------|------|
-| primary | `iris-100` | none | white | CTA, 追加, 保存 |
-| outline | white | `border` | `text-secondary` | キャンセル, 編集 |
-| danger-outline | none | `semantic-danger/30%` | `semantic-danger` | 凍結, 削除 |
-| ghost | none | none | `text-secondary` | 戻るリンク |
-
-| Size | Height | Padding | Font Size |
-|------|--------|---------|-----------|
-| sm | 30px | 0 12px | 11px |
-| md | 38px | 0 20px | 13px |
-| lg | 44px | 0 24px | 14px |
-
-### 2.2 Input
-
-```tsx
-// packages/ui/src/Input.tsx
-interface InputProps {
-  label?: string;
-  required?: boolean;
-  placeholder?: string;
-  type?: "text" | "email" | "password";
-  size?: "md" | "lg";        // md=42px, lg=46px (login)
-  error?: string;
-}
-```
-
-**スタイル**: border `border-input`, border-radius `input` (5px), font `body-sm`
-
-### 2.3 Badge
-
-```tsx
-// packages/ui/src/Badge.tsx
-type BadgeVariant =
-  | "root_operator" | "operator"           // PlatformRole
-  | "instructor" | "learner" | "assistant" // GlobalRole
-  | "active" | "inactive" | "frozen";      // Status
-
-interface BadgeProps {
-  variant: BadgeVariant;
-  children: React.ReactNode;
-}
-```
-
-| Variant | Background | Text Color |
-|---------|-----------|------------|
-| root_operator | `iris-100/10%` | `iris-100` |
-| operator | `iris-60/15%` | `iris-80` |
-| instructor | `iris-100/10%` | `iris-100` |
-| learner | `success/10%` | `success` |
-| assistant | `warning/10%` | `warning` |
-| active | `success/10%` | `success` |
-| inactive / frozen | `danger/10%` | `danger` |
-
-### 2.4 Table
-
-- ヘッダー背景: `iris-10`
-- ヘッダーテキスト: `caption` size, `text-secondary`, font-semibold
-- 行ボーダー: `border`
-- セルパディング: `14px 16px`
-- 外枠: `border`, border-radius `card` (8px)
-
----
-
-## 3. Admin レイアウト仕様
-
-### 3.1 AdminLayout (`apps/admin/app/layout.tsx`)
+## Admin レイアウト
 
 ```
 ┌─── Sidebar (240px, fixed) ───┬─── Main ────────────────┐
-│                              │ AdminHeader (64px)       │
+│                              │ Header (56px)            │
 │ (sticky, full height)        │─────────────────────────│
-│                              │ {children}               │
-│                              │ (scrollable)             │
+│ #0F172A                      │ {children}               │
+│                              │ padding 24px, bg #F8FAFC │
 └──────────────────────────────┴─────────────────────────┘
 ```
 
 - ログインページ (`/login`) のみ Sidebar/Header なしのフルスクリーン
 
-### 3.2 Sidebar ナビゲーション構造
+### サイドバー ナビゲーション（SoT 07_画面一覧 準拠）
 
-```tsx
-// openapi_admin.yaml の機能グループに基づく
-const adminNavItems = [
-  {
-    group: "メイン",
-    items: [
-      { href: "/", label: "ダッシュボード", icon: LayoutDashboard, roles: ["operator", "root_operator"] },
-    ],
-  },
-  {
-    group: "管理",
-    items: [
-      { href: "/courses", label: "コース管理", icon: BookOpen, roles: ["operator", "root_operator"] },
-      { href: "/users", label: "ユーザー管理", icon: Users, roles: ["operator", "root_operator"] },
-      { href: "/channels", label: "チャンネル管理", icon: MessageSquare, roles: ["operator", "root_operator"] },
-      { href: "/payments", label: "決済管理", icon: CreditCard, roles: ["operator", "root_operator"] },
-    ],
-  },
-  {
-    group: "システム",
-    items: [
-      { href: "/operators", label: "運営スタッフ", icon: Key, roles: ["root_operator"] },
-      { href: "/audit", label: "監査ログ", icon: ClipboardList, roles: ["operator", "root_operator"] },
-    ],
-  },
-];
+| ラベル | パス | ロール |
+|--------|------|--------|
+| ダッシュボード | /admin/dashboard | operator, root_operator |
+| 受講者管理 | /admin/learners | operator, root_operator |
+| 講師管理 | /admin/instructors | operator, root_operator |
+| 運営スタッフ | /admin/operators | **root_operator のみ** |
+| 講座管理 | /admin/courses | operator, root_operator |
+| 売上・決済 | /admin/finance/overview | operator, root_operator |
+
+root_operator のみのメニューは非該当ユーザーには**非表示**にする。
+
+## カラートークン（.cursorrules §19.4 準拠）
+
+tailwind.config.ts に設定済み。値の変更は禁止。
+
+```
+sidebar: #0F172A         accent: #3B82F6
+bg: #F8FAFC              card: #FFFFFF
+border: #E2E8F0          text: #0F172A
+textSecondary: #334155   textTertiary: #64748B
+textMuted: #94A3B8       success: #16A34A
+error: #DC2626           warning: #D97706
 ```
 
-**重要**: `roles` は `PlatformRole` enum (schema.prisma) に準拠。
-`root_operator` のみのメニューは非該当ユーザーには**非表示**にする。
+## 共通コンポーネント（ADMIN-00 で作成済み）
 
----
+| コンポーネント | 用途 |
+|--------------|------|
+| AdminTable | shadcn/ui Table + ソート + ページネーション |
+| StatusBadge | Enum値対応色分けバッジ |
+| FilterBar | 検索 + ステータスフィルター |
+| ConfirmDialog | 確認ダイアログ |
 
-## 4. Enum / Role 定義（packages/shared）
+## チケット・実行順序
 
-schema.prisma から転写。**追加・変更禁止**。
-
-```tsx
-// packages/shared/src/types/enums.ts
-
-export const GlobalRole = {
-  GUEST: "guest",
-  LEARNER: "learner",
-  INSTRUCTOR: "instructor",
-  ASSISTANT: "assistant",
-  OPERATOR: "operator",
-  ROOT_OPERATOR: "root_operator",
-} as const;
-export type GlobalRole = (typeof GlobalRole)[keyof typeof GlobalRole];
-
-export const PlatformRole = {
-  OPERATOR: "operator",
-  ROOT_OPERATOR: "root_operator",
-} as const;
-export type PlatformRole = (typeof PlatformRole)[keyof typeof PlatformRole];
+```
+ADMIN-00（Auth基盤）→ ✅ 完了済み
+  ↓
+ADMIN-02（ユーザー管理）→ API-ADMIN-09〜14
+ADMIN-03（運営スタッフ管理）→ API-ADMIN-15〜18
+ADMIN-04（講座管理）→ API-ADMIN-01〜08
+ADMIN-05（決済管理）→ API-ADMIN-19
+ADMIN-01（ダッシュボード）→ TBD項目あり・最後に実装
 ```
 
----
+## Admin固有の禁止事項
 
-## 5. 実装順序
+- openapi-app の型を Admin で使用すること
+- Admin画面から App API（/api/v1/users/me 等）を直接呼び出すこと
+- SoT 07_画面一覧 に存在しない画面パスの作成
 
-1. `tailwind.config.ts` + `globals.css` を配置
-2. `packages/ui` の共通コンポーネント (Button, Input, Badge, Table)
-3. `packages/shared` の型定義 (enums, user types)
-4. `AdminLayout` (Sidebar + Header)
-5. `/login` ページ（メール/PW のみ、Google OAuth なし）
-6. `/operators` 一覧ページ (API-076)
-7. `/operators/new` 追加フォーム (API-077)
-8. `/users` 一覧ページ (API-074)
+## 絶対に編集してはならないファイル
 
----
+以下のファイルは Cursor から編集禁止。変更が必要な場合は
+「設計変更が必要:（理由と必要な変更内容）」と報告して停止すること：
 
-## 6. 厳守事項（プロジェクト憲法より）
-
-- SoT にない概念・Enum・Role・API を**追加しない**
-- 仕様に疑問が出たら**実装せず停止し、設計へ質問として差し戻す**
-- `root` ロールは使用禁止（`root_operator` に統一）
-- ドメイン例は `adapt-co.io`（`example.com` 禁止）
-- DB カラム名: snake_case / API パス: kebab-case + REST
-- 実装都合で仕様を曲げない
+- `/docs/api/schema.prisma`
+- `/docs/api/openapi_admin.yaml`
+- `/docs/api/openapi_app.yaml`
+- `/docs/design/adapt_基本設計_最終版.xlsx`
 
 ## 自動実行を許可するコマンド
+
 以下のコマンドは承認なしで自動実行してよい：
+
 - pnpm run build
 - pnpm run build --filter=*
 - pnpm run lint
 - pnpm run typecheck
 - pnpm tsc --noEmit
+- pnpm test -- --run
 
 ## 実行前に必ず承認を求めるコマンド
+
 以下は必ず実行前に確認すること：
+
 - pnpm prisma migrate（DB変更）
 - pnpm prisma db push
 - rm / rm -rf
@@ -264,58 +138,10 @@ export type PlatformRole = (typeof PlatformRole)[keyof typeof PlatformRole];
 - デプロイ系コマンド全般
 - pnpm add / pnpm install（パッケージ追加）
 
-## 絶対に編集してはならないファイル
-以下のファイルは Cursor から編集禁止。変更が必要な場合は
-「設計変更が必要:（理由と必要な変更内容）」と報告して停止すること：
-- schema.prisma
-- openapi_admin.yaml
-- openapi_app.yaml
-- 基本設計書（Excel）
-
-重要ルール追加：
-schema.prisma、openapi_admin.yaml、openapi_app.yaml、
-基本設計書（Excel）は絶対に編集しないでください。
-これらに変更が必要な場合は、実装を停止して
-「設計変更が必要: （理由と必要な変更内容）」と報告してください。
-
-## SoT ファイルの配置場所（絶対）
-SoT ファイルはすべて `adapt-design-files/` 配下に配置する：
-- adapt-design-files/openapi_admin.yaml
-- adapt-design-files/openapi_app.yaml
-- adapt-design-files/schema.prisma
-- adapt-design-files/adapt_基本設計_最終版.xlsx
-
-## SoT ファイルの配置と同期（絶対遵守）
-
-### マスター（SSoT）
-adapt-design-files/ 配下の4ファイルが唯一の正：
-- adapt-design-files/openapi_admin.yaml
-- adapt-design-files/openapi_app.yaml
-- adapt-design-files/schema.prisma
-- adapt-design-files/adapt_基本設計_最終版.xlsx
-
-### 同期先（読み取り専用コピー）
-- apps/api/prisma/schema.prisma
-- docs/api/openapi_admin.yaml
-- docs/api/openapi_app.yaml
-- docs/design/adapt_基本設計_最終版.xlsx
-
-### 同期コマンド（SoT更新時に必ず実行）
-```bash
-cp adapt-design-files/schema.prisma apps/api/prisma/
-cp adapt-design-files/openapi_{admin,app}.yaml docs/api/
-cp adapt-design-files/adapt_基本設計_最終版.xlsx docs/design/
-cd apps/api && npx prisma generate
-```
-
 ## Git ルール
+
 - タスク完了後は必ず `git add -A && git commit` する
 - コミットメッセージ形式: `<type>: <日本語で要約>`
   - type: feat / fix / refactor / docs / chore
 - SoT ファイルの変更は必ず独立したコミットにする
-- WIP コミットは禁止（ビルド成功を確認してからコミット）
-
-### 禁止事項
-- 同期先ファイルの直接編集
-- adapt-design-files/ 配下のファイルの編集
-- 同期先以外の場所へのコピー作成
+- WIP コミットは禁止（ビルド + テスト成功を確認してからコミット）
