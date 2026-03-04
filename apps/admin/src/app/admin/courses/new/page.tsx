@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * ADM-UI-11: 講座代理作成
  *
@@ -8,18 +10,14 @@
  *
  * ADMIN-04チケット参照
  */
+
+import { CourseCreateForm } from '@/components/features/course/course-create-form';
+
 export default function NewCoursePage() {
-  // TODO(TBD): Cursor実装
-  // - 作成フォーム（AdminCourseCreateRequest）
-  // - title（必須）、style（必須）、ownerUserId（必須・講師選択）
-  // - description、catalogVisibility、visibility（任意）
-  // - ownerUserId: 講師検索で指定（API-ADMIN-09 で instructor 一覧を取得）
-  // - 送信 → API-ADMIN-02
-  // - 成功時: 講座一覧へリダイレクト
   return (
     <div>
-      <h1>講座代理作成</h1>
-      {/* TODO(TBD): Cursor実装 */}
+      <h1 className="mb-4 text-xl font-semibold text-text">講座代理作成</h1>
+      <CourseCreateForm />
     </div>
   );
 }

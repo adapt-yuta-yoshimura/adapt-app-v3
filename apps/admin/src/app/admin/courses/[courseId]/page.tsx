@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * ADM-UI-13: 講座詳細・監査
  *
@@ -9,23 +11,58 @@
  *
  * ADMIN-04チケット参照
  */
-export default async function CourseDetailPage({
-  params,
-}: {
-  params: Promise<{ courseId: string }>;
-}) {
-  const { courseId } = await params;
-  // TODO(TBD): Cursor実装
-  // - 講座詳細情報表示
-  // - 審査パネル: 承認ボタン（API-ADMIN-05）
-  // - 凍結/凍結解除ボタン（API-ADMIN-06/07）
-  // - 削除ボタン（API-ADMIN-04、確認ダイアログ）
-  // - 監査ログ表示
-  // - 「編集画面へ」→ ADM-UI-12（未実装の旨を表示）
+
+import * as React from 'react';
+import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { fetchCourseList } from '@/lib/admin-courses-api';
+import { CourseDetailPanel } from '@/components/features/course/course-detail-panel';
+import { CourseReviewPanel } from '@/components/features/course/course-review-panel';
+
+export default function CourseDetailPage() {
+  const params = useParams<{ courseId: string }>();
+  const courseId = params?.courseId as string | undefined;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'courses', { page: 1, perPage: 100 }],
+    queryFn: () => fetchCourseList({ page: 1, perPage: 100 }),
+    enabled: !!courseId,
+  });
+
+  const course = data?.items.find((c) => c.id === courseId) ?? null;
+
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center text-textMuted">読み込み中...</div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="py-8 text-center text-textMuted">
+        講座が見つかりません
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h1>講座詳細</h1>
-      {/* TODO(TBD): Cursor実装 - courseId: {courseId} */}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-text">講座詳細</h1>
+        <button
+          type="button"
+          onClick={() => {
+            // ADM-UI-12 は未実装（INS-UI-05 作成後に対応）
+            alert('編集画面は現在未実装です（INS-UI-05 作成後に対応予定）');
+          }}
+          className="rounded-md border border-border px-4 py-2 text-sm hover:bg-bg"
+        >
+          編集画面へ
+        </button>
+      </div>
+
+      <CourseDetailPanel course={course} />
+      <CourseReviewPanel course={course} courseId={courseId!} />
     </div>
   );
 }
