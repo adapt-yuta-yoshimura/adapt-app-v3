@@ -915,6 +915,8 @@ components:
           - active
           - archived
           description: 講座ステータス
+        style:
+          $ref: '#/components/schemas/CourseStyle'
         approvalRequestedAt:
           type: string
           format: date-time
@@ -938,6 +940,7 @@ components:
       - updatedAt
       - createdByUserId
       - status
+      - style
     CourseStyle:
       type: string
       enum:
