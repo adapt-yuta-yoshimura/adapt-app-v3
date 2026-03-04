@@ -6,7 +6,10 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '../../../common/guards/auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
@@ -14,11 +17,11 @@ import { Roles } from '../../../common/guards/roles.decorator';
 import { CurrentUser } from '../../../common/guards/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/auth/jwt.types';
 import { AdminOperatorUseCase } from '../usecases/admin-operator.usecase';
-
-// TODO(TBD): pnpm generate:types 実行後、以下の型を openapi-admin 生成型に置換
-// import type { paths } from '@adapt/types/openapi-admin';
-// type OperatorListResponse = paths['/api/v1/admin/operators']['get']['responses']['200']['content']['application/json'];
-// ...
+import type {
+  OperatorListResponse,
+  OperatorAdminView,
+  SuccessResponse,
+} from '../usecases/admin-operator.usecase';
 
 /**
  * 運営スタッフ管理コントローラ（Admin）
@@ -39,10 +42,17 @@ export class AdminOperatorController {
    */
   @Get()
   @Roles('root_operator')
-  async listOperators(@CurrentUser() user: AuthenticatedUser): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminOperatorUseCase.listOperators
-    // Response: OperatorListResponse（items: OperatorAdminView[], meta: ListMeta）
-    throw new Error('Not implemented');
+  async listOperators(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page') pageStr?: string,
+    @Query('perPage') perPageStr?: string,
+  ): Promise<OperatorListResponse> {
+    const page = pageStr ? parseInt(pageStr, 10) : undefined;
+    const perPage = perPageStr ? parseInt(perPageStr, 10) : undefined;
+    return this.usecase.listOperators(user.userId, {
+      page: page && !Number.isNaN(page) ? page : undefined,
+      perPage: perPage && !Number.isNaN(perPage) ? perPage : undefined,
+    });
   }
 
   /**
@@ -53,15 +63,17 @@ export class AdminOperatorController {
    */
   @Post()
   @Roles('root_operator')
+  @HttpCode(HttpStatus.CREATED)
   async inviteOperator(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: unknown,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminOperatorUseCase.inviteOperator
-    // Request: OperatorInviteRequest（email, name, globalRole: operator|root_operator）
-    // Response: 201 OperatorAdminView / 409
-    // 処理: Keycloakユーザー作成 → 招待メール送信
-    throw new Error('Not implemented');
+    @Body()
+    body: { email: string; name: string; globalRole: 'operator' | 'root_operator' },
+  ): Promise<OperatorAdminView> {
+    return this.usecase.inviteOperator(
+      user.userId,
+      user.globalRole as 'root_operator',
+      { email: body.email, name: body.name, globalRole: body.globalRole },
+    );
   }
 
   /**
@@ -75,12 +87,15 @@ export class AdminOperatorController {
   async updateOperator(
     @CurrentUser() user: AuthenticatedUser,
     @Param('userId') userId: string,
-    @Body() body: unknown,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminOperatorUseCase.updateOperator
-    // Request: OperatorUpdateRequest（globalRole: operator|root_operator）
-    // Response: 200 OperatorAdminView / 404
-    throw new Error('Not implemented');
+    @Body()
+    body: { globalRole: 'operator' | 'root_operator' },
+  ): Promise<OperatorAdminView> {
+    return this.usecase.updateOperator(
+      user.userId,
+      user.globalRole as 'root_operator',
+      userId,
+      { globalRole: body.globalRole },
+    );
   }
 
   /**
@@ -94,10 +109,11 @@ export class AdminOperatorController {
   async deleteOperator(
     @CurrentUser() user: AuthenticatedUser,
     @Param('userId') userId: string,
-  ): Promise<unknown> {
-    // TODO(TBD): Cursor実装 - AdminOperatorUseCase.deleteOperator
-    // Response: 200 SuccessResponse / 404
-    // 処理: deletedAt + isActive=false（globalRole は保持）
-    throw new Error('Not implemented');
+  ): Promise<SuccessResponse> {
+    return this.usecase.deleteOperator(
+      user.userId,
+      user.globalRole as 'root_operator',
+      userId,
+    );
   }
 }

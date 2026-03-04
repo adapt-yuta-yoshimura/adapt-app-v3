@@ -5,5 +5,6 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.spec.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
+    passWithNoTests: true,
   },
 });

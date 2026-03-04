@@ -8,5 +8,6 @@ import { OperatorRepository } from './repositories/operator.repository';
   imports: [AuditModule],
   controllers: [AdminOperatorController],
   providers: [AdminOperatorUseCase, OperatorRepository],
+  exports: [OperatorRepository],
 })
 export class AdminOperatorModule {}
