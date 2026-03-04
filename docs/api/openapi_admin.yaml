@@ -22,6 +22,7 @@ tags:
 - name: Admin-Operator
 - name: Admin-Payment
 - name: Admin-Channel
+- name: Admin-Dashboard
 paths:
   /api/v1/admin/courses:
     get:
@@ -677,6 +678,81 @@ paths:
                 $ref: '#/components/schemas/CourseChannelDetailView'
       security:
       - bearerAuth: []
+  /api/v1/admin/dashboard/kpi:
+    get:
+      tags:
+      - Admin-Dashboard
+      summary: ダッシュボードKPI集計
+      description: 受講者数・講師数・講座数・今月売上と前月比・直近推移を返す
+      operationId: API_ADMIN_22
+      x-api-id: API-ADMIN-22
+      x-roles: operator, root_operator
+      x-policy: '-'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardKpiResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/admin/dashboard/revenue-chart:
+    get:
+      tags:
+      - Admin-Dashboard
+      summary: 売上推移チャートデータ
+      description: 指定期間の売上推移データポイントを返す
+      operationId: API_ADMIN_23
+      x-api-id: API-ADMIN-23
+      x-roles: operator, root_operator
+      x-policy: '-'
+      parameters:
+      - name: period
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - 7D
+          - 1M
+          - 6M
+          - 1Y
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueChartResponse'
+      security:
+      - bearerAuth: []
+  /api/v1/admin/dashboard/activities:
+    get:
+      tags:
+      - Admin-Dashboard
+      summary: 最近のアクティビティ（監査ログ）
+      description: 直近の監査ログをoccurredAt降順で返す
+      operationId: API_ADMIN_24
+      x-api-id: API-ADMIN-24
+      x-roles: operator, root_operator
+      x-policy: '-'
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardActivitiesResponse'
+      security:
+      - bearerAuth: []
 components:
   securitySchemes:
     bearerAuth:
@@ -1213,3 +1289,133 @@ components:
       - course_updated
       - course_archived
       - frozen_course_viewed
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        actorUserId:
+          type: string
+        eventType:
+          $ref: '#/components/schemas/AuditEventType'
+        actorGlobalRole:
+          $ref: '#/components/schemas/GlobalRole'
+        courseId:
+          type: string
+          nullable: true
+        channelId:
+          type: string
+          nullable: true
+        messageId:
+          type: string
+          nullable: true
+        reason:
+          type: string
+        metaJson:
+          type: object
+          nullable: true
+        requestId:
+          type: string
+          nullable: true
+        ipHash:
+          type: string
+          nullable: true
+        userAgentHash:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - id
+      - occurredAt
+      - actorUserId
+      - eventType
+      - actorGlobalRole
+      - reason
+      - createdAt
+      - updatedAt
+    KpiCard:
+      type: object
+      properties:
+        current:
+          type: number
+          description: 現在値
+        change:
+          type: number
+          description: 前月比（%）。講座数の場合は今月新規件数
+        trend:
+          type: array
+          items:
+            type: number
+          description: 直近推移（ミニチャート用、直近7データポイント）
+      additionalProperties: false
+      required:
+      - current
+      - change
+      - trend
+    DashboardKpiResponse:
+      type: object
+      properties:
+        learners:
+          $ref: '#/components/schemas/KpiCard'
+        instructors:
+          $ref: '#/components/schemas/KpiCard'
+        courses:
+          $ref: '#/components/schemas/KpiCard'
+        revenue:
+          $ref: '#/components/schemas/KpiCard'
+      additionalProperties: false
+      required:
+      - learners
+      - instructors
+      - courses
+      - revenue
+    RevenueDataPoint:
+      type: object
+      properties:
+        label:
+          type: string
+          description: X軸ラベル（日付や月名）
+        value:
+          type: number
+          description: 売上金額
+      additionalProperties: false
+      required:
+      - label
+      - value
+    RevenueChartResponse:
+      type: object
+      properties:
+        period:
+          type: string
+          enum:
+          - 7D
+          - 1M
+          - 6M
+          - 1Y
+        dataPoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevenueDataPoint'
+      additionalProperties: false
+      required:
+      - period
+      - dataPoints
+    DashboardActivitiesResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+      additionalProperties: false
+      required:
+      - items
