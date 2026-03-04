@@ -83,12 +83,7 @@ export default function CoursesPage() {
       key: 'style',
       label: 'スタイル',
       sortKey: 'style',
-      render: (row) =>
-        row.style != null ? (
-          <CourseStyleBadge style={row.style} />
-        ) : (
-          <span className="text-textTertiary">—</span>
-        ),
+      render: (row) => <CourseStyleBadge style={row.style} />,
     },
     {
       key: 'catalogVisibility',

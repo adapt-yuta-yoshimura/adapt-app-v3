@@ -28,8 +28,7 @@ export type CourseCatalogVisibility =
 /** CourseVisibility enum（SoT: schema.prisma） */
 export type CourseVisibility = 'public' | 'instructors_only';
 
-/** Course（SoT: openapi_admin.yaml - Course schema）
- * 一覧APIは style を返さないため、一覧用は CourseListItemView を使用 */
+/** Course（SoT: openapi_admin.yaml - Course schema） */
 export type CourseAdminView = {
   id: string;
   title: string;
@@ -37,7 +36,7 @@ export type CourseAdminView = {
   ownerUserId: string;
   createdByUserId: string;
   status: CourseStatus;
-  style?: CourseStyle;
+  style: CourseStyle;
   catalogVisibility: CourseCatalogVisibility;
   visibility: CourseVisibility;
   isFrozen: boolean;

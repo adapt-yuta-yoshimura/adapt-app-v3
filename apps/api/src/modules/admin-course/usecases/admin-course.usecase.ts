@@ -18,7 +18,7 @@ import { CourseMemberRepository } from '../repositories/course-member.repository
 import { AuditEventRepository } from '../../audit/repositories/audit-event.repository';
 import { UserRepository } from '../../admin-user/repositories/user.repository';
 
-/** SoT: openapi_admin.yaml - Course（style はスキーマにないためレスポンスに含めない） */
+/** SoT: openapi_admin.yaml - Course */
 export type CourseResponse = {
   id: string;
   title: string;
@@ -34,6 +34,7 @@ export type CourseResponse = {
   updatedAt: string;
   createdByUserId: string;
   status: CourseStatus;
+  style: CourseStyle;
   approvalRequestedAt: string | null;
   approvedAt: string | null;
   approvedByUserId: string | null;
@@ -96,6 +97,7 @@ export class AdminCourseUseCase {
       updatedAt: course.updatedAt.toISOString(),
       createdByUserId: course.createdByUserId,
       status: course.status,
+      style: course.style,
       approvalRequestedAt: course.approvalRequestedAt?.toISOString() ?? null,
       approvedAt: course.approvedAt?.toISOString() ?? null,
       approvedByUserId: course.approvedByUserId,
