@@ -55,7 +55,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // url is defined in prisma.config.ts
 }
 
 enum GlobalRole {
