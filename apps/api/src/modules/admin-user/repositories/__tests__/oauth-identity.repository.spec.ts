@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OAuthIdentityRepository } from '../oauth-identity.repository';
-import { PrismaService } from '../../../common/prisma/prisma.service';
+import { PrismaService } from '../../../../common/prisma/prisma.service';
 
 describe('OAuthIdentityRepository', () => {
   let repo: OAuthIdentityRepository;

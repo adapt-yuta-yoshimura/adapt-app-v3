@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UserRepository } from '../user.repository';
-import { PrismaService } from '../../../common/prisma/prisma.service';
+import { PrismaService } from '../../../../common/prisma/prisma.service';
 
 const mockUser = {
   id: 'user-1',

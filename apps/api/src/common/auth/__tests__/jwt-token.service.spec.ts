@@ -5,10 +5,10 @@ import { JwtTokenService } from '../jwt-token.service';
 import type { JwtPayload } from '../jwt.types';
 
 const mockJwtVerify = vi.fn();
-const mockCreateRemoteJWKSet = vi.fn(() => ({}));
+const mockCreateRemoteJWKSet = vi.fn();
 
 vi.mock('jose', () => ({
-  createRemoteJWKSet: (...args: unknown[]) => mockCreateRemoteJWKSet(...args),
+  createRemoteJWKSet: (...args: Parameters<typeof import('jose').createRemoteJWKSet>) => mockCreateRemoteJWKSet(...args),
   jwtVerify: (...args: unknown[]) => mockJwtVerify(...args),
   decodeJwt: vi.fn((token: string) => {
     if (!token || token.trim() === '') throw new Error('invalid');

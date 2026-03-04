@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuditEventType, GlobalRole } from '@prisma/client';
 import { AuditEventRepository } from '../audit-event.repository';
-import { PrismaService } from '../../../common/prisma/prisma.service';
+import { PrismaService } from '../../../../common/prisma/prisma.service';
 
 describe('AuditEventRepository', () => {
   let repo: AuditEventRepository;
