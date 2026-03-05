@@ -1,8 +1,9 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    # 自動トリガーを一時無効化（手動実行のみ）
+    # 再有効化時は push トリガーを復元すること
 
 jobs:
   deploy:

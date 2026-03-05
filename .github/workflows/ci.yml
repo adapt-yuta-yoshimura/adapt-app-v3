@@ -1,10 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  workflow_dispatch:
+    # 自動トリガーを一時無効化（手動実行のみ）
+    # 再有効化時は push/pull_request トリガーを復元すること
 
 jobs:
   lint:
