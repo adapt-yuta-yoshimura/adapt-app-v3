@@ -60,7 +60,7 @@ Claude の判断基準・人格は
 
 ## 0-2. 参照先ルール名一覧表
 
-本文書が参照するProject Instructionsのルール名（最終更新：2026-02-24）
+本文書が参照するProject Instructionsのルール名（最終更新：2026-03-05）
 
 | ルール名 | 参照箇所（CLAUDE.MD内） | 状態 |
 |---------|----------------------|------|
@@ -126,12 +126,17 @@ Claude の判断基準・人格は
 
 ## 1. Single Source of Truth（絶対遵守）
 
-以下 4 点のみが正であり、これ以外は存在しない。
+以下 5 点のみが正であり、これ以外は存在しない。
 
 - 基本設計書（Excel・最終版）
 - openapi_app.yaml
 - openapi_admin.yaml
 - schema.prisma
+- Figma（UIスタイル限定）
+  - 対象：色・フォント・余白・レイアウト・コンポーネント配置
+  - 対象外：API仕様・DB設計・ロール・Enum（これらは1〜4が正）
+  - FigmaにないUI要素：SoT差分として報告し、実装の優先採用はしない
+  - Figma URL: https://www.figma.com/design/3nAHGGhB2dsyuMvYlrilWT/adapt-design-sot
 
 これらに無い API / Model / Enum / Role / Status を
 **Claude Code が生成・補完・仮定してはならない**。
@@ -425,7 +430,7 @@ Claude Code が **やってよいことは以下のみ**。
 - OpenAPI 型生成・import までの配線
 - Controller / UseCase / Repository の **空構造（枠）生成**
 - 共通 Guard / Policy の **枠（中身なし）**
-- 実装チケット（API-xxx.md / {DOMAIN}-xx-{slug}.md）の生成（§9 テンプレートに準拠）
+- 実装チケット（API-xxx.md / {DOMAIN}-xx-{slug}.md）の生成（§10 テンプレートに準拠）
 - 行番号・セル番号・path を固定した **自動編集パッチ**
 
 ### 6.2 必須ルール
@@ -529,9 +534,16 @@ return this.prisma.course.findUnique({
 
 ---
 
-## 9. 実装チケットテンプレート（固定）
+## 9. Claude が報告すべき条件
 
-### 9.1 APIエンドポイントチケット（従来）
+- FigmaにないUI要素が実装に含まれている場合はSoT差分として報告し、実装の優先採用はしない
+- Figmaにあって他のSoT（openapi_*.yaml・Excel）にないUI要素が存在する場合は報告する
+
+---
+
+## 10. 実装チケットテンプレート（固定）
+
+### 10.1 APIエンドポイントチケット（従来）
 
 `tickets/API-xxx.md` は以下のフォーマットで生成すること。
 単一APIエンドポイントの実装チケット。
@@ -574,7 +586,7 @@ return this.prisma.course.findUnique({
 - [ ] テスト全通過
 ```
 
-### 9.2 ドメインチケット（Frontend + Backend セット）
+### 10.2 ドメインチケット（Frontend + Backend セット）
 
 `tickets/{DOMAIN}-xx-{slug}.md` は以下のフォーマットで生成すること。
 画面ドメイン単位でFrontend（画面）+ Backend（API群）をセットにしたチケット。
@@ -587,7 +599,7 @@ return this.prisma.course.findUnique({
 
 #### 使用条件
 - 関連する複数画面 + 複数APIを1つの機能ドメインとしてまとめる場合に使用
-- 単一APIエンドポイントの場合は §9.1（API-xxx.md）を使用
+- 単一APIエンドポイントの場合は §10.1（API-xxx.md）を使用
 - Figma URLは各画面の参照としてチケット内に記載する
 - SoTに存在しないAPI/画面は TODO(TBD) として明記し、実装しない
 
@@ -635,7 +647,7 @@ return this.prisma.course.findUnique({
 
 ---
 
-## 10. 自動編集パッチの厳格ルール
+## 11. 自動編集パッチの厳格ルール
 
 - 編集対象は必ず一意に特定する
   （行番号 / セル番号 / OpenAPI path / Prisma model）
@@ -645,7 +657,7 @@ return this.prisma.course.findUnique({
 
 ---
 
-## 11. アーキテクチャ原則（事実・逸脱禁止）
+## 12. アーキテクチャ原則（事実・逸脱禁止）
 
 以下は SoT で確定しているアーキテクチャ制約である。
 Claude Code は枠生成時にこれに従うこと。
@@ -687,7 +699,7 @@ PostgreSQL
 
 ---
 
-## 12. Claude Code の成功状態
+## 13. Claude Code の成功状態
 
 - 生成物が少ない
 - TODO(TBD) が多い
@@ -698,7 +710,7 @@ PostgreSQL
 
 ---
 
-## 13. 結論
+## 14. 結論
 
 Claude Code は
 **「設計を壊さず、実装を進めやすくする"骨格専任AI"」**である。

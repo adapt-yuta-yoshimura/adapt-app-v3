@@ -8,7 +8,6 @@ info:
     ## 概要
     - 対象: 受講者・講師向けアプリケーションAPI
     - 認証: OIDC（auth.adapt-co.io）+ Bearer Token
-    - エンドポイント数: 65個
     - 基本設計書: 06_API一覧 完全準拠
 
     ## 機能グループ

@@ -9,14 +9,19 @@ globs: ["apps/**", "packages/**"]
 
 チケットを受け取ったら、以下の順序で作業すること。
 
-### Step 1: SoT確認
+### Step 1: SoT確認（4点一致ルール）
 
-1. チケットの API一覧 を確認
+1. チケットの `screen_id`（ADM-UI-xx 等）を特定し、以下の4点一致を確認する：
+   - **Excel 07_画面一覧** に `screen_id` が存在するか
+   - **Excel 15_トレーサビリティ** に `screen_id` が存在するか
+   - **openapi_*.yaml** に対応 API が存在するか
+   - **Figma** に対応デザインが存在するか
+   → 1点でも欠ける場合：実装停止・報告（.cursorrules §21.2 準拠）
 2. 対応する OpenAPI yaml で該当APIの定義を確認
    - x-api-id, x-roles, x-policy
    - Request / Response スキーマ
 3. schema.prisma で DB参照テーブルを確認
-4. チケットに Figma URL があれば Figma MCP で画面構成を確認
+4. Figma MCP で画面構成を確認（Figma URL はチケットから取得）
 5. SoTとチケットの記載に矛盾がないか確認
    - 矛盾がある場合 → SoTを優先し、チケットの矛盾箇所を報告
 
@@ -82,6 +87,8 @@ globs: ["apps/**", "packages/**"]
 - Figma設計にあるフィールドがSoTに存在しない
 - Figma MCPが利用できない
 - Claude Codeの骨格が存在しない（枠がない状態で実装しない）
+- Screen ID（ADM-UI-xx 等）が Excel 07_画面一覧 に存在しない
+- Screen ID が Excel 15_トレーサビリティ に存在しない
 
 ## 禁止事項（.cursorrules §5 に追加）
 
