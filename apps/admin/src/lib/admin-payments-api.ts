@@ -57,7 +57,7 @@ export type PaymentListResponse = {
 // API 定数
 // ---------------------------------------------------------------------------
 
-const PAYMENTS_BASE = '/payments';
+const PAYMENTS_BASE = '/api/v1/admin/payments';
 
 // ---------------------------------------------------------------------------
 // API 呼び出し関数

@@ -8,10 +8,10 @@ const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:4000';
  * クッキー admin_token を Authorization: Bearer に載せてバックエンドへ転送
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ path: string[] }> }
 ) {
-  return proxy('GET', context.params);
+  return proxy('GET', context.params, request);
 }
 
 export async function POST(
@@ -29,10 +29,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ path: string[] }> }
 ) {
-  return proxy('DELETE', context.params);
+  return proxy('DELETE', context.params, request);
 }
 
 async function proxy(
@@ -42,12 +42,16 @@ async function proxy(
 ) {
   const { path } = await params;
   const pathStr = path.join('/');
-  const url = `${API_BASE_URL}/${pathStr}`;
+  const search = request ? new URL(request.url).search : '';
+  const url = `${API_BASE_URL}/${pathStr}${search}`;
 
   const cookieStore = await cookies();
   const token = cookieStore.get('admin_token')?.value;
 
+  const targetUrl = `${API_BASE_URL}/${pathStr}`;
+  console.log('[BFF proxy]', { pathStr, hasToken: !!token, targetUrl });
   if (!token) {
+    console.log('[BFF proxy] no token in cookies');
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 

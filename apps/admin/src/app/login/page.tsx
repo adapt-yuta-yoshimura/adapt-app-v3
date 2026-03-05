@@ -13,12 +13,9 @@ import Link from 'next/link';
 export default function LoginPage() {
   const issuer = process.env.NEXT_PUBLIC_AUTH_ISSUER ?? 'https://auth.adapt-co.io/realms/adapt';
   const clientId = process.env.NEXT_PUBLIC_AUTH_CLIENT_ID ?? 'admin';
-  const redirectUri =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/callback`
-      : process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/callback`
-        : 'http://localhost:3001/callback';
+  const redirectUri = process.env.NEXT_PUBLIC_APP_URL
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/callback`
+    : 'http://localhost:3001/callback';
 
   const authUrl = new URL(`${issuer}/protocol/openid-connect/auth`);
   authUrl.searchParams.set('client_id', clientId);
@@ -26,7 +23,26 @@ export default function LoginPage() {
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('scope', 'openid profile email');
 
-  function handleLogin() {
+  async function handleLogin() {
+    // PKCE: code_verifier生成
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const codeVerifier = btoa(String.fromCharCode(...array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+    // code_challenge生成（S256）
+    const encoder = new TextEncoder();
+    const data = encoder.encode(codeVerifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+    // state にcode_verifierを含める（Server Sideのcallbackで使用）
+    authUrl.searchParams.set('code_challenge', codeChallenge);
+    authUrl.searchParams.set('code_challenge_method', 'S256');
+    authUrl.searchParams.set('state', codeVerifier);
     window.location.href = authUrl.toString();
   }
 

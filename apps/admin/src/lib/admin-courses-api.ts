@@ -106,8 +106,8 @@ export type CourseAuditView = {
 // API 定数
 // ---------------------------------------------------------------------------
 
-const COURSES_BASE = '/courses';
-const AUDIT_BASE = '/audit/courses';
+const COURSES_BASE = '/api/v1/admin/courses';
+const AUDIT_BASE = '/api/v1/admin/audit/courses';
 
 // ---------------------------------------------------------------------------
 // API 呼び出し関数

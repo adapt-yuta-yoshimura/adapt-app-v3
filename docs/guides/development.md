@@ -21,6 +21,19 @@
    pnpm prisma migrate dev --name init
    pnpm prisma generate
    ```
+#### DBシード（初回のみ）
+   マイグレーション完了後、開発用テストユーザーをDBに登録します：
+   ```bash
+   DATABASE_URL="postgresql://adapt:adapt@localhost:5432/adapt" npx tsx prisma/seed.ts
+   cd ../..
+   ```
+   登録されるテストアカウント：
+   | メール | ロール | パスワード |
+   |--------|--------|-----------|
+   | root@adapt-co.io | root_operator | root1234 |
+   | operator@adapt-co.io | operator | oper1234 |
+   | instructor@adapt-co.io | instructor | inst1234 |
+   | learner@adapt-co.io | learner | learn1234 |
 7. OpenAPI型を生成: `pnpm generate:types`
 8. 開発サーバーを起動: `pnpm dev`
 

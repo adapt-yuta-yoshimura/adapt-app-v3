@@ -99,7 +99,7 @@ export type DashboardActivitiesResponse = {
 // API 定数
 // ---------------------------------------------------------------------------
 
-const DASHBOARD_BASE = '/dashboard';
+const DASHBOARD_BASE = '/api/v1/admin/dashboard';
 
 // ---------------------------------------------------------------------------
 // API 呼び出し関数

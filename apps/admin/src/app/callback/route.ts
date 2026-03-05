@@ -27,11 +27,14 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${appUrl}/callback`;
 
   const tokenUrl = `${issuer}/protocol/openid-connect/token`;
+  const state = searchParams.get('state');
+  const codeVerifier = state ?? '';
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
     redirect_uri: redirectUri,
     client_id: clientId,
+    ...(codeVerifier ? { code_verifier: codeVerifier } : {}),
     ...(clientSecret ? { client_secret: clientSecret } : {}),
   });
 
@@ -42,6 +45,15 @@ export async function GET(request: NextRequest) {
   });
 
   if (!tokenRes.ok) {
+    const errorBody = await tokenRes.text();
+    console.error('[callback] token exchange failed', {
+      status: tokenRes.status,
+      tokenUrl,
+      redirectUri,
+      clientId,
+      codeVerifier: codeVerifier ? codeVerifier.substring(0, 10) + '...' : 'empty',
+      errorBody,
+    });
     return NextResponse.redirect(new URL('/login?error=token_exchange_failed', request.url));
   }
 

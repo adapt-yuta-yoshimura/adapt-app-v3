@@ -27,7 +27,10 @@ export async function adminApiFetch<T>(
 ): Promise<T> {
   const { method = 'GET', body, headers = {} } = options;
   const base = getBaseUrl();
-  const url = path.startsWith('http') ? path : `${base}/api/admin${path}`;
+  // BFFプロキシ: /api/admin/{path} → localhost:4000/{path}
+  // path は /api/v1/admin/... 形式なので先頭の / を除去して渡す
+  const proxyPath = path.startsWith('/') ? path.slice(1) : path;
+  const url = path.startsWith('http') ? path : `${base}/api/admin/${proxyPath}`;
 
   const res = await fetch(url, {
     method,
