@@ -5,7 +5,8 @@ import { JwtTokenService } from '../jwt-token.service';
 import type { JwtPayload } from '../jwt.types';
 
 const mockJwtVerify = vi.fn();
-const mockCreateRemoteJWKSet = vi.fn();
+const mockJwksFunction = vi.fn(); // createRemoteJWKSet が返す JWKS 関数のモック
+const mockCreateRemoteJWKSet = vi.fn().mockReturnValue(mockJwksFunction);
 
 vi.mock('jose', () => ({
   createRemoteJWKSet: (...args: Parameters<typeof import('jose').createRemoteJWKSet>) => mockCreateRemoteJWKSet(...args),

@@ -92,7 +92,17 @@ export async function GET(request: NextRequest) {
     cookieStore.set('admin_user_name', userName, cookieOpts);
   }
 
-  return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+  // returnUrl: ログイン前の遷移先を復元（Cookie から取得して削除）
+  const returnUrl = cookieStore.get('admin_return_url')?.value;
+  cookieStore.delete('admin_return_url');
+
+  // returnUrl の安全性チェック: /admin/ で始まるパスのみ許可（オープンリダイレクト防止）
+  const redirectPath =
+    returnUrl && returnUrl.startsWith('/admin/')
+      ? returnUrl
+      : '/admin/dashboard';
+
+  return NextResponse.redirect(new URL(redirectPath, request.url));
 }
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
