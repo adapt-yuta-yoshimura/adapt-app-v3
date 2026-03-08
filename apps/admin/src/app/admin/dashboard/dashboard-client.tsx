@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Bell, Clock } from 'lucide-react';
 import {
   fetchDashboardKpi,
   fetchRevenueChart,
@@ -80,10 +81,29 @@ export function DashboardClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">ダッシュボード</h1>
-        {lastUpdated && (
-          <p className="text-sm text-textMuted">最終更新: {lastUpdated}</p>
-        )}
+        <div>
+          <h1 className="text-[22px] font-bold tracking-tight text-text">
+            ダッシュボード
+          </h1>
+          <p className="mt-1 text-[13px] text-textTertiary">
+            adapt プラットフォームの概要
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {lastUpdated && (
+            <p className="flex items-center gap-1.5 text-xs text-textMuted">
+              <Clock className="h-4 w-4" />
+              最終更新: {lastUpdated}
+            </p>
+          )}
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-border text-textTertiary hover:bg-border/80 hover:text-textSecondary"
+            aria-label="通知"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* KPI カード ×4 */}
@@ -92,7 +112,7 @@ export function DashboardClient() {
           Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-40 animate-pulse rounded-[12px] border border-border bg-card"
+              className="h-40 animate-pulse rounded-xl border border-border bg-card"
             />
           ))
         ) : kpi ? (
@@ -123,7 +143,7 @@ export function DashboardClient() {
       </div>
 
       {/* 2カラム: 売上チャート + 承認待ち講座 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <RevenueChart
             data={revenueChart ?? null}

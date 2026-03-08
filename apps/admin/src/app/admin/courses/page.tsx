@@ -13,6 +13,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCourseList } from '@/lib/admin-courses-api';
 import type { CourseAdminView } from '@/lib/admin-courses-api';
@@ -48,6 +49,24 @@ export default function CoursesPage() {
         sortOrder,
       }),
   });
+
+  const { data: countAll } = useQuery({
+    queryKey: ['admin', 'courses', 'count'],
+    queryFn: () => fetchCourseList({ page: 1, perPage: 1 }),
+  });
+  const { data: countActive } = useQuery({
+    queryKey: ['admin', 'courses', 'count', 'active'],
+    queryFn: () => fetchCourseList({ status: 'active', page: 1, perPage: 1 }),
+  });
+  const { data: countPending } = useQuery({
+    queryKey: ['admin', 'courses', 'count', 'pending_approval'],
+    queryFn: () =>
+      fetchCourseList({ status: 'pending_approval', page: 1, perPage: 1 }),
+  });
+
+  const kpiTotal = countAll?.meta?.totalCount ?? 0;
+  const kpiActive = countActive?.meta?.totalCount ?? 0;
+  const kpiPending = countPending?.meta?.totalCount ?? 0;
 
   // ソートは API に委譲（sortKey / sortOrder を queryKey に含め済み）
   const handleSort = (key: string) => {
@@ -109,18 +128,48 @@ export default function CoursesPage() {
   ];
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-text">講座管理</h1>
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-text">
+            講座管理
+          </h1>
+          <p className="mt-1 text-sm tracking-wide text-textTertiary">
+            講座の一覧・代理作成・凍結管理
+          </p>
+        </div>
         <Link
           href="/admin/courses/new"
-          className="rounded-md bg-accent px-4 py-2 text-sm text-white hover:bg-accent/90"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent py-2.5 px-5 text-sm font-semibold tracking-wide text-white shadow-[0_2px_8px_rgba(59,130,246,0.25)] transition-all duration-200 hover:bg-accent/90"
         >
+          <Plus className="h-4 w-4" />
           講座を代理作成
         </Link>
       </div>
 
-      <FilterBar
+      {/* KPI カード 4枚（Figma: 全講座数・運用中・承認待ち・凍結中） */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">全講座数</p>
+          <p className="mt-2 text-2xl font-bold text-text">{kpiTotal}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">運用中</p>
+          <p className="mt-2 text-2xl font-bold text-text">{kpiActive}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">承認待ち</p>
+          <p className="mt-2 text-2xl font-bold text-text">{kpiPending}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">凍結中</p>
+          <p className="mt-2 text-2xl font-bold text-text">—</p>
+          <p className="mt-0.5 text-[10px] text-textMuted">集計API未対応</p>
+        </div>
+      </div>
+
+      <div className="rounded-[10px] border border-border bg-card px-4 py-3 [&>div]:mb-0">
+        <FilterBar
         searchPlaceholder="講座名で検索..."
         searchValue={search}
         onSearchChange={setSearch}
@@ -135,7 +184,8 @@ export default function CoursesPage() {
           { value: 'archived', label: 'アーカイブ' },
         ]}
       />
-      <div className="mb-4 flex items-center gap-4">
+      </div>
+      <div className="flex items-center gap-4">
         <label className="text-sm text-textSecondary">スタイル</label>
         <select
           value={styleFilter}
@@ -158,6 +208,7 @@ export default function CoursesPage() {
         onSort={handleSort}
         page={page}
         totalPages={data?.meta.totalPages ?? 1}
+        totalCount={data?.meta.totalCount ?? 0}
         onPageChange={setPage}
         isLoading={isLoading}
       />

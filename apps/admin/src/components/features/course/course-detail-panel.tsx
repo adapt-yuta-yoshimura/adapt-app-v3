@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * 講座詳細表示パネル
+ * 講座詳細表示パネル（基本情報タブ・左カラム）
  *
  * ADM-UI-13 で使用
- * Figma: https://www.figma.com/design/3nAHGGhB2dsyuMvYlrilWT/adapt-design-sot?node-id=8355-2&m=dev
+ * Figma: 講座情報カード — 講座ID / タイトル / 説明 / スタイル / ステータス / カタログ公開 / コース内公開 / 作成者 / 作成日時 / 最終更新
  *
  * SoT: openapi_admin.yaml - Course schema
  */
@@ -18,85 +18,77 @@ type CourseDetailPanelProps = {
   course: CourseAdminView;
 };
 
-export function CourseDetailPanel({ course }: CourseDetailPanelProps) {
-  // TODO(TBD): Cursor実装
-  // - 講座詳細情報の完全な表示
-  // - ownerUserId からユーザー名の表示（User参照）
-  // - 監査ログ一覧の表示（API-ADMIN-08）
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${y}/${m}/${day} ${h}:${min}`;
+}
+
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
-      <h2 className="mb-4 text-lg font-semibold text-text">講座情報</h2>
-      <dl className="space-y-3">
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">講座名</dt>
-          <dd className="text-sm text-text">{course.title}</dd>
-        </div>
+    <div className="flex border-b border-border py-3">
+      <dt className="w-[180px] shrink-0 text-[13px] font-semibold text-textTertiary">
+        {label}
+      </dt>
+      <dd className="min-w-0 flex-1 text-sm text-textSecondary">
+        {children}
+      </dd>
+    </div>
+  );
+}
 
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">ステータス</dt>
-          <dd>
-            <CourseStatusBadge status={course.status} />
-          </dd>
-        </div>
+/** コース内公開（CourseVisibility: public | instructors_only） */
+function VisibilityLabel({
+  visibility,
+}: {
+  visibility: 'public' | 'instructors_only';
+}) {
+  const label = visibility === 'instructors_only' ? '講師のみ' : 'public';
+  return <span className="text-sm text-textSecondary">{label}</span>;
+}
 
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">スタイル</dt>
-          <dd>
-            <CourseStyleBadge style={course.style} />
-          </dd>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">カタログ公開</dt>
-          <dd>
-            <CatalogVisibilityBadge visibility={course.catalogVisibility} />
-          </dd>
-        </div>
-
-        {course.description && (
-          <div className="flex gap-2">
-            <dt className="w-32 text-sm text-textSecondary">説明</dt>
-            <dd className="text-sm text-text">{course.description}</dd>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">担当講師ID</dt>
-          <dd className="text-sm text-text">{course.ownerUserId}</dd>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">作成者ID</dt>
-          <dd className="text-sm text-text">{course.createdByUserId}</dd>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">凍結状態</dt>
-          <dd className="text-sm">
-            {course.isFrozen ? (
-              <span className="text-error">
-                凍結中
-                {course.freezeReason && `（理由: ${course.freezeReason}）`}
-              </span>
-            ) : (
-              <span className="text-textMuted">なし</span>
-            )}
-          </dd>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">作成日</dt>
-          <dd className="text-sm text-text">
-            {new Date(course.createdAt).toLocaleString('ja-JP')}
-          </dd>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <dt className="w-32 text-sm text-textSecondary">更新日</dt>
-          <dd className="text-sm text-text">
-            {new Date(course.updatedAt).toLocaleString('ja-JP')}
-          </dd>
-        </div>
+export function CourseDetailPanel({ course }: CourseDetailPanelProps) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-6">
+      <h3 className="mb-4 text-[15px] font-bold text-text">講座情報</h3>
+      <dl>
+        <DetailRow label="講座ID">{course.id}</DetailRow>
+        <DetailRow label="タイトル">{course.title}</DetailRow>
+        <DetailRow label="説明">
+          {course.description ?? (
+            <span className="text-textMuted">未設定</span>
+          )}
+        </DetailRow>
+        <DetailRow label="スタイル">
+          <CourseStyleBadge style={course.style} />
+        </DetailRow>
+        <DetailRow label="ステータス">
+          <CourseStatusBadge status={course.status} />
+        </DetailRow>
+        <DetailRow label="カタログ公開">
+          <CatalogVisibilityBadge visibility={course.catalogVisibility} />
+        </DetailRow>
+        <DetailRow label="コース内公開">
+          <VisibilityLabel visibility={course.visibility} />
+        </DetailRow>
+        <DetailRow label="作成者">{course.createdByUserId}</DetailRow>
+        <DetailRow label="作成日時">
+          {formatDateTime(course.createdAt)}
+        </DetailRow>
+        <DetailRow label="最終更新">
+          {formatDateTime(course.updatedAt)}
+        </DetailRow>
       </dl>
     </div>
   );

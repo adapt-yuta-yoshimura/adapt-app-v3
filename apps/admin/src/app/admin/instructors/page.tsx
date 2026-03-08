@@ -2,45 +2,85 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { UserPlus, Eye, Snowflake, Sun, Trash2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserList, inviteUser } from '@/lib/admin-users-api';
+import {
+  fetchUserList,
+  inviteUser,
+} from '@/lib/admin-users-api';
 import type { UserAdminView } from '@/lib/admin-users-api';
-import { AdminTable } from '@/components/ui/admin-table';
+import { AdminTable, type AdminTableColumn } from '@/components/ui/admin-table';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { UserInviteModal } from '@/components/features/user/user-invite-modal';
+import { UserFreezeModal } from '@/components/features/user/user-freeze-modal';
+import { UserUnfreezeModal } from '@/components/features/user/user-unfreeze-modal';
+import { UserDeleteModal } from '@/components/features/user/user-delete-modal';
 
-const STATUS_OPTIONS = [
+/** JSX準拠: すべて / Active / Frozen */
+const STATUS_TABS = [
   { value: '', label: 'すべて' },
-  { value: 'active', label: 'アクティブ' },
-  { value: 'frozen', label: '凍結' },
-  { value: 'deleted', label: '削除済み' },
+  { value: 'active', label: 'Active' },
+  { value: 'frozen', label: 'Frozen' },
 ];
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+}
 
 export default function InstructorsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [page, setPage] = React.useState(1);
+  const [perPage, setPerPage] = React.useState(10);
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [sortKey, setSortKey] = React.useState<string>('name');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
+  const [targetUser, setTargetUser] = React.useState<UserAdminView | null>(null);
+  const [modalType, setModalType] = React.useState<'freeze' | 'unfreeze' | 'delete' | null>(null);
 
   const isActiveParam =
-    statusFilter === 'active' ? true : statusFilter === 'frozen' || statusFilter === 'deleted' ? false : undefined;
-  const includeDeleted = statusFilter === 'deleted';
+    statusFilter === 'active' ? true : statusFilter === 'frozen' ? false : undefined;
+  const includeDeleted = false;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'users', 'instructor', { page, isActive: isActiveParam, includeDeleted }],
+    queryKey: ['admin', 'users', 'instructor', { page, perPage, isActive: isActiveParam, includeDeleted }],
     queryFn: () =>
       fetchUserList({
         globalRole: 'instructor',
         isActive: isActiveParam,
         includeDeleted: includeDeleted || undefined,
         page,
-        perPage: 20,
+        perPage,
       }),
   });
+
+  const { data: countAll } = useQuery({
+    queryKey: ['admin', 'users', 'instructor', 'count'],
+    queryFn: () => fetchUserList({ globalRole: 'instructor', page: 1, perPage: 1 }),
+  });
+  const { data: countActive } = useQuery({
+    queryKey: ['admin', 'users', 'instructor', 'count', 'active'],
+    queryFn: () =>
+      fetchUserList({ globalRole: 'instructor', isActive: true, page: 1, perPage: 1 }),
+  });
+  const { data: countFrozen } = useQuery({
+    queryKey: ['admin', 'users', 'instructor', 'count', 'frozen'],
+    queryFn: () =>
+      fetchUserList({
+        globalRole: 'instructor',
+        isActive: false,
+        includeDeleted: false,
+        page: 1,
+        perPage: 1,
+      }),
+  });
+
+  const totalCount = countAll?.meta?.totalCount ?? 0;
+  const activeCount = countActive?.meta?.totalCount ?? 0;
+  const frozenCount = countFrozen?.meta?.totalCount ?? 0;
 
   const filteredItems = React.useMemo(() => {
     const items = data?.items ?? [];
@@ -49,7 +89,7 @@ export default function InstructorsPage() {
     return items.filter(
       (row) =>
         row.user.name?.toLowerCase().includes(s) ||
-        row.user.email?.toLowerCase().includes(s)
+        (row.user.email?.toLowerCase().includes(s) ?? false)
     );
   }, [data?.items, search]);
 
@@ -68,13 +108,11 @@ export default function InstructorsPage() {
         return order * va.localeCompare(vb);
       }
       if (sortKey === 'status') {
-        const va = a.status;
-        const vb = b.status;
-        return order * va.localeCompare(vb);
+        return order * a.status.localeCompare(b.status);
       }
-      if (sortKey === 'lastLoginAt') {
-        const va = a.lastLoginAt ?? '';
-        const vb = b.lastLoginAt ?? '';
+      if (sortKey === 'createdAt') {
+        const va = a.user.createdAt ?? '';
+        const vb = b.user.createdAt ?? '';
         return order * va.localeCompare(vb);
       }
       return 0;
@@ -87,98 +125,224 @@ export default function InstructorsPage() {
     setSortOrder((prev) => (prev === 'asc' && sortKey === key ? 'desc' : 'asc'));
   };
 
-  const handleInviteSubmit = async (body: { email: string; name: string; globalRole: 'learner' | 'instructor' }) => {
+  const handleInviteSubmit = async (body: {
+    email: string;
+    name: string;
+    globalRole: 'learner' | 'instructor';
+  }) => {
     await inviteUser(body);
     await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
   };
 
+  const closeModal = () => {
+    setTargetUser(null);
+    setModalType(null);
+  };
+
+  const handleModalSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    setTargetUser(null);
+    setModalType(null);
+  };
+
   const columns = React.useMemo(
-    () => [
+    (): AdminTableColumn<UserAdminView>[] => [
       {
         key: 'name',
-        label: '名前',
+        label: '講師名',
         sortKey: 'name',
-        render: (row: UserAdminView) => (
-          <Link
-            href={`/admin/instructors/${row.user.id}`}
-            className="text-accent hover:underline"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                sessionStorage.setItem('admin_selected_instructor', JSON.stringify(row));
-              }
-            }}
-          >
-            {row.user.name ?? '—'}
-          </Link>
+        render: (row) => (
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[13px] font-bold text-accent">
+              {(row.user.name ?? row.user.id).charAt(0)}
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold text-text">
+                {row.user.name ?? '—'}
+              </div>
+              <div className="text-[11px] text-textTertiary">{row.user.id}</div>
+            </div>
+          </div>
         ),
       },
       {
         key: 'email',
-        label: 'メール',
+        label: 'メールアドレス',
         sortKey: 'email',
-        render: (row: UserAdminView) => row.user.email ?? '—',
+        render: (row) => (
+          <span className="text-[13px] text-textSecondary">
+            {row.user.email ?? '—'}
+          </span>
+        ),
+      },
+      {
+        key: 'courseCount',
+        label: '開講講座数',
+        render: () => (
+          <span className="text-[13px] font-semibold text-textSecondary">—</span>
+        ),
       },
       {
         key: 'status',
         label: 'ステータス',
         sortKey: 'status',
-        render: (row: UserAdminView) => (
+        render: (row) => (
           <StatusBadge variant={row.status}>
-            {row.status === 'active' ? 'アクティブ' : row.status === 'frozen' ? '凍結' : '削除済み'}
+            {row.status === 'active' ? 'Active' : 'Frozen'}
           </StatusBadge>
         ),
       },
       {
-        key: 'lastLoginAt',
-        label: '最終ログイン',
-        sortKey: 'lastLoginAt',
-        render: (row: UserAdminView) =>
-          row.lastLoginAt
-            ? new Date(row.lastLoginAt).toLocaleString('ja-JP')
-            : '—',
+        key: 'createdAt',
+        label: '登録日',
+        sortKey: 'createdAt',
+        render: (row) => (
+          <span className="text-[13px] text-textTertiary">
+            {row.user.createdAt ? formatDate(row.user.createdAt) : '—'}
+          </span>
+        ),
+      },
+      {
+        key: 'actions',
+        label: 'アクション',
+        render: (row) => (
+          <div className="flex gap-1">
+            <Link
+              href={`/admin/instructors/${row.user.id}`}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem('admin_selected_instructor', JSON.stringify(row));
+                }
+              }}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-textSecondary hover:bg-bg"
+            >
+              <Eye className="h-4 w-4" /> 詳細
+            </Link>
+            {row.status === 'active' ? (
+              <button
+                type="button"
+                onClick={() => { setTargetUser(row); setModalType('freeze'); }}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-warning hover:bg-bg"
+              >
+                <Snowflake className="h-4 w-4" /> 凍結
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setTargetUser(row); setModalType('unfreeze'); }}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-accent hover:bg-bg"
+              >
+                <Sun className="h-4 w-4" /> 解除
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => { setTargetUser(row); setModalType('delete'); }}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-error hover:bg-bg"
+            >
+              <Trash2 className="h-4 w-4" /> 削除
+            </button>
+          </div>
+        ),
       },
     ],
-    []
+    [sortKey]
   );
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-text">講師管理</h1>
-        <button
-          type="button"
-          onClick={() => setInviteOpen(true)}
-          className="rounded-md bg-accent px-4 py-2 text-sm text-white hover:bg-accent/90"
-        >
-          講師を招待
-        </button>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[22px] font-bold tracking-tight text-text">
+            講師管理
+          </h1>
+          <p className="mt-1 text-[13px] text-textTertiary">
+            プラットフォーム上の講師アカウントを管理します
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <p className="text-[13px] text-textTertiary">
+            全 <strong className="text-text">{totalCount}</strong> 名 | Active{' '}
+            <strong className="text-success">{activeCount}</strong> Frozen{' '}
+            <strong className="text-error">{frozenCount}</strong>
+          </p>
+          <button
+            type="button"
+            onClick={() => setInviteOpen(true)}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent py-2 px-[18px] text-[13px] font-semibold text-white shadow-[0_1px_3px_rgba(59,130,246,0.3)] transition-colors hover:bg-accent/90"
+          >
+            <UserPlus className="h-4 w-4" />
+            講師を招待
+          </button>
+        </div>
       </div>
-      <FilterBar
-        searchPlaceholder="名前・メールで検索"
-        searchValue={search}
-        onSearchChange={setSearch}
-        filterLabel="ステータス"
-        filterOptions={STATUS_OPTIONS}
-        filterValue={statusFilter}
-        onFilterChange={setStatusFilter}
-      />
-      <AdminTable<UserAdminView>
-        columns={columns}
-        data={sortedItems}
-        sortKey={sortKey}
-        sortOrder={sortOrder}
-        onSort={handleSort}
-        page={data?.meta.page ?? 1}
-        totalPages={data?.meta.totalPages ?? 1}
-        onPageChange={setPage}
-        isLoading={isLoading}
-      />
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <FilterBar
+            variant="tabs"
+            searchPlaceholder="名前・メールアドレスで検索..."
+            searchValue={search}
+            onSearchChange={setSearch}
+            filterOptions={STATUS_TABS}
+            filterValue={statusFilter}
+            onFilterChange={(v) => {
+              setStatusFilter(v);
+              setPage(1);
+            }}
+          />
+        </div>
+        <AdminTable<UserAdminView>
+          columns={columns}
+          data={sortedItems}
+          sortKey={sortKey}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          page={data?.meta.page ?? 1}
+          totalPages={data?.meta.totalPages ?? 1}
+          totalCount={data?.meta.totalCount ?? sortedItems.length}
+          perPage={perPage}
+          perPageOptions={[5, 10, 50, 100]}
+          onPageChange={setPage}
+          onPerPageChange={(n) => {
+            setPerPage(n);
+            setPage(1);
+          }}
+          isLoading={isLoading}
+        />
+      </div>
+
       <UserInviteModal
         open={inviteOpen}
         onOpenChange={setInviteOpen}
         globalRole="instructor"
         onSubmit={handleInviteSubmit}
       />
+
+      {modalType === 'freeze' && (
+        <UserFreezeModal
+          open
+          onClose={closeModal}
+          user={targetUser?.user ?? null}
+          onSuccess={handleModalSuccess}
+        />
+      )}
+      {modalType === 'unfreeze' && (
+        <UserUnfreezeModal
+          open
+          onClose={closeModal}
+          user={targetUser?.user ?? null}
+          onSuccess={handleModalSuccess}
+        />
+      )}
+      {modalType === 'delete' && (
+        <UserDeleteModal
+          open
+          onClose={closeModal}
+          user={targetUser?.user ?? null}
+          onSuccess={handleModalSuccess}
+        />
+      )}
     </div>
   );
 }

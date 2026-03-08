@@ -10,6 +10,11 @@ export interface UserEditFormProps {
   onSuccess: (updated: UserAdminViewUser) => void;
   onError?: (message: string) => void;
   disabled?: boolean;
+  /** モーダル内で使う場合: 保存ボタンを出さず form に id を付与 */
+  hideSubmitButton?: boolean;
+  formId?: string;
+  /** ロールを変更不可でバッジ表示のみにする（詳細画面の編集モーダル用） */
+  readOnlyRole?: boolean;
 }
 
 const GLOBAL_ROLE_OPTIONS: { value: 'learner' | 'instructor'; label: string }[] = [
@@ -27,13 +32,15 @@ export function UserEditForm({
   onSuccess,
   onError,
   disabled = false,
+  hideSubmitButton = false,
+  formId = 'user-edit-form',
+  readOnlyRole = false,
 }: UserEditFormProps) {
   const [email, setEmail] = React.useState(user.email ?? '');
   const [name, setName] = React.useState(user.name ?? '');
   const [globalRole, setGlobalRole] = React.useState<'learner' | 'instructor'>(
     user.globalRole === 'learner' || user.globalRole === 'instructor' ? user.globalRole : 'learner'
   );
-  const [isActive, setIsActive] = React.useState(user.isActive);
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -42,8 +49,7 @@ export function UserEditForm({
     setGlobalRole(
       user.globalRole === 'learner' || user.globalRole === 'instructor' ? user.globalRole : 'learner'
     );
-    setIsActive(user.isActive);
-  }, [user.id, user.email, user.name, user.globalRole, user.isActive]);
+  }, [user.id, user.email, user.name, user.globalRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +60,6 @@ export function UserEditForm({
         email: email.trim() || undefined,
         name: name.trim() || undefined,
         globalRole,
-        isActive,
       };
       const updated = await updateUser(userId, body);
       onSuccess(updated);
@@ -67,7 +72,7 @@ export function UserEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id={formId} onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="edit-email" className="block text-sm font-medium text-textSecondary">
           メールアドレス
@@ -98,33 +103,29 @@ export function UserEditForm({
         <label htmlFor="edit-globalRole" className="block text-sm font-medium text-textSecondary">
           ロール
         </label>
-        <select
-          id="edit-globalRole"
-          value={globalRole}
-          onChange={(e) => setGlobalRole(e.target.value as 'learner' | 'instructor')}
-          disabled={disabled}
-          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
-        >
-          {GLOBAL_ROLE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        {readOnlyRole ? (
+          <p className="mt-1">
+            <span className="inline-flex rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+              {globalRole === 'instructor' ? '講師' : '受講者'}
+            </span>
+          </p>
+        ) : (
+          <select
+            id="edit-globalRole"
+            value={globalRole}
+            onChange={(e) => setGlobalRole(e.target.value as 'learner' | 'instructor')}
+            disabled={disabled}
+            className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+          >
+            {GLOBAL_ROLE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          id="edit-isActive"
-          type="checkbox"
-          checked={isActive}
-          onChange={(e) => setIsActive(e.target.checked)}
-          disabled={disabled}
-          className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
-        />
-        <label htmlFor="edit-isActive" className="text-sm text-textSecondary">
-          アクティブ（凍結していない）
-        </label>
-      </div>
+      {!hideSubmitButton && (
       <div className="flex gap-2 pt-2">
         <button
           type="submit"
@@ -134,6 +135,7 @@ export function UserEditForm({
           {loading ? '保存中...' : '保存'}
         </button>
       </div>
+      )}
     </form>
   );
 }

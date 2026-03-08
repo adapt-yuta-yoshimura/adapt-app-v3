@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Lock } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
@@ -23,10 +24,19 @@ export default function LoginPage() {
 
 function LoginPageSkeleton() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-bg">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-text">adapt Admin</h1>
-        <p className="mt-1 text-sm text-textTertiary">管理者ログイン</p>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-sidebar">
+      <div className="flex w-full max-w-[420px] flex-col items-center gap-9 rounded-2xl border border-border bg-card py-12 px-10 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_2px_8px_rgba(0,0,0,0.1)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/70 text-xl font-bold text-white">
+            a
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">adapt</h1>
+          <span className="rounded-full bg-accent/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-accent">
+            管理コンソール
+          </span>
+        </div>
+        <div className="h-px w-full bg-border" />
+        <p className="text-sm text-textTertiary">管理者ログイン</p>
       </div>
     </main>
   );
@@ -79,30 +89,55 @@ function LoginPageContent() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-bg">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-text">adapt Admin</h1>
-        <p className="mt-1 text-sm text-textTertiary">管理者ログイン</p>
+    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-sidebar">
+      {/* Subtle grid pattern (Figma batch1) */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: 'linear-gradient(#94A3B8 1px, transparent 1px), linear-gradient(90deg, #94A3B8 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
+      />
+      <div className="absolute right-[15%] top-[10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.12),transparent_70%)]" />
+      <div className="absolute bottom-[5%] left-[10%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.08),transparent_70%)]" />
+
+      <div className="relative z-10 flex w-full max-w-[420px] flex-col items-center gap-9 rounded-2xl border border-border bg-card py-12 px-10 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_2px_8px_rgba(0,0,0,0.1)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-[#1D4ED8] text-xl font-bold tracking-tight text-white">
+            a
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-text">adapt</h1>
+          <span className="rounded-full bg-accent/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-accent">
+            管理コンソール
+          </span>
+        </div>
+        <div className="h-px w-full bg-border" />
+        <div className="flex w-full max-w-[340px] flex-col items-center gap-6">
+          <p className="text-center text-sm leading-relaxed tracking-wide text-textTertiary">
+            SSOアカウントで管理画面にログインします
+          </p>
+          <button
+            type="button"
+            onClick={handleLogin}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-3 px-4 text-[15px] font-semibold tracking-wide text-white shadow-[0_2px_8px_rgba(59,130,246,0.25)] transition-all duration-200 hover:-translate-y-px hover:bg-[#2563EB] hover:shadow-[0_8px_24px_rgba(59,130,246,0.35)]"
+          >
+            <Lock className="h-[18px] w-[18px] shrink-0" />
+            管理画面にログイン
+          </button>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-center text-xs leading-relaxed tracking-wide text-textMuted">
+            auth.adapt-co.io で認証を行います
+          </p>
+          <Link href="/" className="text-xs text-textMuted underline hover:text-textTertiary">
+            トップへ戻る
+          </Link>
+        </div>
         {returnUrl && (
-          <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
             セッションが期限切れになりました。再度ログインしてください。
           </p>
         )}
-        <p className="mt-6 text-sm text-textSecondary">
-          auth.adapt-co.io（OIDC）で認証します。operator / root_operator のみログイン可能です。
-        </p>
-        <button
-          type="button"
-          onClick={handleLogin}
-          className="mt-6 w-full rounded-md bg-accent px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-accent/90"
-        >
-          管理者ログイン
-        </button>
-        <p className="mt-4 text-center text-xs text-textMuted">
-          <Link href="/" className="underline hover:text-textTertiary">
-            トップへ戻る
-          </Link>
-        </p>
       </div>
     </main>
   );

@@ -1,21 +1,35 @@
 'use client';
 
+/**
+ * ADM-UI-06: 講師詳細
+ *
+ * Figma nodeId: 8349:4
+ * レイアウト: パンくず → 戻る → 講師サマリーカード（アバター+名前+ステータス+メール+ID / 編集・凍結・削除 / 4項目グリッド）→ タブ（開講講座 | 収益サマリー）→ テーブル
+ */
+
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { ArrowLeft, Pencil, Snowflake, Trash2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   fetchUserList,
-  deleteUser,
-  freezeUser,
-  unfreezeUser,
 } from '@/lib/admin-users-api';
 import type { UserAdminView, UserAdminViewUser } from '@/lib/admin-users-api';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { UserEditForm } from '@/components/features/user/user-edit-form';
+import { UserEditModal } from '@/components/features/user/user-edit-modal';
+import { UserFreezeModal } from '@/components/features/user/user-freeze-modal';
+import { UserUnfreezeModal } from '@/components/features/user/user-unfreeze-modal';
+import { UserDeleteModal } from '@/components/features/user/user-delete-modal';
 
 const STORAGE_KEY = 'admin_selected_instructor';
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}/${m}/${day}`;
+}
 
 export default function InstructorDetailPage({
   params,
@@ -23,14 +37,18 @@ export default function InstructorDetailPage({
   params: Promise<{ userId: string }>;
 }) {
   const { userId } = React.use(params);
-  const router = useRouter();
   const queryClient = useQueryClient();
-  const [userFromStorage, setUserFromStorage] = React.useState<UserAdminView | null>(null);
+  const [userFromStorage, setUserFromStorage] =
+    React.useState<UserAdminView | null>(null);
   const [confirmAction, setConfirmAction] = React.useState<
     'delete' | 'freeze' | 'unfreeze' | null
   >(null);
+  const [showEditModal, setShowEditModal] = React.useState(false);
   const [editedUser, setEditedUser] = React.useState<UserAdminView | null>(null);
   const [editError, setEditError] = React.useState<string | null>(null);
+  const [activeTab, setActiveTab] = React.useState<'courses' | 'revenue'>(
+    'courses',
+  );
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -51,28 +69,14 @@ export default function InstructorDetailPage({
     enabled: !!userId && !userFromStorage,
   });
 
-  const detailUser = userFromStorage ?? listData?.items.find((i) => i.user.id === userId) ?? null;
+  const detailUser =
+    userFromStorage ??
+    listData?.items.find((i) => i.user.id === userId) ??
+    null;
   const displayUser = editedUser ?? detailUser;
 
-  const handleDelete = async () => {
-    if (!userId) return;
-    await deleteUser(userId);
-    await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-    router.push('/admin/instructors');
-  };
-
-  const handleFreeze = async () => {
-    if (!userId) return;
-    await freezeUser(userId);
-    await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-    setConfirmAction(null);
-    setUserFromStorage(null);
-  };
-
-  const handleUnfreeze = async () => {
-    if (!userId) return;
-    await unfreezeUser(userId);
-    await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+  const handleDetailModalSuccess = () => {
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
     setConfirmAction(null);
     setUserFromStorage(null);
   };
@@ -89,7 +93,10 @@ export default function InstructorDetailPage({
         <p className="text-textSecondary">
           ユーザー情報を表示するには、講師一覧から該当ユーザーを選択してください。
         </p>
-        <Link href="/admin/instructors" className="mt-4 inline-block text-accent hover:underline">
+        <Link
+          href="/admin/instructors"
+          className="mt-4 inline-block text-accent hover:underline"
+        >
           ← 講師一覧へ
         </Link>
       </div>
@@ -102,7 +109,10 @@ export default function InstructorDetailPage({
         <p className="text-textSecondary">
           ユーザー情報を表示するには、講師一覧から該当ユーザーを選択してください。
         </p>
-        <Link href="/admin/instructors" className="mt-4 inline-block text-accent hover:underline">
+        <Link
+          href="/admin/instructors"
+          className="mt-4 inline-block text-accent hover:underline"
+        >
           ← 講師一覧へ
         </Link>
       </div>
@@ -110,9 +120,19 @@ export default function InstructorDetailPage({
   }
 
   const u = displayUser.user;
+  const statusLabel =
+    displayUser.status === 'active'
+      ? 'Active'
+      : displayUser.status === 'frozen'
+        ? '凍結'
+        : '削除済み';
 
   const handleEditSuccess = (updated: UserAdminViewUser) => {
-    const status = updated.deletedAt ? 'deleted' : !updated.isActive ? 'frozen' : 'active';
+    const status = updated.deletedAt
+      ? 'deleted'
+      : !updated.isActive
+        ? 'frozen'
+        : 'active';
     setEditedUser({
       user: updated,
       status,
@@ -123,116 +143,246 @@ export default function InstructorDetailPage({
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-text">講師詳細</h1>
-        <Link
-          href="/admin/instructors"
-          className="text-sm text-accent hover:underline"
-        >
-          ← 一覧へ
+    <div className="flex flex-col gap-5">
+      {/* パンくず */}
+      <nav className="flex items-center gap-1.5 text-[13px] text-textMuted">
+        <Link href="/admin/dashboard" className="hover:text-textSecondary">
+          ホーム
         </Link>
-      </div>
-      <div className="rounded-lg border border-border bg-card p-6">
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-sm text-textTertiary">ID</dt>
-            <dd className="font-mono text-sm text-text">{u.id}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-textTertiary">メール</dt>
-            <dd className="text-text">{u.email ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-textTertiary">名前</dt>
-            <dd className="text-text">{u.name ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-sm text-textTertiary">ステータス</dt>
-            <dd>
-              <StatusBadge variant={displayUser.status}>
-                {displayUser.status === 'active' ? 'アクティブ' : displayUser.status === 'frozen' ? '凍結' : '削除済み'}
-              </StatusBadge>
-            </dd>
-          </div>
-          <div>
-            <dt className="text-sm text-textTertiary">最終ログイン</dt>
-            <dd className="text-text">
-              {displayUser.lastLoginAt
-                ? new Date(displayUser.lastLoginAt).toLocaleString('ja-JP')
-                : '—'}
-            </dd>
-          </div>
-        </dl>
-        <p className="mt-4 text-sm text-textMuted">
-          開講講座一覧・収益情報は別チケットで実装。編集・凍結・削除は API-ADMIN-11〜14 で利用可能。
-        </p>
-        {displayUser.status !== 'deleted' && (
-          <>
-            <h2 className="mt-6 text-sm font-medium text-textSecondary">編集</h2>
-            {editError && <p className="mt-2 text-sm text-error">{editError}</p>}
-            <div className="mt-2">
-              <UserEditForm
-                userId={userId}
-                user={u}
-                onSuccess={handleEditSuccess}
-                onError={setEditError}
-              />
+        <span>/</span>
+        <Link href="/admin/instructors" className="hover:text-textSecondary">
+          講師管理
+        </Link>
+        <span>/</span>
+        <span className="font-bold text-text">{u.name ?? u.id}</span>
+      </nav>
+
+      {/* 戻るリンク */}
+      <Link
+        href="/admin/instructors"
+        className="inline-flex items-center gap-2 text-[13px] text-textTertiary hover:text-textSecondary"
+      >
+        <ArrowLeft className="h-[18px] w-[18px]" />
+        講師管理一覧に戻る
+      </Link>
+
+      {/* 講師サマリーカード（Figma: アバター+名前+ステータス / 編集・凍結・削除 / 4項目グリッド） */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex gap-5">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-success/10 text-2xl font-bold text-success">
+              {(u.name ?? u.email ?? u.id).slice(0, 1)}
             </div>
-          </>
-        )}
-        <div className="mt-6 flex gap-2">
-          {displayUser.status === 'frozen' ? (
-            <button
-              type="button"
-              onClick={() => setConfirmAction('unfreeze')}
-              className="rounded-md bg-success/90 px-4 py-2 text-sm text-white hover:bg-success"
-            >
-              凍結解除
-            </button>
-          ) : displayUser.status === 'active' ? (
-            <button
-              type="button"
-              onClick={() => setConfirmAction('freeze')}
-              className="rounded-md bg-warning px-4 py-2 text-sm text-white hover:bg-warning/90"
-            >
-              凍結
-            </button>
-          ) : null}
-          {displayUser.status !== 'deleted' && (
-            <button
-              type="button"
-              onClick={() => setConfirmAction('delete')}
-              className="rounded-md bg-error px-4 py-2 text-sm text-white hover:bg-error/90"
-            >
-              論理削除
-            </button>
-          )}
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-bold text-text">{u.name ?? '—'}</h1>
+                {displayUser.status === 'active' && (
+                  <span className="inline-flex items-center gap-1.5 text-[13px] text-success">
+                    <span className="h-2 w-2 rounded-full bg-success" />
+                    {statusLabel}
+                  </span>
+                )}
+                {displayUser.status === 'frozen' && (
+                  <span className="text-[13px] text-warning">{statusLabel}</span>
+                )}
+                {displayUser.status === 'deleted' && (
+                  <span className="text-[13px] text-textMuted">{statusLabel}</span>
+                )}
+              </div>
+              <p className="mt-1 text-[13px] text-textTertiary">
+                {u.email ?? '—'}
+              </p>
+              <p className="mt-1 text-xs text-textMuted">ID: {u.id}</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {displayUser.status !== 'deleted' && (
+              <>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-[13px] font-medium text-textSecondary hover:bg-bg"
+                  onClick={() => setShowEditModal(true)}
+                  aria-label="編集"
+                >
+                  <Pencil className="h-4 w-4" />
+                  編集
+                </button>
+                {displayUser.status === 'frozen' ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmAction('unfreeze')}
+                    className="inline-flex items-center gap-2 rounded-lg bg-success/90 px-4 py-2 text-[13px] font-medium text-white hover:bg-success"
+                  >
+                    <Snowflake className="h-4 w-4" />
+                    凍結解除
+                  </button>
+                ) : displayUser.status === 'active' ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmAction('freeze')}
+                    className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-[#fffbeb] px-4 py-2 text-[13px] font-medium text-warning hover:bg-amber-50"
+                  >
+                    <Snowflake className="h-4 w-4" />
+                    凍結
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setConfirmAction('delete')}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#fecaca] bg-error/10 px-4 py-2 text-[13px] font-medium text-error hover:bg-error/20"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  削除
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 4項目グリッド（ユーザーID / ロール / 登録日 / 開講講座数） */}
+        <div className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-6 lg:grid-cols-4">
+          <div className="rounded-lg bg-bg px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-textTertiary">
+              ユーザーID
+            </p>
+            <p className="mt-1 text-sm font-bold text-text">{u.id}</p>
+          </div>
+          <div className="rounded-lg bg-bg px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-textTertiary">
+              ロール
+            </p>
+            <p className="mt-1 text-sm font-bold text-text">
+              {u.globalRole ?? 'instructor'}
+            </p>
+          </div>
+          <div className="rounded-lg bg-bg px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-textTertiary">
+              登録日
+            </p>
+            <p className="mt-1 text-sm font-bold text-text">
+              {formatDate(u.createdAt)}
+            </p>
+          </div>
+          <div className="rounded-lg bg-bg px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-textTertiary">
+              開講講座数
+            </p>
+            <p className="mt-1 text-sm font-bold text-text">
+              —（API未実装）
+            </p>
+          </div>
         </div>
       </div>
-      <ConfirmDialog
-        open={confirmAction === 'delete'}
-        onOpenChange={(open) => !open && setConfirmAction(null)}
-        title="論理削除の確認"
-        description="この講師を論理削除します。よろしいですか？"
-        confirmLabel="削除する"
-        variant="danger"
-        onConfirm={handleDelete}
+
+      {/* タブ: 開講講座 | 収益サマリー */}
+      <div className="border-b-2 border-border">
+        <div className="flex gap-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab('courses')}
+            className={`border-b-2 px-6 py-3 text-[13px] font-medium transition-colors ${
+              activeTab === 'courses'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-textTertiary hover:text-textSecondary'
+            }`}
+          >
+            開講講座
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('revenue')}
+            className={`-mb-0.5 border-b-2 px-6 py-3 text-[13px] font-medium transition-colors ${
+              activeTab === 'revenue'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-textTertiary hover:text-textSecondary'
+            }`}
+          >
+            収益サマリー
+          </button>
+        </div>
+      </div>
+
+      {/* タブコンテンツ: 開講講座（テーブル） */}
+      {activeTab === 'courses' && (
+        <div className="overflow-hidden rounded-b-xl border border-t-0 border-border bg-card">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="bg-bg">
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-textTertiary">
+                  講座タイトル
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-textTertiary">
+                  ステータス
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-textTertiary">
+                  スタイル
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-textTertiary">
+                  受講者数
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-textTertiary">
+                  アクション
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-6 py-12 text-center text-textMuted"
+                >
+                  開講講座データは API 未実装のため表示できません
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* タブコンテンツ: 収益サマリー */}
+      {activeTab === 'revenue' && (
+        <div className="rounded-b-xl border border-t-0 border-border bg-card p-8">
+          <p className="text-center text-textMuted">
+            収益サマリーは API 未実装のため表示できません
+          </p>
+        </div>
+      )}
+
+      <UserEditModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        userId={userId}
+        user={u}
+        onSuccess={handleEditSuccess}
+        onError={setEditError}
+        error={editError}
       />
-      <ConfirmDialog
-        open={confirmAction === 'freeze'}
-        onOpenChange={(open) => !open && setConfirmAction(null)}
-        title="凍結の確認"
-        description="この講師を凍結します。よろしいですか？"
-        onConfirm={handleFreeze}
-      />
-      <ConfirmDialog
-        open={confirmAction === 'unfreeze'}
-        onOpenChange={(open) => !open && setConfirmAction(null)}
-        title="凍結解除の確認"
-        description="この講師の凍結を解除します。よろしいですか？"
-        onConfirm={handleUnfreeze}
-      />
+
+      {confirmAction === 'freeze' && (
+        <UserFreezeModal
+          open
+          onClose={() => setConfirmAction(null)}
+          user={{ id: u.id, name: u.name, email: u.email, globalRole: u.globalRole }}
+          onSuccess={handleDetailModalSuccess}
+        />
+      )}
+      {confirmAction === 'unfreeze' && (
+        <UserUnfreezeModal
+          open
+          onClose={() => setConfirmAction(null)}
+          user={{ id: u.id, name: u.name, email: u.email }}
+          onSuccess={handleDetailModalSuccess}
+        />
+      )}
+      {confirmAction === 'delete' && (
+        <UserDeleteModal
+          open
+          onClose={() => setConfirmAction(null)}
+          user={{ id: u.id, name: u.name, email: u.email, globalRole: u.globalRole }}
+          onSuccess={handleDetailModalSuccess}
+          redirectTo="/admin/instructors"
+        />
+      )}
     </div>
   );
 }

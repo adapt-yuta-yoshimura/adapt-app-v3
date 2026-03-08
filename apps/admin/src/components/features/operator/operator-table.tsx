@@ -14,6 +14,7 @@ export interface OperatorTableProps {
   onSort: (key: string) => void;
   page: number;
   totalPages: number;
+  totalCount?: number;
   onPageChange: (page: number) => void;
   isLoading: boolean;
 }
@@ -30,6 +31,7 @@ export function OperatorTable({
   onSort,
   page,
   totalPages,
+  totalCount,
   onPageChange,
   isLoading,
 }: OperatorTableProps) {
@@ -94,6 +96,7 @@ export function OperatorTable({
       onSort={onSort}
       page={page}
       totalPages={totalPages}
+      totalCount={totalCount}
       onPageChange={onPageChange}
       isLoading={isLoading}
     />

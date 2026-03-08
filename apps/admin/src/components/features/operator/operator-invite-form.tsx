@@ -2,12 +2,25 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { Send } from 'lucide-react';
 import { inviteOperator } from '@/lib/admin-operators-api';
 import type { OperatorInviteRequest } from '@/lib/admin-operators-api';
 
-const GLOBAL_ROLE_OPTIONS: { value: 'operator' | 'root_operator'; label: string }[] = [
-  { value: 'operator', label: 'Operator' },
-  { value: 'root_operator', label: 'Root' },
+const GLOBAL_ROLE_OPTIONS: {
+  value: 'operator' | 'root_operator';
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'operator',
+    label: 'Operator',
+    description: '通常の運営権限 (講座管理、ユーザー管理)',
+  },
+  {
+    value: 'root_operator',
+    label: 'Root Operator',
+    description: 'すべての権限 (DM閲覧、緊急凍結、スタッフ管理)',
+  },
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,6 +31,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * API: API-ADMIN-16 POST /api/v1/admin/operators
  * 成功時: /admin/operators へリダイレクト
  * 409: メールアドレス重複メッセージ表示
+ * Figma: メール*・表示名*・付与ロール*（ラジオカード）・招待フロー・キャンセル / 招待メールを送信
  */
 export function OperatorInviteForm() {
   const router = useRouter();
@@ -32,7 +46,7 @@ export function OperatorInviteForm() {
     const errs: { email?: string; name?: string } = {};
     if (!email.trim()) errs.email = 'メールアドレスを入力してください';
     else if (!EMAIL_REGEX.test(email)) errs.email = '有効なメールアドレスを入力してください';
-    if (!name.trim()) errs.name = '名前を入力してください';
+    if (!name.trim()) errs.name = '表示名を入力してください';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -61,73 +75,121 @@ export function OperatorInviteForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md space-y-4">
-      <div>
-        <label htmlFor="operator-invite-email" className="block text-sm font-medium text-textSecondary">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-1.5">
+        <label htmlFor="operator-invite-email" className="block text-[13px] font-semibold text-textSecondary">
           メールアドレス <span className="text-error">*</span>
         </label>
         <input
           id="operator-invite-email"
           type="email"
           required
+          placeholder="staff@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-[14px] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />
+        <p className="text-[12px] text-textTertiary">このアドレスに招待メールが送信されます</p>
         {fieldErrors.email && (
-          <p className="mt-1 text-sm text-error">{fieldErrors.email}</p>
+          <p className="text-sm text-error">{fieldErrors.email}</p>
         )}
       </div>
-      <div>
-        <label htmlFor="operator-invite-name" className="block text-sm font-medium text-textSecondary">
-          名前 <span className="text-error">*</span>
+
+      <div className="space-y-1.5">
+        <label htmlFor="operator-invite-name" className="block text-[13px] font-semibold text-textSecondary">
+          表示名 <span className="text-error">*</span>
         </label>
         <input
           id="operator-invite-name"
           type="text"
           required
+          placeholder="山田 太郎"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-[14px] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />
         {fieldErrors.name && (
-          <p className="mt-1 text-sm text-error">{fieldErrors.name}</p>
+          <p className="text-sm text-error">{fieldErrors.name}</p>
         )}
       </div>
-      <div>
-        <label htmlFor="operator-invite-role" className="block text-sm font-medium text-textSecondary">
-          ロール <span className="text-error">*</span>
+
+      <div className="space-y-3">
+        <label className="block text-[13px] font-semibold text-textSecondary">
+          付与ロール <span className="text-error">*</span>
         </label>
-        <select
-          id="operator-invite-role"
-          value={globalRole}
-          onChange={(e) => setGlobalRole(e.target.value as 'operator' | 'root_operator')}
-          className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-        >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {GLOBAL_ROLE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+            <label
+              key={opt.value}
+              className={`flex cursor-pointer flex-col gap-1 rounded-lg border-2 px-4 py-3 transition-colors ${
+                globalRole === opt.value
+                  ? 'border-accent bg-accent/5'
+                  : 'border-border bg-card hover:border-textTertiary'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="operator-role"
+                  value={opt.value}
+                  checked={globalRole === opt.value}
+                  onChange={() => setGlobalRole(opt.value)}
+                  className="h-4 w-4 border-border text-accent focus:ring-accent"
+                />
+                <span className="text-[14px] font-semibold text-text">{opt.label}</span>
+              </div>
+              <p className="pl-6 text-[11px] text-textTertiary">{opt.description}</p>
+            </label>
           ))}
-        </select>
+        </div>
       </div>
+
+      {/* 招待フロー（Figma: 3ステップ） */}
+      <div className="flex items-center gap-4 border-t border-border pt-6">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
+            1
+          </span>
+          <span className="text-[13px] text-textSecondary">招待メール送信</span>
+        </div>
+        <span className="h-px flex-1 border-b border-dashed border-border" />
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
+            2
+          </span>
+          <span className="text-[13px] text-textSecondary">パスワード設定</span>
+        </div>
+        <span className="h-px flex-1 border-b border-dashed border-border" />
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
+            3
+          </span>
+          <span className="text-[13px] text-textSecondary">ログイン可能</span>
+        </div>
+      </div>
+      <p className="text-[12px] text-textTertiary">
+        入力したアドレスにメール送信 → auth.adapt-co.ioでパスワード設定 → admin.adapt-co.io にログイン
+      </p>
+
       {error && (
         <p className="text-sm text-error">{error}</p>
       )}
-      <div className="flex gap-2 pt-2">
+
+      <div className="flex gap-3 pt-2">
         <button
           type="button"
           onClick={() => router.push('/admin/operators')}
-          className="rounded-md border border-border px-4 py-2 text-sm hover:bg-bg"
+          className="rounded-lg border border-border bg-card px-5 py-2.5 text-[14px] font-medium text-textSecondary hover:bg-bg"
         >
           キャンセル
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-accent px-4 py-2 text-sm text-white hover:bg-accent/90 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-[14px] font-semibold text-white shadow-[0_2px_8px_rgba(59,130,246,0.25)] hover:bg-accent/90 disabled:opacity-50"
         >
-          {loading ? '送信中...' : '招待する'}
+          <Send className="h-4 w-4" />
+          {loading ? '送信中...' : '招待メールを送信'}
         </button>
       </div>
     </form>

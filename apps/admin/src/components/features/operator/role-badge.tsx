@@ -2,25 +2,22 @@
 
 /**
  * ロールバッジ（ADMIN-03）
- *
- * operator / root_operator を視覚的に区別するバッジコンポーネント
- * 指示書: operator 灰色系 / root_operator 青色系（accent #3B82F6）
+ * operator / root_operator を視覚的に区別（Figma: Root Operator 青系 / Operator 灰系）
  */
-
 type RoleBadgeProps = {
   role: 'operator' | 'root_operator';
 };
 
 export function RoleBadge({ role }: RoleBadgeProps) {
   const isRoot = role === 'root_operator';
-  const label = isRoot ? 'Root' : 'Operator';
+  const label = isRoot ? 'Root Operator' : 'Operator';
   const className = isRoot
-    ? 'bg-accent/10 text-accent'
-    : 'bg-border text-textSecondary';
+    ? 'bg-[#dbeafe] text-[#1d4ed8]'
+    : 'bg-[#f1f5f9] text-[#475569]';
 
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${className}`}
+      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${className}`}
     >
       {label}
     </span>

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import {
   updateOperator,
   deleteOperator,
@@ -11,9 +12,17 @@ import type { OperatorAdminView } from '@/lib/admin-operators-api';
 import { RoleBadge } from './role-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
-const GLOBAL_ROLE_OPTIONS: { value: 'operator' | 'root_operator'; label: string }[] = [
-  { value: 'operator', label: 'Operator' },
-  { value: 'root_operator', label: 'Root' },
+const GLOBAL_ROLE_OPTIONS: {
+  value: 'operator' | 'root_operator';
+  label: string;
+  description: string;
+}[] = [
+  { value: 'operator', label: 'Operator', description: '通常の運営権限' },
+  {
+    value: 'root_operator',
+    label: 'Root Operator',
+    description: 'すべての権限',
+  },
 ];
 
 export interface OperatorEditFormProps {
@@ -21,22 +30,27 @@ export interface OperatorEditFormProps {
   operator: OperatorAdminView;
   /** ログイン中ユーザーID。自分自身の削除時に警告表示に使用 */
   currentUserId?: string | null;
+  /** Figma ADM-UI-09: カード分割レイアウト（ロール変更・危険な操作を別カードで表示） */
+  layout?: 'single' | 'cards';
 }
 
 /**
  * 運営スタッフ編集フォーム（ADMIN-03 / ADM-UI-09）
  *
  * API: API-ADMIN-17（編集）、API-ADMIN-18（削除）
- * 削除時: ConfirmDialog → deleteOperator() → /admin/operators へリダイレクト
+ * layout="cards" 時: ロール変更カード + 危険な操作カードのみ表示（情報はページ側で表示）
  */
 export function OperatorEditForm({
   userId,
   operator,
   currentUserId,
+  layout = 'single',
 }: OperatorEditFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [globalRole, setGlobalRole] = React.useState<'operator' | 'root_operator'>(operator.globalRole);
+  const [globalRole, setGlobalRole] = React.useState<
+    'operator' | 'root_operator'
+  >(operator.globalRole);
   const [saveLoading, setSaveLoading] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -66,6 +80,106 @@ export function OperatorEditForm({
     await queryClient.invalidateQueries({ queryKey: ['admin', 'operators'] });
     router.push('/admin/operators');
   };
+
+  const roleSection = (
+    <div className="space-y-4">
+      <h2 className="text-[15px] font-bold text-text">ロール変更</h2>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {GLOBAL_ROLE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setGlobalRole(opt.value)}
+            className={`flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition-colors ${
+              globalRole === opt.value
+                ? 'border-accent bg-accent/10'
+                : 'border-border bg-card hover:bg-bg'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={`h-[18px] w-[18px] shrink-0 rounded-full border-2 ${
+                  globalRole === opt.value
+                    ? 'border-accent bg-accent'
+                    : 'border-border'
+                }`}
+              />
+              <span className="text-sm font-bold text-text">{opt.label}</span>
+            </div>
+            <p className="pl-6 text-xs text-textTertiary">
+              {opt.description}
+            </p>
+          </button>
+        ))}
+      </div>
+      {error && <p className="text-sm text-error">{error}</p>}
+      <div className="flex justify-end pt-1">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saveLoading || globalRole === operator.globalRole}
+          className="rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-accent/25 hover:bg-accent/90 disabled:opacity-50"
+        >
+          {saveLoading ? '保存中...' : '保存'}
+        </button>
+      </div>
+    </div>
+  );
+
+  const dangerSection = (
+    <div className="space-y-3">
+      <h2 className="text-[15px] font-bold text-error">危険な操作</h2>
+      <p className="text-[13px] leading-relaxed text-textTertiary">
+        このスタッフを運営権限から削除します。論理削除として記録されます。
+      </p>
+      <button
+        type="button"
+        onClick={() => setDeleteConfirmOpen(true)}
+        className="inline-flex items-center gap-2 rounded-lg border border-error bg-card px-5 py-2.5 text-sm font-medium text-error hover:bg-error/5"
+      >
+        <Trash2 className="h-4 w-4" />
+        運営スタッフから削除
+      </button>
+    </div>
+  );
+
+  if (layout === 'cards') {
+    return (
+      <>
+        <div className="rounded-xl border border-border bg-card p-6">
+          {roleSection}
+        </div>
+        <div className="rounded-xl border border-error/30 bg-card p-6">
+          {dangerSection}
+        </div>
+        <ConfirmDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          title="スタッフ削除の確認"
+          description={isSelf ? '自分自身を削除します。ログインできなくなります。よろしいですか？' : `「${operator.name}」を運営スタッフから削除しますか？ユーザーアカウント自体は削除されません。`}
+          warningBanner={
+            <div className="rounded-lg bg-[#fef2f2] p-4 text-[13px] font-semibold text-[#dc2626]">
+              この操作は元に戻せません
+            </div>
+          }
+          infoBlock={
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-border text-[13px] font-semibold text-textSecondary">
+                {operator.name?.charAt(0) ?? '?'}
+              </div>
+              <div>
+                <div className="text-[14px] font-medium text-text">{operator.name}</div>
+                <div className="text-xs text-textTertiary">{operator.email}</div>
+              </div>
+            </div>
+          }
+          confirmLabel="削除する"
+          variant="danger"
+          onConfirm={handleDelete}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -111,7 +225,9 @@ export function OperatorEditForm({
         <div className="mt-2 flex items-center gap-2">
           <select
             value={globalRole}
-            onChange={(e) => setGlobalRole(e.target.value as 'operator' | 'root_operator')}
+            onChange={(e) =>
+              setGlobalRole(e.target.value as 'operator' | 'root_operator')
+            }
             className="rounded-md border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           >
             {GLOBAL_ROLE_OPTIONS.map((opt) => (
@@ -145,11 +261,23 @@ export function OperatorEditForm({
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
-        title="論理削除の確認"
-        description={
-          isSelf
-            ? '自分自身を削除します。ログインできなくなります。よろしいですか？'
-            : 'この運営スタッフを論理削除します。よろしいですか？'
+        title="スタッフ削除の確認"
+        description={isSelf ? '自分自身を削除します。ログインできなくなります。よろしいですか？' : `「${operator.name}」を運営スタッフから削除しますか？ユーザーアカウント自体は削除されません。`}
+        warningBanner={
+          <div className="rounded-lg bg-[#fef2f2] p-4 text-[13px] font-semibold text-[#dc2626]">
+            この操作は元に戻せません
+          </div>
+        }
+        infoBlock={
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-border text-[13px] font-semibold text-textSecondary">
+              {operator.name?.charAt(0) ?? '?'}
+            </div>
+            <div>
+              <div className="text-[14px] font-medium text-text">{operator.name}</div>
+              <div className="text-xs text-textTertiary">{operator.email}</div>
+            </div>
+          </div>
         }
         confirmLabel="削除する"
         variant="danger"

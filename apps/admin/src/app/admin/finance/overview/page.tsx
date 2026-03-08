@@ -50,41 +50,46 @@ export default function FinanceOverviewPage() {
   };
 
   return (
-    <div>
-      <h1 className="mb-4 text-xl font-semibold text-text">
-        売上・決済管理
-      </h1>
+    <div className="flex flex-col gap-5">
+      <div className="mb-5">
+        <h1 className="text-2xl font-bold tracking-tight text-text">
+          売上・決済
+        </h1>
+        <p className="mt-1 text-sm tracking-wide text-textTertiary">
+          決済一覧・集計（API-ADMIN-19）
+        </p>
+      </div>
 
       {/* TODO(TBD): Cursor実装 - KPIカード4枚 */}
-      {/* 総売上、月間売上、決済件数、返金件数 */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-textSecondary">総売上</p>
-          <p className="mt-1 text-2xl font-bold text-text">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">総売上</p>
+          <p className="mt-2 text-2xl font-bold text-text">
             {/* TODO(TBD): Cursor実装 - 集計値 */}
             -
           </p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-textSecondary">月間売上</p>
-          <p className="mt-1 text-2xl font-bold text-text">-</p>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">月間売上</p>
+          <p className="mt-2 text-2xl font-bold text-text">-</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-textSecondary">決済件数</p>
-          <p className="mt-1 text-2xl font-bold text-text">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">決済件数</p>
+          <p className="mt-2 text-2xl font-bold text-text">
             {data?.meta.totalCount ?? '-'}
           </p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-textSecondary">返金件数</p>
-          <p className="mt-1 text-2xl font-bold text-text">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-xs font-medium text-textTertiary">返金件数</p>
+          <p className="mt-2 text-2xl font-bold text-text">
             {/* TODO(TBD): Cursor実装 - 返金件数集計 */}
             -
           </p>
         </div>
       </div>
 
-      <FilterBar
+      <div className="rounded-[10px] border border-border bg-card px-4 py-3 [&>div]:mb-0">
+        <FilterBar
         searchPlaceholder="ユーザー名・講座名で検索..."
         searchValue={search}
         onSearchChange={setSearch}
@@ -100,6 +105,7 @@ export default function FinanceOverviewPage() {
           { value: 'refunded', label: '返金済' },
         ]}
       />
+      </div>
 
       <PaymentTable
         data={data?.items ?? []}
@@ -108,6 +114,7 @@ export default function FinanceOverviewPage() {
         onSort={handleSort}
         page={page}
         totalPages={data?.meta.totalPages ?? 1}
+        totalCount={data?.meta.totalCount ?? 0}
         onPageChange={setPage}
         isLoading={isLoading}
       />

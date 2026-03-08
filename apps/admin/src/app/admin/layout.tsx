@@ -31,7 +31,11 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-bg">
-      <AdminSidebar globalRole={globalRole} />
+      <AdminSidebar
+        globalRole={globalRole}
+        userName={userName}
+        roleLabel={globalRole === 'root_operator' ? 'Root Operator' : 'Operator'}
+      />
       <div className="pl-[240px]">
         <AdminHeader userName={userName} />
         <main className="p-6">{children}</main>

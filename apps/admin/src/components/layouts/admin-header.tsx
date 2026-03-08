@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { User } from 'lucide-react';
 
 /**
- * パスからパンくずラベルを生成（簡易）
+ * パスからパンくずラベルを生成（Figma 準拠: ホーム起点）
  */
 function getBreadcrumb(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
@@ -38,7 +38,7 @@ export function AdminHeader({ userName }: AdminHeaderProps) {
     <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card px-6">
       <div className="text-sm text-textTertiary">
         <Link href="/admin/dashboard" className="hover:text-textSecondary">
-          Admin
+          ホーム
         </Link>
         <span className="mx-2">/</span>
         <span className="text-textSecondary">{breadcrumb}</span>

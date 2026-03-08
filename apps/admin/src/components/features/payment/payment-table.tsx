@@ -39,6 +39,7 @@ type PaymentTableProps = {
   onSort: (key: string) => void;
   page: number;
   totalPages: number;
+  totalCount?: number;
   onPageChange: (page: number) => void;
   isLoading: boolean;
 };
@@ -50,6 +51,7 @@ export function PaymentTable({
   onSort,
   page,
   totalPages,
+  totalCount,
   onPageChange,
   isLoading,
 }: PaymentTableProps) {
@@ -121,6 +123,7 @@ export function PaymentTable({
       onSort={onSort}
       page={page}
       totalPages={totalPages}
+      totalCount={totalCount}
       onPageChange={onPageChange}
       isLoading={isLoading}
     />

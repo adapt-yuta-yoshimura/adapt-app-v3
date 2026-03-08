@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchOperatorList } from '@/lib/admin-operators-api';
 import type { OperatorAdminView } from '@/lib/admin-operators-api';
@@ -77,21 +78,33 @@ export default function OperatorsPage() {
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-text">運営スタッフ</h1>
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-text">
+            運営スタッフ管理
+          </h1>
+          <p className="mt-1 text-sm tracking-wide text-textTertiary">
+            {data?.meta?.totalCount != null
+              ? `${data.meta.totalCount}名のスタッフが登録されています`
+              : '運営スタッフの一覧です'}
+          </p>
+        </div>
         <Link
           href="/admin/operators/new"
-          className="rounded-md bg-accent px-4 py-2 text-sm text-white hover:bg-accent/90"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent py-2.5 px-5 text-sm font-semibold tracking-wide text-white shadow-[0_2px_8px_rgba(59,130,246,0.25)] transition-all duration-200 hover:bg-accent/90"
         >
-          スタッフを招待
+          <Plus className="h-4 w-4" />
+          運営スタッフ追加
         </Link>
       </div>
-      <FilterBar
-        searchPlaceholder="名前・メールで検索"
-        searchValue={search}
-        onSearchChange={setSearch}
-      />
+      <div className="rounded-[10px] border border-border bg-card px-4 py-3 [&>div]:mb-0">
+        <FilterBar
+          searchPlaceholder="名前、メールで検索…"
+          searchValue={search}
+          onSearchChange={setSearch}
+        />
+      </div>
       <OperatorTable
         data={sortedItems}
         sortKey={sortKey}
@@ -99,6 +112,7 @@ export default function OperatorsPage() {
         onSort={handleSort}
         page={data?.meta.page ?? 1}
         totalPages={data?.meta.totalPages ?? 1}
+        totalCount={data?.meta?.totalCount ?? 0}
         onPageChange={setPage}
         isLoading={isLoading}
       />
