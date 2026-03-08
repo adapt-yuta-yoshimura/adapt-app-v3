@@ -100,7 +100,12 @@ describe('AdminUserUseCase', () => {
           eventType: AuditEventType.user_created,
           actorGlobalRole: GlobalRole.operator,
           reason: 'User invited via admin',
-          metaJson: { targetUserId: 'user-1' },
+          metaJson: expect.objectContaining({
+            targetUserId: 'user-1',
+            targetEmail: mockUser.email,
+            targetName: mockUser.name,
+            targetGlobalRole: mockUser.globalRole,
+          }),
         })
       );
     });
@@ -144,7 +149,12 @@ describe('AdminUserUseCase', () => {
       expect(auditRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: AuditEventType.user_updated,
-          metaJson: { targetUserId: 'user-1' },
+          metaJson: expect.objectContaining({
+            targetUserId: 'user-1',
+            targetEmail: mockUser.email,
+            targetName: mockUser.name,
+            targetGlobalRole: mockUser.globalRole,
+          }),
         })
       );
     });
@@ -191,7 +201,12 @@ describe('AdminUserUseCase', () => {
       expect(auditRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: AuditEventType.user_deleted,
-          metaJson: { targetUserId: 'user-1' },
+          metaJson: expect.objectContaining({
+            targetUserId: 'user-1',
+            targetEmail: mockUser.email,
+            targetName: mockUser.name,
+            targetGlobalRole: mockUser.globalRole,
+          }),
         })
       );
     });
@@ -223,7 +238,12 @@ describe('AdminUserUseCase', () => {
       expect(auditRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: AuditEventType.user_frozen,
-          metaJson: { targetUserId: 'user-1' },
+          metaJson: expect.objectContaining({
+            targetUserId: 'user-1',
+            targetEmail: mockUser.email,
+            targetName: mockUser.name,
+            targetGlobalRole: mockUser.globalRole,
+          }),
         })
       );
     });
@@ -256,7 +276,12 @@ describe('AdminUserUseCase', () => {
       expect(auditRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: AuditEventType.user_unfrozen,
-          metaJson: { targetUserId: 'user-1' },
+          metaJson: expect.objectContaining({
+            targetUserId: 'user-1',
+            targetEmail: frozenUser.email,
+            targetName: frozenUser.name,
+            targetGlobalRole: frozenUser.globalRole,
+          }),
         })
       );
     });

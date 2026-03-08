@@ -14,6 +14,10 @@
 
 import Link from 'next/link';
 import type { AuditEvent } from '@/lib/admin-dashboard-api';
+import {
+  formatAuditMessage,
+  getUserDetailPath,
+} from '@/lib/format-audit-message';
 import { ActivityCategoryBadge } from './activity-category-badge';
 
 type ActivityTimelineProps = {
@@ -39,56 +43,15 @@ function formatOccurredAt(isoString: string): string {
   return `${diffDays}日前`;
 }
 
-/** eventType + metaJson から人間が読める説明を生成 */
-function formatDescription(event: AuditEvent): string {
-  const meta = event.metaJson as Record<string, unknown> | null;
-  const name = meta?.name != null ? String(meta.name) : null;
-  const title = meta?.title != null ? String(meta.title) : null;
-
-  switch (event.eventType) {
-    case 'user_created':
-      return name ? `新規受講者「${name}」が招待により登録` : '新規ユーザーが登録されました';
-    case 'user_updated':
-      return name ? `ユーザー「${name}」の情報が更新されました` : 'ユーザー情報が更新されました';
-    case 'user_deleted':
-      return 'ユーザーが論理削除されました';
-    case 'course_created':
-      return title ? `講座「${title}」が作成されました` : '講座が作成されました';
-    case 'course_approval_requested':
-      return title ? `講座「${title}」の承認が申請されました` : '講座の承認が申請されました';
-    case 'course_approved':
-      return title ? `講座「${title}」が承認されました` : '講座が承認されました';
-    case 'course_published':
-      return title ? `講座「${title}」が公開されました` : '講座が公開されました';
-    case 'course_updated':
-      return title ? `講座「${title}」が運営により更新されました` : '講座が更新されました';
-    case 'course_archived':
-      return title ? `講座「${title}」がアーカイブされました` : '講座がアーカイブされました';
-    case 'course_frozen':
-      return title ? `講座「${title}」が凍結されました` : '講座が凍結されました';
-    case 'course_unfrozen':
-      return title ? `講座「${title}」の凍結が解除されました` : '講座の凍結が解除されました';
-    case 'channel_frozen':
-      return 'チャンネルが凍結されました';
-    case 'channel_unfrozen':
-      return 'チャンネルの凍結が解除されました';
-    case 'user_frozen':
-      return 'ユーザーが凍結されました';
-    case 'user_unfrozen':
-      return 'ユーザーの凍結が解除されました';
-    case 'operator_role_changed':
-      return '運営スタッフのロールが変更されました';
-    case 'dm_viewed_by_root_operator':
-      return 'root_operator による DM 閲覧が記録されました';
-    case 'announcement_emergency_posted':
-      return '緊急アナウンスが投稿されました';
-    case 'course_member_role_promoted':
-      return 'コースメンバーのロールが昇格されました';
-    case 'frozen_course_viewed':
-      return '凍結講座の監査閲覧が記録されました';
-    default:
-      return event.reason || event.eventType;
-  }
+/** eventType + metaJson から表示パーツと実行者を生成 */
+function getMessageResult(event: AuditEvent) {
+  return formatAuditMessage({
+    eventType: event.eventType,
+    reason: event.reason,
+    metaJson: event.metaJson,
+    courseId: event.courseId,
+    actorUserId: event.actorUserId,
+  });
 }
 
 export function ActivityTimeline({
@@ -117,33 +80,67 @@ export function ActivityTimeline({
             アクティビティはありません
           </li>
         ) : (
-          activities.map((event) => (
-            <li key={event.id} className="flex gap-3 py-4 first:pt-0">
-              <span className="w-12 shrink-0 text-right text-xs text-textTertiary">
-                {formatOccurredAt(event.occurredAt)}
-              </span>
-              <span
-                className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                style={{
-                  backgroundColor:
-                    event.eventType.startsWith('user_')
-                      ? '#16A34A'
-                      : event.eventType.startsWith('course_') || event.eventType.startsWith('channel_')
-                        ? '#3B82F6'
-                        : event.eventType.includes('frozen') || event.eventType.includes('unfrozen')
-                          ? '#DC2626'
-                          : '#7C3AED',
-                }}
-                aria-hidden
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-text">{formatDescription(event)}</p>
-                <div className="mt-1">
-                  <ActivityCategoryBadge eventType={event.eventType} />
+          activities.map((event) => {
+            const result = getMessageResult(event);
+            return (
+              <li key={event.id} className="flex gap-3 py-4 first:pt-0">
+                <span className="w-12 shrink-0 text-right text-xs text-textTertiary">
+                  {formatOccurredAt(event.occurredAt)}
+                </span>
+                <span
+                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                  style={{
+                    backgroundColor:
+                      event.eventType.startsWith('user_')
+                        ? '#16A34A'
+                        : event.eventType.startsWith('course_') || event.eventType.startsWith('channel_')
+                          ? '#3B82F6'
+                          : event.eventType.includes('frozen') || event.eventType.includes('unfrozen')
+                            ? '#DC2626'
+                            : '#7C3AED',
+                  }}
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-text">
+                    {result.parts.map((part, i) => {
+                      if (part.type === 'text') {
+                        return <span key={i}>{part.text}</span>;
+                      }
+                      if (part.type === 'userLink') {
+                        const href = getUserDetailPath(part.userId, part.globalRole);
+                        if (href === '#') return <span key={i}>{part.label}</span>;
+                        return (
+                          <Link
+                            key={i}
+                            href={href}
+                            className="text-accent hover:underline cursor-pointer"
+                          >
+                            {part.label}
+                          </Link>
+                        );
+                      }
+                      return (
+                        <Link
+                          key={i}
+                          href={`/admin/courses/${part.courseId}`}
+                          className="text-accent hover:underline cursor-pointer"
+                        >
+                          {part.label}
+                        </Link>
+                      );
+                    })}
+                  </p>
+                  <p className="mt-1 text-xs text-textMuted">
+                    実行者: {result.actorLabel}
+                  </p>
+                  <div className="mt-1">
+                    <ActivityCategoryBadge eventType={event.eventType} />
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))
+              </li>
+            );
+          })
         )}
       </ul>
       <div className="mt-4 border-t border-border pt-4">

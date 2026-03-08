@@ -45,6 +45,12 @@ export type ListMeta = {
 /** OpenAPI SuccessResponse 相当 */
 export type SuccessResponse = { success: boolean; message?: string };
 
+/** 監査ログ用の実行者情報（Controller から渡す） */
+export type ActorContext = {
+  actorEmail: string | null;
+  actorName: string | null;
+};
+
 /**
  * ユーザー管理ユースケース（Admin）
  *
@@ -119,6 +125,7 @@ export class AdminUserUseCase {
       name: string;
       globalRole: 'learner' | 'instructor';
     },
+    actorContext?: ActorContext,
   ): Promise<UserAdminView> {
     const existing = await this.userRepo.findByEmail(params.email);
     if (existing) {
@@ -134,7 +141,14 @@ export class AdminUserUseCase {
       eventType: AuditEventType.user_created,
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: 'User invited via admin',
-      metaJson: { targetUserId: user.id },
+      metaJson: {
+        targetUserId: user.id,
+        targetEmail: user.email,
+        targetName: user.name,
+        targetGlobalRole: user.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
     return {
       user: this.toUserResponse(user),
@@ -156,6 +170,7 @@ export class AdminUserUseCase {
       globalRole?: 'learner' | 'instructor';
       isActive?: boolean;
     },
+    actorContext?: ActorContext,
   ): Promise<UserResponse> {
     const target = await this.userRepo.findById(userId);
     if (!target) {
@@ -178,7 +193,14 @@ export class AdminUserUseCase {
       eventType: AuditEventType.user_updated,
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: 'User updated via admin',
-      metaJson: { targetUserId: userId },
+      metaJson: {
+        targetUserId: userId,
+        targetEmail: target.email,
+        targetName: target.name,
+        targetGlobalRole: target.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
     return this.toUserResponse(updated);
   }
@@ -190,6 +212,7 @@ export class AdminUserUseCase {
     actorUserId: string,
     actorGlobalRole: GlobalRole,
     userId: string,
+    actorContext?: ActorContext,
   ): Promise<SuccessResponse> {
     const target = await this.userRepo.findById(userId);
     if (!target) {
@@ -201,7 +224,14 @@ export class AdminUserUseCase {
       eventType: AuditEventType.user_deleted,
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: 'User deleted via admin',
-      metaJson: { targetUserId: userId },
+      metaJson: {
+        targetUserId: userId,
+        targetEmail: target.email,
+        targetName: target.name,
+        targetGlobalRole: target.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
     return { success: true };
   }
@@ -213,6 +243,7 @@ export class AdminUserUseCase {
     actorUserId: string,
     actorGlobalRole: GlobalRole,
     userId: string,
+    actorContext?: ActorContext,
   ): Promise<SuccessResponse> {
     const target = await this.userRepo.findById(userId);
     if (!target) {
@@ -224,7 +255,14 @@ export class AdminUserUseCase {
       eventType: AuditEventType.user_frozen,
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: 'User frozen via admin',
-      metaJson: { targetUserId: userId },
+      metaJson: {
+        targetUserId: userId,
+        targetEmail: target.email,
+        targetName: target.name,
+        targetGlobalRole: target.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
     return { success: true };
   }
@@ -236,6 +274,7 @@ export class AdminUserUseCase {
     actorUserId: string,
     actorGlobalRole: GlobalRole,
     userId: string,
+    actorContext?: ActorContext,
   ): Promise<SuccessResponse> {
     const target = await this.userRepo.findById(userId);
     if (!target) {
@@ -247,7 +286,14 @@ export class AdminUserUseCase {
       eventType: AuditEventType.user_unfrozen,
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: 'User unfrozen via admin',
-      metaJson: { targetUserId: userId },
+      metaJson: {
+        targetUserId: userId,
+        targetEmail: target.email,
+        targetName: target.name,
+        targetGlobalRole: target.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
     return { success: true };
   }

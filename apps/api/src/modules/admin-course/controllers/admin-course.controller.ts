@@ -93,6 +93,7 @@ export class AdminCourseController {
         catalogVisibility: body.catalogVisibility as 'public_listed' | 'public_unlisted' | 'private' | undefined,
         visibility: body.visibility as 'public' | 'instructors_only' | undefined,
       },
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -127,6 +128,7 @@ export class AdminCourseController {
         catalogVisibility: body.catalogVisibility as 'public_listed' | 'public_unlisted' | 'private' | undefined,
         visibility: body.visibility as 'public' | 'instructors_only' | undefined,
       },
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -146,6 +148,7 @@ export class AdminCourseController {
       user.userId,
       user.globalRole as GlobalRole,
       courseId,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -166,6 +169,7 @@ export class AdminCourseController {
       user.userId,
       user.globalRole as GlobalRole,
       courseId,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -187,6 +191,7 @@ export class AdminCourseController {
       user.globalRole as GlobalRole,
       courseId,
       body,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 

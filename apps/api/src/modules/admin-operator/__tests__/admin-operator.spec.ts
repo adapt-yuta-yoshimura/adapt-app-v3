@@ -134,11 +134,12 @@ describe('AdminOperatorUseCase', () => {
           eventType: AuditEventType.user_created,
           actorGlobalRole: GlobalRole.root_operator,
           reason: '運営スタッフ招待',
-          metaJson: {
-            email: 'new-op@example.com',
-            name: 'New Op',
-            globalRole: 'operator',
-          },
+          metaJson: expect.objectContaining({
+            targetUserId: 'op-1',
+            targetEmail: mockOperator.email,
+            targetName: mockOperator.name,
+            targetGlobalRole: mockOperator.globalRole,
+          }),
         }),
       );
     });
@@ -202,10 +203,14 @@ describe('AdminOperatorUseCase', () => {
       expect(auditRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: AuditEventType.operator_role_changed,
-          metaJson: {
+          metaJson: expect.objectContaining({
+            targetUserId: 'op-1',
+            targetEmail: mockOperator.email,
+            targetName: mockOperator.name,
+            targetGlobalRole: mockOperator.globalRole,
             previousRole: 'operator',
             newRole: 'root_operator',
-          },
+          }),
         }),
       );
     });
@@ -228,10 +233,14 @@ describe('AdminOperatorUseCase', () => {
       expect(result.globalRole).toBe('operator');
       expect(auditRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          metaJson: {
+          metaJson: expect.objectContaining({
+            targetUserId: 'rop-1',
+            targetEmail: mockRootOperator.email,
+            targetName: mockRootOperator.name,
+            targetGlobalRole: mockRootOperator.globalRole,
             previousRole: 'root_operator',
             newRole: 'operator',
-          },
+          }),
         }),
       );
     });
@@ -278,7 +287,12 @@ describe('AdminOperatorUseCase', () => {
       expect(auditRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: AuditEventType.user_deleted,
-          metaJson: { email: 'op1@example.com', globalRole: 'operator' },
+          metaJson: expect.objectContaining({
+            targetUserId: 'op-1',
+            targetEmail: mockOperator.email,
+            targetName: mockOperator.name,
+            targetGlobalRole: mockOperator.globalRole,
+          }),
         }),
       );
     });

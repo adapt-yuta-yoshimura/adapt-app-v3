@@ -37,6 +37,7 @@ export class AdminAuditController {
       user.userId,
       user.globalRole as GlobalRole,
       courseId,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 }

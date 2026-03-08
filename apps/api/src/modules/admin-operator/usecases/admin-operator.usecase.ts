@@ -37,6 +37,12 @@ export type ListMeta = {
 /** OpenAPI SuccessResponse 相当 */
 export type SuccessResponse = { success: boolean; message?: string };
 
+/** 監査ログ用の実行者情報（Controller から渡す） */
+export type ActorContext = {
+  actorEmail: string | null;
+  actorName: string | null;
+};
+
 /**
  * 運営スタッフ管理ユースケース（Admin）
  *
@@ -98,6 +104,7 @@ export class AdminOperatorUseCase {
       name: string;
       globalRole: 'operator' | 'root_operator';
     },
+    actorContext?: ActorContext,
   ): Promise<OperatorAdminView> {
     const allowedRoles: ('operator' | 'root_operator')[] = ['operator', 'root_operator'];
     if (!allowedRoles.includes(params.globalRole)) {
@@ -121,9 +128,12 @@ export class AdminOperatorUseCase {
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: '運営スタッフ招待',
       metaJson: {
-        email: params.email,
-        name: params.name,
-        globalRole: params.globalRole,
+        targetUserId: user.id,
+        targetEmail: user.email,
+        targetName: user.name,
+        targetGlobalRole: user.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
       },
     });
 
@@ -145,6 +155,7 @@ export class AdminOperatorUseCase {
     params: {
       globalRole: 'operator' | 'root_operator';
     },
+    actorContext?: ActorContext,
   ): Promise<OperatorAdminView> {
     const allowedRoles: ('operator' | 'root_operator')[] = ['operator', 'root_operator'];
     if (!allowedRoles.includes(params.globalRole)) {
@@ -167,8 +178,14 @@ export class AdminOperatorUseCase {
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: '運営スタッフロール変更',
       metaJson: {
+        targetUserId: userId,
+        targetEmail: target.email,
+        targetName: target.name,
+        targetGlobalRole: target.globalRole,
         previousRole: target.globalRole,
         newRole: params.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
       },
     });
 
@@ -185,6 +202,7 @@ export class AdminOperatorUseCase {
     actorUserId: string,
     actorGlobalRole: GlobalRole,
     userId: string,
+    actorContext?: ActorContext,
   ): Promise<SuccessResponse> {
     const target = await this.operatorRepo.findOperatorById(userId);
     if (!target) {
@@ -199,8 +217,12 @@ export class AdminOperatorUseCase {
       actorGlobalRole: actorGlobalRole as GlobalRole,
       reason: '運営スタッフ論理削除',
       metaJson: {
-        email: target.email ?? undefined,
-        globalRole: target.globalRole,
+        targetUserId: userId,
+        targetEmail: target.email,
+        targetName: target.name,
+        targetGlobalRole: target.globalRole,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
       },
     });
 

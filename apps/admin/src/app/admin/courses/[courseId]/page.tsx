@@ -17,6 +17,10 @@ import { ArrowLeft, Clock, CheckCircle, Snowflake, Sun, Eye } from 'lucide-react
 import { useQuery } from '@tanstack/react-query';
 import { fetchCourseList, fetchCourseAudit } from '@/lib/admin-courses-api';
 import type { CourseAdminView } from '@/lib/admin-courses-api';
+import {
+  formatAuditMessage,
+  getUserDetailPath,
+} from '@/lib/format-audit-message';
 import { CourseDetailPanel } from '@/components/features/course/course-detail-panel';
 import { CourseReviewPanel } from '@/components/features/course/course-review-panel';
 import { CourseStatusBadge } from '@/components/features/course/course-status-badge';
@@ -257,8 +261,8 @@ export default function CourseDetailPage() {
             {showAudit && auditLoading && (
               <p className="text-sm text-textMuted">読み込み中...</p>
             )}
-            {showAudit && !auditLoading && auditData && (
-              <AuditLogList events={auditData.auditEvents} />
+            {showAudit && !auditLoading && auditData && courseId && (
+              <AuditLogList events={auditData.auditEvents} courseId={courseId} />
             )}
           </div>
         </div>
@@ -376,30 +380,72 @@ function DetailRow({
 
 function AuditLogList({
   events,
+  courseId,
 }: {
   events: Array<{
     id: string;
     occurredAt: string;
+    actorUserId: string;
     eventType: string;
     reason: string;
+    metaJson: unknown;
   }>;
+  courseId: string;
 }) {
   if (events.length === 0) {
     return <p className="text-sm text-textMuted">イベントはありません</p>;
   }
   return (
     <ul className="divide-y divide-border text-sm">
-      {events.map((ev) => (
-        <li key={ev.id} className="py-2">
-          <span className="text-textTertiary">
-            {new Date(ev.occurredAt).toLocaleString('ja-JP')}
-          </span>
-          {' — '}
-          <span className="font-medium">{ev.eventType}</span>
-          {' — '}
-          <span className="text-textSecondary">{ev.reason}</span>
-        </li>
-      ))}
+      {events.map((ev) => {
+        const result = formatAuditMessage({
+          eventType: ev.eventType,
+          reason: ev.reason,
+          metaJson: (ev.metaJson as Record<string, unknown>) ?? null,
+          courseId,
+          actorUserId: ev.actorUserId,
+        });
+        return (
+          <li key={ev.id} className="py-3">
+            <span className="text-textTertiary">
+              {new Date(ev.occurredAt).toLocaleString('ja-JP')}
+            </span>
+            {' — '}
+            <span className="text-text">
+              {result.parts.map((part, i) => {
+                if (part.type === 'text') {
+                  return <span key={i}>{part.text}</span>;
+                }
+                if (part.type === 'userLink') {
+                  const href = getUserDetailPath(part.userId, part.globalRole);
+                  if (href === '#') return <span key={i}>{part.label}</span>;
+                  return (
+                    <Link
+                      key={i}
+                      href={href}
+                      className="text-accent hover:underline cursor-pointer"
+                    >
+                      {part.label}
+                    </Link>
+                  );
+                }
+                return (
+                  <Link
+                    key={i}
+                    href={`/admin/courses/${part.courseId}`}
+                    className="text-accent hover:underline cursor-pointer"
+                  >
+                    {part.label}
+                  </Link>
+                );
+              })}
+            </span>
+            <p className="mt-1 text-xs text-textMuted">
+              実行者: {result.actorLabel}
+            </p>
+          </li>
+        );
+      })}
     </ul>
   );
 }

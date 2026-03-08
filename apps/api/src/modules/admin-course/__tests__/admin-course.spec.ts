@@ -191,8 +191,10 @@ describe('AdminCourseUseCase', () => {
           actorGlobalRole: GlobalRole.operator,
           courseId: 'course-1',
           metaJson: expect.objectContaining({
-            title: 'Test Course',
+            courseTitle: 'Test Course',
+            courseStatus: 'draft',
             ownerUserId: 'owner-instructor-1',
+            title: 'Test Course',
             style: 'seminar',
           }),
         }),
@@ -276,7 +278,12 @@ describe('AdminCourseUseCase', () => {
           eventType: AuditEventType.course_updated,
           actorGlobalRole: GlobalRole.operator,
           courseId: 'course-1',
-          metaJson: { changedFields: ['description'] },
+          metaJson: expect.objectContaining({
+            courseTitle: 'Test Course',
+            courseStatus: 'draft',
+            ownerUserId: 'owner-instructor-1',
+            changedFields: ['description'],
+          }),
         }),
       );
     });
@@ -328,7 +335,13 @@ describe('AdminCourseUseCase', () => {
           eventType: AuditEventType.course_archived,
           actorGlobalRole: GlobalRole.operator,
           courseId: 'course-1',
-          metaJson: { title: 'Test Course', previousStatus: 'draft' },
+          metaJson: expect.objectContaining({
+            courseTitle: 'Test Course',
+            courseStatus: 'draft',
+            ownerUserId: 'owner-instructor-1',
+            title: 'Test Course',
+            previousStatus: 'draft',
+          }),
         }),
       );
     });
@@ -374,7 +387,12 @@ describe('AdminCourseUseCase', () => {
           eventType: AuditEventType.course_approved,
           actorGlobalRole: GlobalRole.operator,
           courseId: 'course-1',
-          metaJson: { title: 'Test Course' },
+          metaJson: expect.objectContaining({
+            courseTitle: 'Test Course',
+            courseStatus: 'active',
+            ownerUserId: 'owner-instructor-1',
+            title: 'Test Course',
+          }),
         }),
       );
     });
@@ -435,7 +453,13 @@ describe('AdminCourseUseCase', () => {
           eventType: AuditEventType.course_frozen,
           actorGlobalRole: GlobalRole.operator,
           courseId: 'course-1',
-          metaJson: expect.objectContaining({ title: 'Test Course', reason: 'Test' }),
+          metaJson: expect.objectContaining({
+            courseTitle: 'Test Course',
+            courseStatus: 'draft',
+            ownerUserId: 'owner-instructor-1',
+            title: 'Test Course',
+            reason: 'Test',
+          }),
         }),
       );
     });
@@ -517,7 +541,12 @@ describe('AdminCourseUseCase', () => {
           eventType: AuditEventType.frozen_course_viewed,
           actorGlobalRole: GlobalRole.operator,
           courseId: 'course-1',
-          metaJson: { title: 'Test Course' },
+          metaJson: expect.objectContaining({
+            courseTitle: 'Test Course',
+            courseStatus: 'draft',
+            ownerUserId: 'owner-instructor-1',
+            title: 'Test Course',
+          }),
         }),
       );
     });

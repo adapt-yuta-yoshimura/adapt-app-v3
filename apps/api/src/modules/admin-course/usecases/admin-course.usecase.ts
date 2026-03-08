@@ -54,6 +54,12 @@ export type CourseListResponse = {
 /** SoT: openapi_admin.yaml - SuccessResponse */
 export type SuccessResponse = { success: boolean; message?: string };
 
+/** 監査ログ用の実行者情報（Controller から渡す） */
+export type ActorContext = {
+  actorEmail: string | null;
+  actorName: string | null;
+};
+
 /** SoT: openapi_admin.yaml - GenericDetailView（監査閲覧用） */
 export type GenericDetailView = {
   course: CourseResponse;
@@ -147,6 +153,7 @@ export class AdminCourseUseCase {
       catalogVisibility?: CourseCatalogVisibility;
       visibility?: CourseVisibility;
     },
+    actorContext?: ActorContext,
   ): Promise<CourseResponse> {
     const owner = await this.userRepo.findById(params.ownerUserId);
     if (!owner) {
@@ -181,9 +188,13 @@ export class AdminCourseUseCase {
       reason: 'Admin course create',
       courseId: course.id,
       metaJson: {
-        title: course.title,
+        courseTitle: course.title,
+        courseStatus: course.status,
         ownerUserId: course.ownerUserId,
+        title: course.title,
         style: course.style,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
       },
     });
 
@@ -204,6 +215,7 @@ export class AdminCourseUseCase {
       visibility?: CourseVisibility;
       ownerUserId?: string;
     },
+    actorContext?: ActorContext,
   ): Promise<CourseResponse> {
     const existing = await this.courseRepo.findById(courseId);
     if (!existing) {
@@ -242,7 +254,14 @@ export class AdminCourseUseCase {
       actorGlobalRole,
       reason: 'Admin course update',
       courseId,
-      metaJson: { changedFields },
+      metaJson: {
+        courseTitle: course.title,
+        courseStatus: course.status,
+        ownerUserId: course.ownerUserId,
+        changedFields,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
 
     return this.toCourseResponse(course);
@@ -255,6 +274,7 @@ export class AdminCourseUseCase {
     actorUserId: string,
     actorGlobalRole: GlobalRole,
     courseId: string,
+    actorContext?: ActorContext,
   ): Promise<SuccessResponse> {
     const existing = await this.courseRepo.findById(courseId);
     if (!existing) {
@@ -269,7 +289,15 @@ export class AdminCourseUseCase {
       actorGlobalRole,
       reason: 'Admin course archive',
       courseId,
-      metaJson: { title: existing.title, previousStatus: existing.status },
+      metaJson: {
+        courseTitle: existing.title,
+        courseStatus: existing.status,
+        ownerUserId: existing.ownerUserId,
+        title: existing.title,
+        previousStatus: existing.status,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
 
     return { success: true };
@@ -282,6 +310,7 @@ export class AdminCourseUseCase {
     actorUserId: string,
     actorGlobalRole: GlobalRole,
     courseId: string,
+    actorContext?: ActorContext,
   ): Promise<CourseResponse> {
     const existing = await this.courseRepo.findById(courseId);
     if (!existing) {
@@ -301,7 +330,14 @@ export class AdminCourseUseCase {
       actorGlobalRole,
       reason: 'Admin course approve',
       courseId,
-      metaJson: { title: course.title },
+      metaJson: {
+        courseTitle: course.title,
+        courseStatus: course.status,
+        ownerUserId: course.ownerUserId,
+        title: course.title,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
 
     return this.toCourseResponse(course);
@@ -315,6 +351,7 @@ export class AdminCourseUseCase {
     actorGlobalRole: GlobalRole,
     courseId: string,
     body?: { reason?: string },
+    actorContext?: ActorContext,
   ): Promise<CourseResponse> {
     const existing = await this.courseRepo.findById(courseId);
     if (!existing) {
@@ -333,7 +370,15 @@ export class AdminCourseUseCase {
       actorGlobalRole,
       reason: 'Admin course freeze',
       courseId,
-      metaJson: { title: course.title, reason: body?.reason ?? null },
+      metaJson: {
+        courseTitle: course.title,
+        courseStatus: course.status,
+        ownerUserId: course.ownerUserId,
+        title: course.title,
+        reason: body?.reason ?? null,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
 
     return this.toCourseResponse(course);
@@ -359,6 +404,7 @@ export class AdminCourseUseCase {
     actorUserId: string,
     actorGlobalRole: GlobalRole,
     courseId: string,
+    actorContext?: ActorContext,
   ): Promise<GenericDetailView> {
     const course = await this.courseRepo.findById(courseId);
     if (!course) {
@@ -371,7 +417,14 @@ export class AdminCourseUseCase {
       actorGlobalRole,
       reason: 'Frozen course audit view',
       courseId,
-      metaJson: { title: course.title },
+      metaJson: {
+        courseTitle: course.title,
+        courseStatus: course.status,
+        ownerUserId: course.ownerUserId,
+        title: course.title,
+        actorEmail: actorContext?.actorEmail ?? undefined,
+        actorName: actorContext?.actorName ?? undefined,
+      },
     });
 
     const auditEvents = await this.auditEventRepo.findByCourseId(courseId);

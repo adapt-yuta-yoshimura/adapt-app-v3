@@ -73,6 +73,7 @@ export class AdminOperatorController {
       user.userId,
       user.globalRole as 'root_operator',
       { email: body.email, name: body.name, globalRole: body.globalRole },
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -95,6 +96,7 @@ export class AdminOperatorController {
       user.globalRole as 'root_operator',
       userId,
       { globalRole: body.globalRole },
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -114,6 +116,7 @@ export class AdminOperatorController {
       user.userId,
       user.globalRole as 'root_operator',
       userId,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 }

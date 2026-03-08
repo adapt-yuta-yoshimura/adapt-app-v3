@@ -84,6 +84,7 @@ export class AdminUserController {
       user.userId,
       user.globalRole as 'operator' | 'root_operator',
       { email: body.email, name: body.name, globalRole: body.globalRole },
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -111,6 +112,7 @@ export class AdminUserController {
       user.globalRole as 'operator' | 'root_operator',
       userId,
       body,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -130,6 +132,7 @@ export class AdminUserController {
       user.userId,
       user.globalRole as 'operator' | 'root_operator',
       userId,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -152,6 +155,7 @@ export class AdminUserController {
       user.userId,
       user.globalRole as 'operator' | 'root_operator',
       userId,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 
@@ -174,6 +178,7 @@ export class AdminUserController {
       user.userId,
       user.globalRole as 'operator' | 'root_operator',
       userId,
+      { actorEmail: user.email, actorName: user.name },
     );
   }
 }
