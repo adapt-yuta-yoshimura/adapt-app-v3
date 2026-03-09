@@ -38,8 +38,6 @@ export function DashboardClient() {
   const { data: activities, isLoading: activitiesLoading } = useQuery({
     queryKey: ['admin', 'dashboard', 'activities'],
     queryFn: () => fetchDashboardActivities(10),
-    staleTime: 0,
-    refetchOnMount: true,
   });
 
   const { data: pendingCoursesData, isLoading: pendingLoading } = useQuery({

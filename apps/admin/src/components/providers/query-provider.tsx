@@ -18,7 +18,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000,
+            staleTime: 0,
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
               // 401 (UnauthorizedError) はリトライしない
               if (error instanceof UnauthorizedError) return false;
