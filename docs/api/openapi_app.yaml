@@ -471,7 +471,7 @@ paths:
       operationId: API_015
       x-api-id: API-015
       x-roles: learner
-      x-policy: é–²è¦§ã®ã¿
+      x-policy: 閲覧のみ
       responses:
         '200':
           description: OK
@@ -923,7 +923,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CourseDetailView'
         '403':
-          description: Forbidden (ownerUserIdä¸ä¸€è‡´)
+          description: Forbidden (ownerUserId不一致)
         '423':
           description: Locked (Course is frozen)
       security:
@@ -1595,7 +1595,7 @@ paths:
       operationId: API_053
       x-api-id: API-053
       x-roles: all_in_course
-      x-policy: é–²è¦§ã®ã¿
+      x-policy: 閲覧のみ
       responses:
         '200':
           description: OK
@@ -2109,7 +2109,7 @@ components:
           format: date-time
         createdByUserId:
           type: string
-          description: ä½œæˆè€…ãƒ¦ãƒ¼ã‚¶ãƒ¼IDï¼ˆinstructor or operator/root_operatorï¼‰
+          description: 作成者ユーザーID（instructor or operator/root_operator）
         status:
           type: string
           enum:
@@ -2117,7 +2117,9 @@ components:
           - pending_approval
           - active
           - archived
-          description: ""
+          description: 講座ステータス
+        style:
+          $ref: '#/components/schemas/CourseStyle'
         approvalRequestedAt:
           type: string
           format: date-time
@@ -2141,6 +2143,7 @@ components:
       - catalogVisibility
       - id
       - status
+      - style
     CourseCreateRequest:
       type: object
       properties:
