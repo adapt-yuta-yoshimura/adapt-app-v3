@@ -550,9 +550,24 @@ export interface components {
       /** @enum {string} */
       role?: "instructor_owner" | "learner" | "instructor" | "assistant";
     };
+    CourseSection: {
+      id: string;
+      courseId: string;
+      /** @description セクション名（例: Week 1, 制作準備と基礎固め） */
+      title: string;
+      /** @description 表示順序 */
+      order: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      lessons: components["schemas"]["Lesson"][];
+    };
     Lesson: {
       id: string;
       courseId: string;
+      /** @description 所属セクションID（ブートキャンプの場合に使用） */
+      courseSectionId?: string | null;
       /** @enum {string} */
       type: "text" | "video" | "live" | "assignment";
       title: string;
@@ -1463,6 +1478,25 @@ export interface components {
       channels: components["schemas"]["CourseChannelSummaryView"][];
       stats: components["schemas"]["CourseStatsView"];
     };
+    SyllabusView: {
+      courseId: string;
+      style: components["schemas"]["CourseStyle"];
+      sections: components["schemas"]["CourseSection"][];
+    };
+    /** @description 受講者向け講座詳細。CourseDetailView を拡張し、シラバス（セクション→レッスン階層）を含む。1on1/セミナーの場合は syllabus.sections が空配列。 */
+    LearnerCourseDetailView: {
+      course: components["schemas"]["Course"];
+      channels: components["schemas"]["CourseChannelSummaryView"][];
+      stats: components["schemas"]["CourseStatsView"];
+      syllabus: components["schemas"]["SyllabusView"];
+    };
+    /** @description 受講者向けサイドメニュー。セクション→レッスン階層とチャンネル一覧を含む。Excel 06_API一覧の「階層構造化して取得」に対応。 */
+    LearnerSideMenuView: {
+      courseId: string;
+      style: components["schemas"]["CourseStyle"];
+      sections: components["schemas"]["CourseSection"][];
+      channels: components["schemas"]["CourseChannelSummaryView"][];
+    };
     ThreadSummaryView: {
       threadId: string;
       rootMessage: components["schemas"]["CourseMessageView"];
@@ -1871,7 +1905,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["GenericDetailView"];
+          "application/json": components["schemas"]["LearnerCourseDetailView"];
         };
       };
       /** @description Locked (Course is frozen) */
@@ -1913,7 +1947,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["GenericListResponse"];
+          "application/json": components["schemas"]["LearnerSideMenuView"];
         };
       };
     };
@@ -2279,7 +2313,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CourseDetailView"];
+          "application/json": components["schemas"]["SyllabusView"];
         };
       };
     };
@@ -2303,7 +2337,7 @@ export interface operations {
       /** @description OK */
       201: {
         content: {
-          "application/json": components["schemas"]["CourseDetailView"];
+          "application/json": components["schemas"]["SyllabusView"];
         };
       };
       /** @description Locked (Course is frozen) */
