@@ -484,10 +484,14 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
-      /** @description ä½œæˆè€…ãƒ¦ãƒ¼ã‚¶ãƒ¼IDï¼ˆinstructor or operator/root_operatorï¼‰ */
+      /** @description 作成者ユーザーID（instructor or operator/root_operator） */
       createdByUserId: string;
-      /** @enum {string} */
+      /**
+       * @description 講座ステータス
+       * @enum {string}
+       */
       status: "draft" | "pending_approval" | "active" | "archived";
+      style: components["schemas"]["CourseStyle"];
       /** Format: date-time */
       approvalRequestedAt?: string | null;
       /** Format: date-time */
@@ -2218,7 +2222,7 @@ export interface operations {
           "application/json": components["schemas"]["CourseDetailView"];
         };
       };
-      /** @description Forbidden (ownerUserIdä¸ä¸€è‡´) */
+      /** @description Forbidden (ownerUserId不一致) */
       403: {
         content: never;
       };
