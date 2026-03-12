@@ -1550,6 +1550,14 @@ export interface components {
       items: components["schemas"]["PaymentSummaryView"][];
       meta?: components["schemas"]["ListMeta"];
     };
+    SubmissionListResponse: {
+      items: components["schemas"]["SubmissionView"][];
+      meta?: components["schemas"]["ListMeta"];
+    };
+    CourseMemberListResponse: {
+      items: components["schemas"]["CourseMember"][];
+      meta?: components["schemas"]["ListMeta"];
+    };
     GenericWriteRequest: {
       [key: string]: unknown;
     };
@@ -2537,7 +2545,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CourseDetailView"];
+          "application/json": components["schemas"]["SubmissionListResponse"];
         };
       };
     };
@@ -2580,7 +2588,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CourseDetailView"];
+          "application/json": components["schemas"]["CourseMemberListResponse"];
         };
       };
     };
