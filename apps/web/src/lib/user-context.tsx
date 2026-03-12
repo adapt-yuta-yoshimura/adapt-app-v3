@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { fetchCurrentUser, type AuthUser } from '@/lib/auth';
+import { fetchCurrentUser, getStubToken, type AuthUser } from '@/lib/auth';
 
 type UserContextValue = {
   user: AuthUser | null;
@@ -17,13 +17,6 @@ type UserContextValue = {
 };
 
 const UserContext = createContext<UserContextValue | null>(null);
-
-function getStubToken(): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/adapt_token=([^;]+)/);
-  if (match) return match[1];
-  return process.env.NEXT_PUBLIC_STUB_TOKEN ?? null;
-}
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);

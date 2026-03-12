@@ -19,6 +19,17 @@ export interface AuthUser {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 /**
+ * スタブトークン取得（Cookie adapt_token または環境変数）
+ * API 呼び出し時に Bearer として使用する
+ */
+export function getStubToken(): string | null {
+  if (typeof document === 'undefined') return process.env.NEXT_PUBLIC_STUB_TOKEN ?? null;
+  const match = document.cookie.match(/adapt_token=([^;]+)/);
+  if (match) return match[1];
+  return process.env.NEXT_PUBLIC_STUB_TOKEN ?? null;
+}
+
+/**
  * globalRole による講師モードアクセス可否
  */
 export function canAccessInstructorMode(role: string): boolean {
