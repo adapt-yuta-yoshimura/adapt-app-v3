@@ -420,7 +420,7 @@ paths:
 
       operationId: API_013
       x-api-id: API-013
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '200':
@@ -441,7 +441,7 @@ paths:
 
       operationId: API_014
       x-api-id: API-014
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: 423_ON_FROZEN
       responses:
         '200':
@@ -470,7 +470,7 @@ paths:
 
       operationId: API_015
       x-api-id: API-015
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: 閲覧のみ
       responses:
         '200':
@@ -497,7 +497,7 @@ paths:
 
       operationId: API_016
       x-api-id: API-016
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '200':
@@ -524,7 +524,7 @@ paths:
 
       operationId: API_017
       x-api-id: API-017
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '200':
@@ -545,7 +545,7 @@ paths:
 
       operationId: API_018
       x-api-id: API-018
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '200':
@@ -572,7 +572,7 @@ paths:
 
       operationId: API_019
       x-api-id: API-019
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: 423_ON_FROZEN, threads_only
       responses:
         '201':
@@ -607,7 +607,7 @@ paths:
 
       operationId: API_020
       x-api-id: API-020
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '200':
@@ -628,7 +628,7 @@ paths:
 
       operationId: API_021
       x-api-id: API-021
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '200':
@@ -649,7 +649,7 @@ paths:
 
       operationId: API_022
       x-api-id: API-022
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '201':
@@ -682,7 +682,7 @@ paths:
 
       operationId: API_023
       x-api-id: API-023
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: '-'
       responses:
         '200':
@@ -709,7 +709,7 @@ paths:
 
       operationId: API_024
       x-api-id: API-024
-      x-roles: learner
+      x-roles: learner, instructor
       x-policy: 423_ON_FROZEN
       responses:
         '201':
