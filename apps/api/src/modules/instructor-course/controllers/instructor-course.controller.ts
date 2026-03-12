@@ -21,10 +21,14 @@ type CourseListResponse =
   paths['/api/v1/instructor/courses']['get']['responses']['200']['content']['application/json'];
 type CreateCourseResponse =
   paths['/api/v1/instructor/courses']['post']['responses']['201']['content']['application/json'];
+type CreateCourseBody =
+  paths['/api/v1/instructor/courses']['post']['requestBody']['content']['application/json'];
 type CourseDetailView =
   paths['/api/v1/instructor/courses/{courseId}']['get']['responses']['200']['content']['application/json'];
 type UpdateCourseResponse =
   paths['/api/v1/instructor/courses/{courseId}']['put']['responses']['200']['content']['application/json'];
+type UpdateCourseBody =
+  paths['/api/v1/instructor/courses/{courseId}']['put']['requestBody']['content']['application/json'];
 type DeleteCourseResponse =
   paths['/api/v1/instructor/courses/{courseId}']['delete']['responses']['200']['content']['application/json'];
 type RequestApprovalResponse =
@@ -53,8 +57,7 @@ export class InstructorCourseController {
   async listCourses(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<CourseListResponse> {
-    // TODO(TBD): Cursor実装 - InstructorCourseUseCase.listCourses
-    throw new Error('Not implemented');
+    return this.usecase.listCourses(user.userId);
   }
 
   /**
@@ -66,10 +69,9 @@ export class InstructorCourseController {
   @Roles('instructor')
   async createCourse(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: unknown,
+    @Body() body: CreateCourseBody,
   ): Promise<CreateCourseResponse> {
-    // TODO(TBD): Cursor実装 - InstructorCourseUseCase.createCourse
-    throw new Error('Not implemented');
+    return this.usecase.createCourse(user.userId, body);
   }
 
   /**
@@ -83,8 +85,7 @@ export class InstructorCourseController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
   ): Promise<CourseDetailView> {
-    // TODO(TBD): Cursor実装 - InstructorCourseUseCase.getCourse
-    throw new Error('Not implemented');
+    return this.usecase.getCourse(user.userId, courseId);
   }
 
   /**
@@ -98,12 +99,9 @@ export class InstructorCourseController {
   async updateCourse(
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
-    @Body() body: unknown,
+    @Body() body: UpdateCourseBody,
   ): Promise<UpdateCourseResponse> {
-    // TODO(TBD): Cursor実装 - InstructorCourseUseCase.updateCourse
-    // - instructor_owner（CourseMemberRole）チェックはUseCase層で実装
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.updateCourse(user.userId, courseId, body);
   }
 
   /**
@@ -117,9 +115,7 @@ export class InstructorCourseController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
   ): Promise<DeleteCourseResponse> {
-    // TODO(TBD): Cursor実装 - InstructorCourseUseCase.deleteCourse
-    // - instructor_owner（CourseMemberRole）チェックはUseCase層で実装
-    throw new Error('Not implemented');
+    return this.usecase.deleteCourse(user.userId, courseId);
   }
 
   /**
@@ -135,10 +131,7 @@ export class InstructorCourseController {
     @Param('courseId') courseId: string,
     @Body() body: unknown,
   ): Promise<RequestApprovalResponse> {
-    // TODO(TBD): Cursor実装 - InstructorCourseUseCase.requestApproval
-    // - instructor_owner（CourseMemberRole）チェックはUseCase層で実装
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.requestApproval(user.userId, courseId);
   }
 
   /**
@@ -154,10 +147,6 @@ export class InstructorCourseController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
   ): Promise<PublishCourseResponse> {
-    // TODO(TBD): Cursor実装 - InstructorCourseUseCase.publishCourse
-    // - instructor_owner（CourseMemberRole）チェックはUseCase層で実装
-    // - x-policy: AUDIT_LOG
-    // - 403: ownerUserId不一致
-    throw new Error('Not implemented');
+    return this.usecase.publishCourse(user, courseId);
   }
 }

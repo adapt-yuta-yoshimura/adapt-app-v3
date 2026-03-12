@@ -7,6 +7,8 @@ import { CourseRepository } from './repositories/course.repository';
 import { CourseSectionRepository } from './repositories/course-section.repository';
 import { LessonRepository } from './repositories/lesson.repository';
 import { CourseMemberRepository } from './repositories/course-member.repository';
+import { CourseChannelRepository } from './repositories/course-channel.repository';
+import { AuditModule } from '../audit/audit.module';
 
 /**
  * 講師向け講座管理モジュール
@@ -15,6 +17,7 @@ import { CourseMemberRepository } from './repositories/course-member.repository'
  * PrismaModule / AuthModule は @Global() のため imports 不要
  */
 @Module({
+  imports: [AuditModule],
   controllers: [InstructorCourseController, InstructorSyllabusController],
   providers: [
     InstructorCourseUseCase,
@@ -23,6 +26,7 @@ import { CourseMemberRepository } from './repositories/course-member.repository'
     CourseSectionRepository,
     LessonRepository,
     CourseMemberRepository,
+    CourseChannelRepository,
   ],
 })
 export class InstructorCourseModule {}

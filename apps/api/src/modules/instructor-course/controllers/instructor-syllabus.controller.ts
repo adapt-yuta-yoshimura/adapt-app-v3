@@ -56,8 +56,7 @@ export class InstructorSyllabusController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
   ): Promise<SyllabusView> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.getSyllabus
-    throw new Error('Not implemented');
+    return this.usecase.getSyllabus(user.userId, courseId);
   }
 
   /**
@@ -73,9 +72,7 @@ export class InstructorSyllabusController {
     @Param('courseId') courseId: string,
     @Body() body: unknown,
   ): Promise<AddSectionResponse> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.addSection
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.addSection(user.userId, courseId, (body ?? {}) as { title?: string; order?: number });
   }
 
   /**
@@ -91,9 +88,7 @@ export class InstructorSyllabusController {
     @Param('sectionId') sectionId: string,
     @Body() body: unknown,
   ): Promise<UpdateSectionResponse> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.updateSection
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.updateSection(user.userId, sectionId, (body ?? {}) as { title?: string; order?: number });
   }
 
   /**
@@ -108,9 +103,7 @@ export class InstructorSyllabusController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('sectionId') sectionId: string,
   ): Promise<DeleteSectionResponse> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.deleteSection
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.deleteSection(user.userId, sectionId);
   }
 
   /**
@@ -126,9 +119,7 @@ export class InstructorSyllabusController {
     @Param('sectionId') sectionId: string,
     @Body() body: unknown,
   ): Promise<CreateLessonResponse> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.createLesson
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.createLesson(user.userId, sectionId, (body ?? {}) as { title?: string });
   }
 
   /**
@@ -142,9 +133,7 @@ export class InstructorSyllabusController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('lessonId') lessonId: string,
   ): Promise<LessonDetailView> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.getLesson
-    // レスポンス型: GenericDetailView（additionalProperties: true）
-    throw new Error('Not implemented');
+    return this.usecase.getLesson(user.userId, lessonId);
   }
 
   /**
@@ -160,9 +149,7 @@ export class InstructorSyllabusController {
     @Param('lessonId') lessonId: string,
     @Body() body: unknown,
   ): Promise<UpdateLessonResponse> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.updateLesson
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.updateLesson(user.userId, lessonId, (body ?? {}) as { title?: string; type?: string });
   }
 
   /**
@@ -177,8 +164,6 @@ export class InstructorSyllabusController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('lessonId') lessonId: string,
   ): Promise<DeleteLessonResponse> {
-    // TODO(TBD): Cursor実装 - SyllabusUseCase.deleteLesson
-    // - x-policy: 423_ON_FROZEN（凍結チェック）
-    throw new Error('Not implemented');
+    return this.usecase.deleteLesson(user.userId, lessonId);
   }
 }
