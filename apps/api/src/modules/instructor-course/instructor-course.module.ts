@@ -28,5 +28,6 @@ import { AuditModule } from '../audit/audit.module';
     CourseMemberRepository,
     CourseChannelRepository,
   ],
+  exports: [CourseMemberRepository, CourseRepository],
 })
 export class InstructorCourseModule {}

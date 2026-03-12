@@ -8,6 +8,8 @@ import { AdminCourseModule } from './modules/admin-course/admin-course.module';
 import { AdminPaymentModule } from './modules/admin-payment/admin-payment.module';
 import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
 import { InstructorCourseModule } from './modules/instructor-course/instructor-course.module';
+import { InstructorOperationsModule } from './modules/instructor-operations/instructor-operations.module';
+import { CommunicationModule } from './modules/communication/communication.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { InstructorCourseModule } from './modules/instructor-course/instructor-c
     AdminPaymentModule,
     AdminDashboardModule,
     InstructorCourseModule,
+    InstructorOperationsModule,
+    CommunicationModule,
   ],
 })
 export class AppModule {}
