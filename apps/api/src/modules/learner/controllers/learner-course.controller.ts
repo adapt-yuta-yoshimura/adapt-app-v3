@@ -7,12 +7,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/guards/roles.decorator';
-import { CurrentUser } from '../../common/guards/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/auth/jwt.types';
-import { LearnerCourseUseCase } from './learner-course.usecase';
+import { AuthGuard } from '../../../common/guards/auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles } from '../../../common/guards/roles.decorator';
+import { CurrentUser } from '../../../common/guards/current-user.decorator';
+import type { AuthenticatedUser } from '../../../common/auth/jwt.types';
+import { LearnerCourseUseCase } from '../usecases/learner-course.usecase';
+import { GetMyCoursesUseCase } from '../usecases/get-my-courses.usecase';
+import { GetCourseDetailUseCase } from '../usecases/get-course-detail.usecase';
+import { CompleteCourseUseCase } from '../usecases/complete-course.usecase';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type MyCoursesResponse =
@@ -38,7 +41,12 @@ type CompleteResponse =
 @Controller('api/v1/learner/courses')
 @UseGuards(AuthGuard, RolesGuard)
 export class LearnerCourseController {
-  constructor(private readonly usecase: LearnerCourseUseCase) {}
+  constructor(
+    private readonly usecase: LearnerCourseUseCase,
+    private readonly getMyCoursesUseCase: GetMyCoursesUseCase,
+    private readonly getCourseDetailUseCase: GetCourseDetailUseCase,
+    private readonly completeCourseUseCase: CompleteCourseUseCase,
+  ) {}
 
   /**
    * API-013: マイ講座一覧
@@ -50,7 +58,7 @@ export class LearnerCourseController {
   async getMyCourses(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<MyCoursesResponse> {
-    return this.usecase.getMyCourses(user.userId);
+    return this.getMyCoursesUseCase.execute(user.userId);
   }
 
   /**
@@ -65,7 +73,7 @@ export class LearnerCourseController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('courseId') courseId: string,
   ): Promise<LearnerCourseDetailView> {
-    return this.usecase.getCourseDetail(courseId, user.userId);
+    return this.getCourseDetailUseCase.execute(user.userId, courseId);
   }
 
   /**
@@ -94,6 +102,6 @@ export class LearnerCourseController {
     @Param('courseId') courseId: string,
     @Body() body: CompleteBody,
   ): Promise<CompleteResponse> {
-    return this.usecase.completeCourse(courseId, user.userId, body);
+    return this.completeCourseUseCase.execute(user.userId, courseId);
   }
 }

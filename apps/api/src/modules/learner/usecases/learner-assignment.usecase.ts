@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { AssignmentRepository } from './assignment.repository';
-import { SubmissionRepository } from './submission.repository';
-import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
+import { AssignmentRepository } from '../repositories/assignment.repository';
+import { SubmissionRepository } from '../repositories/submission.repository';
+import { CourseEnrollmentRepository } from '../../enrollment/repositories/course-enrollment.repository';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type AssignmentListResponse =

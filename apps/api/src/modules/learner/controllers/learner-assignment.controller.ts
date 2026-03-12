@@ -7,12 +7,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/guards/roles.decorator';
-import { CurrentUser } from '../../common/guards/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/auth/jwt.types';
-import { LearnerAssignmentUseCase } from './learner-assignment.usecase';
+import { AuthGuard } from '../../../common/guards/auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles } from '../../../common/guards/roles.decorator';
+import { CurrentUser } from '../../../common/guards/current-user.decorator';
+import type { AuthenticatedUser } from '../../../common/auth/jwt.types';
+import { LearnerAssignmentUseCase } from '../usecases/learner-assignment.usecase';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type AssignmentListResponse =

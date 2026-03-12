@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerRecordsUseCase } from './learner-records.usecase';
-import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
-import { SubmissionRepository } from './submission.repository';
-import { LearnerCourseRepository } from './learner-course.repository';
+import { CourseEnrollmentRepository } from '../../enrollment/repositories/course-enrollment.repository';
+import { SubmissionRepository } from '../repositories/submission.repository';
+import { LearnerCourseRepository } from '../repositories/learner-course.repository';
 
 /**
  * STU: LearnerRecords UseCase テスト（API-020〜021）

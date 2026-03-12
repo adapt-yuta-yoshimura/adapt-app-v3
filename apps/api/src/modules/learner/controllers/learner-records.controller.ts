@@ -4,12 +4,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/guards/roles.decorator';
-import { CurrentUser } from '../../common/guards/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/auth/jwt.types';
-import { LearnerRecordsUseCase } from './learner-records.usecase';
+import { AuthGuard } from '../../../common/guards/auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles } from '../../../common/guards/roles.decorator';
+import { CurrentUser } from '../../../common/guards/current-user.decorator';
+import type { AuthenticatedUser } from '../../../common/auth/jwt.types';
+import { LearnerRecordsUseCase } from '../usecases/learner-records.usecase';
+import { GetRecordsUseCase } from '../usecases/get-records.usecase';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type RecordsResponse =
@@ -27,7 +28,10 @@ type CalendarResponse =
 @Controller('api/v1/learner')
 @UseGuards(AuthGuard, RolesGuard)
 export class LearnerRecordsController {
-  constructor(private readonly usecase: LearnerRecordsUseCase) {}
+  constructor(
+    private readonly usecase: LearnerRecordsUseCase,
+    private readonly getRecordsUseCase: GetRecordsUseCase,
+  ) {}
 
   /**
    * API-020: 学習実績取得
@@ -39,7 +43,7 @@ export class LearnerRecordsController {
   async getRecords(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<RecordsResponse> {
-    return this.usecase.getRecords(user.userId);
+    return this.getRecordsUseCase.execute(user.userId);
   }
 
   /**

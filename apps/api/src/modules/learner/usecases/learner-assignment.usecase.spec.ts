@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerAssignmentUseCase } from './learner-assignment.usecase';
-import { AssignmentRepository } from './assignment.repository';
-import { SubmissionRepository } from './submission.repository';
-import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
+import { AssignmentRepository } from '../repositories/assignment.repository';
+import { SubmissionRepository } from '../repositories/submission.repository';
+import { CourseEnrollmentRepository } from '../../enrollment/repositories/course-enrollment.repository';
 
 /**
  * STU: LearnerAssignment UseCase テスト（API-017〜019）

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerEnrollmentUseCase } from './learner-enrollment.usecase';
-import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
+import { CourseEnrollmentRepository } from '../../enrollment/repositories/course-enrollment.repository';
 
 /**
  * STU: LearnerEnrollment UseCase テスト（API-015）

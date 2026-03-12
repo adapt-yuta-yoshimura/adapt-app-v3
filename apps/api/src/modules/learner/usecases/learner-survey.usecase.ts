@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { SurveyRepository } from './survey.repository';
-import { SurveyResponseRepository } from './survey-response.repository';
+import { SurveyRepository } from '../repositories/survey.repository';
+import { SurveyResponseRepository } from '../repositories/survey-response.repository';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type SurveyDetailView =

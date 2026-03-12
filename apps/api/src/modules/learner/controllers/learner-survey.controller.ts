@@ -7,12 +7,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/guards/roles.decorator';
-import { CurrentUser } from '../../common/guards/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/auth/jwt.types';
-import { LearnerSurveyUseCase } from './learner-survey.usecase';
+import { AuthGuard } from '../../../common/guards/auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles } from '../../../common/guards/roles.decorator';
+import { CurrentUser } from '../../../common/guards/current-user.decorator';
+import type { AuthenticatedUser } from '../../../common/auth/jwt.types';
+import { LearnerSurveyUseCase } from '../usecases/learner-survey.usecase';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type SurveyDetailView =

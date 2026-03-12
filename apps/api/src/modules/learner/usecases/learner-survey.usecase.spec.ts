@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerSurveyUseCase } from './learner-survey.usecase';
-import { SurveyRepository } from './survey.repository';
-import { SurveyResponseRepository } from './survey-response.repository';
+import { SurveyRepository } from '../repositories/survey.repository';
+import { SurveyResponseRepository } from '../repositories/survey-response.repository';
 
 /**
  * STU: LearnerSurvey UseCase テスト（API-023〜024）
