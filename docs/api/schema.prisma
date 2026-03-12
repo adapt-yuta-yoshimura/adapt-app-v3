@@ -1,8 +1,7 @@
 // schema.prisma（adapt V1 完璧版 - 基本設計書完全準拠）
 //
 // 【設計書準拠】
-// - テーブル数: 26個（基本設計書 09_DB_テーブル一覧 準拠）
-// - Enum数: 18個
+// - 全モデルは基本設計書 09_DB_テーブル一覧 準拠
 // - 全モデルに @@map() でsnake_caseテーブル名を明示
 //
 // 【技術スタック】
@@ -47,6 +46,10 @@
 //   - AuditEventType に user_created / user_updated / user_deleted / operator_role_changed を追加
 //   - テーブル数: 27→26（-1）、Enum数: 19→18（-1）
 //   - API ID 再採番: app側 API-001〜、admin側 API-ADMIN-01〜
+// - 2026-03-13: STU-02 修了・進捗管理対応
+//   - CourseEnrollment に completedAt カラム追加（修了日時）
+//   - LessonProgress モデル新規追加（レッスン単位の進捗管理）
+//   - ヘッダコメントからテーブル数・Enum数の固定値を削除
 //
 generator client {
   provider = "prisma-client-js"
@@ -428,6 +431,7 @@ model CourseEnrollment {
   revokedAt DateTime? @map("revoked_at")
   paidAt DateTime? @map("paid_at")
   paymentId String? @map("payment_id")
+  completedAt DateTime? @map("completed_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   @@unique([courseId, userId])
@@ -712,4 +716,21 @@ model SurveyAnswerOption {
   
   @@unique([answerId, optionId])
   @@map("survey_answer_option")
+}
+
+/// レッスン進捗（受講者のレッスン単位の完了状態）
+/// - BC（ブートキャンプ）の修了判定に使用
+/// - 1on1/セミナーはレッスン構造なし（LessonProgress レコードなしで修了可）
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  lessonId    String    @map("lesson_id")
+  courseId     String    @map("course_id")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, lessonId])
+  @@index([userId, courseId], map: "idx_lesson_progress_user_course")
+  @@map("lesson_progress")
 }
