@@ -50,33 +50,56 @@
    pnpm generate:types
    ```
 
-5. Setup database:
+5. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   cp .env apps/api/.env
+   ```
+
+6. Setup Admin App environment (`.gitignore` 対象のため手動作成):
+   ```bash
+   cat > apps/admin/.env.local << 'EOF'
+   NEXT_PUBLIC_AUTH_ISSUER=http://localhost:8080/realms/adapt
+   NEXT_PUBLIC_AUTH_CLIENT_ID=adapt-admin
+   EOF
+   ```
+
+7. Add auth config to API environment:
+   ```bash
+   echo 'AUTH_JWKS_URI=http://localhost:8080/realms/adapt/protocol/openid-connect/certs' >> apps/api/.env
+   ```
+
+8. Setup database:
    ```bash
    cd apps/api
    pnpm prisma migrate dev --name init
    pnpm prisma generate
+   cd ../..
    ```
 
-6. Seed development data (creates test users for each role):
+9. Seed development data (Keycloak UUIDを自動取得):
    ```bash
-   pnpm db:seed
+   cd apps/api
+   DATABASE_URL="postgresql://adapt:adapt@localhost:5432/adapt" npx tsx prisma/seed.ts
+   cd ../..
    ```
 
-7. Copy environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-
-8. Start development servers:
-   ```bash
-   pnpm dev
-   ```
+10. Start development servers:
+    ```bash
+    pnpm dev
+    ```
 
 ### Access
 
 - Web App: http://app.localhost.adapt:3000
 - Admin: http://admin.localhost.adapt:3001
 - API: http://app.localhost.adapt:4000
+
+## Known Issues（ローカル開発）
+
+- `apps/api/.env` はルートの `.env` をコピーして作成する（`cp .env apps/api/.env`）
+- `apps/admin/.env.local` は `.gitignore` 対象のため手動作成が必要
+- Claude Code が worktree（`.claude/worktrees/`）を自動生成する場合がある。セットアップは必ず main ブランチで実行すること
 
 ## Next.js 15 の重要な変更点
 
