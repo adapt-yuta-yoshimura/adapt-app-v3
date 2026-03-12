@@ -7,6 +7,7 @@ import { AdminOperatorModule } from './modules/admin-operator/admin-operator.mod
 import { AdminCourseModule } from './modules/admin-course/admin-course.module';
 import { AdminPaymentModule } from './modules/admin-payment/admin-payment.module';
 import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.module';
+import { InstructorCourseModule } from './modules/instructor-course/instructor-course.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.
     AdminCourseModule,
     AdminPaymentModule,
     AdminDashboardModule,
+    InstructorCourseModule,
   ],
 })
 export class AppModule {}
