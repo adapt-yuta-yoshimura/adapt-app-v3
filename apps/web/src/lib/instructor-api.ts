@@ -3,6 +3,8 @@ import { apiFetch } from './api-client';
 
 type InstructorCourseCreateBody =
   paths['/api/v1/instructor/courses']['post']['requestBody']['content']['application/json'];
+type CourseUpdateBody =
+  paths['/api/v1/instructor/courses/{courseId}']['put']['requestBody']['content']['application/json'];
 type CourseDetailView =
   paths['/api/v1/instructor/courses/{courseId}']['get']['responses']['200']['content']['application/json'];
 type SyllabusView =
@@ -68,6 +70,24 @@ export async function getInstructorCourse(
     `/api/v1/instructor/courses/${courseId}`,
     {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    },
+  );
+}
+
+/**
+ * API-028: 講座情報更新
+ */
+export async function updateInstructorCourse(
+  courseId: string,
+  body: CourseUpdateBody,
+  token?: string,
+): Promise<CourseDetailView> {
+  return apiFetch<CourseDetailView>(
+    `/api/v1/instructor/courses/${courseId}`,
+    {
+      method: 'PUT',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: JSON.stringify(body),
     },
   );
 }
