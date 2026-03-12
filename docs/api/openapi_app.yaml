@@ -1284,7 +1284,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CourseDetailView'
+                $ref: '#/components/schemas/SubmissionListResponse'
       security:
       - bearerAuth: []
       parameters:
@@ -1344,7 +1344,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CourseDetailView'
+                $ref: '#/components/schemas/CourseMemberListResponse'
       security:
       - bearerAuth: []
       parameters:
@@ -4616,6 +4616,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentSummaryView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    SubmissionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmissionView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      additionalProperties: false
+    CourseMemberListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseMember'
         meta:
           $ref: '#/components/schemas/ListMeta'
       required:
