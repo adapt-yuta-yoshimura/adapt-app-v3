@@ -143,6 +143,55 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.19.32)
 
+  apps/web:
+    dependencies:
+      '@adapt/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@adapt/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@adapt/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: ^5.17.0
+        version: 5.90.20(react@19.2.4)
+      lucide-react:
+        specifier: ^0.309.0
+        version: 0.309.0(react@19.2.4)
+      next:
+        specifier: ^15.0.0
+        version: 15.5.12(@playwright/test@1.58.1)(react-dom@19.2.4)(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.32
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.13
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.13)
+      autoprefixer:
+        specifier: ^10.4.16
+        version: 10.4.24(postcss@8.5.6)
+      postcss:
+        specifier: ^8.4.33
+        version: 8.5.6
+      tailwindcss:
+        specifier: ^3.4.0
+        version: 3.4.19
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
   packages/eslint-config: {}
 
   packages/shared: {}
