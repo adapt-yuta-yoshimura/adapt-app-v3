@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerRecordsUseCase } from './learner-records.usecase';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 import { SubmissionRepository } from './submission.repository';
 import { LearnerCourseRepository } from './learner-course.repository';
 
@@ -35,7 +35,7 @@ describe('LearnerRecordsUseCase', () => {
     };
 
     useCase = new LearnerRecordsUseCase(
-      enrollmentRepo as unknown as EnrollmentRepository,
+      enrollmentRepo as unknown as CourseEnrollmentRepository,
       submissionRepo as unknown as SubmissionRepository,
       courseRepo as unknown as LearnerCourseRepository,
     );

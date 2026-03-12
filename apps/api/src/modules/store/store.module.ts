@@ -1,38 +1,23 @@
 import { Module } from '@nestjs/common';
-import { StoreCourseController } from './store-course.controller';
-import { StoreApplyController } from './store-apply.controller';
-import { PaymentController } from './payment.controller';
-import { StoreCourseUseCase } from './store-course.usecase';
-import { StoreApplyUseCase } from './store-apply.usecase';
-import { PaymentUseCase } from './payment.usecase';
-import { StoreCourseRepository } from './store-course.repository';
-import { EnrollmentRepository } from './enrollment.repository';
-import { PaymentRepository } from './payment.repository';
+import { StoreController } from './controllers/store.controller';
+import { StoreUseCase } from './usecases/store.usecase';
+import { StoreCourseRepository } from './repositories/store-course.repository';
 
 /**
- * Store/Payment モジュール（ストア公開ページ + 決済）
+ * Store モジュール（ストア公開ページ）
  *
- * STU系チケット: API-009〜012
- * - 講座一覧/詳細（公開・guest可）
- * - 講座申込
- * - Stripe決済セッション生成
+ * STU-01: API-009〜010
+ * - 講座一覧取得（公開・guest可）
+ * - 講座詳細取得（公開・guest可）
  *
  * PrismaModule / AuthModule は @Global() のため imports 不要
  */
 @Module({
-  controllers: [
-    StoreCourseController,
-    StoreApplyController,
-    PaymentController,
-  ],
+  controllers: [StoreController],
   providers: [
-    StoreCourseUseCase,
-    StoreApplyUseCase,
-    PaymentUseCase,
+    StoreUseCase,
     StoreCourseRepository,
-    EnrollmentRepository,
-    PaymentRepository,
   ],
-  exports: [EnrollmentRepository],
+  exports: [StoreCourseRepository],
 })
 export class StoreModule {}

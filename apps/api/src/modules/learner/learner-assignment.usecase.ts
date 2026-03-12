@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
 import { AssignmentRepository } from './assignment.repository';
 import { SubmissionRepository } from './submission.repository';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type AssignmentListResponse =
@@ -26,7 +26,7 @@ export class LearnerAssignmentUseCase {
   constructor(
     private readonly assignmentRepo: AssignmentRepository,
     private readonly submissionRepo: SubmissionRepository,
-    private readonly enrollmentRepo: EnrollmentRepository,
+    private readonly enrollmentRepo: CourseEnrollmentRepository,
   ) {}
 
   /**

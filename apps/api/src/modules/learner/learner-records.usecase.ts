@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 import { SubmissionRepository } from './submission.repository';
 import { LearnerCourseRepository } from './learner-course.repository';
 
@@ -19,7 +19,7 @@ type CalendarResponse =
 @Injectable()
 export class LearnerRecordsUseCase {
   constructor(
-    private readonly enrollmentRepo: EnrollmentRepository,
+    private readonly enrollmentRepo: CourseEnrollmentRepository,
     private readonly submissionRepo: SubmissionRepository,
     private readonly courseRepo: LearnerCourseRepository,
   ) {}

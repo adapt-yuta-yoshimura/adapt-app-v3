@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
 import { LearnerCourseRepository } from './learner-course.repository';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type MyCoursesResponse =
@@ -27,7 +27,7 @@ type CompleteResponse =
 export class LearnerCourseUseCase {
   constructor(
     private readonly courseRepo: LearnerCourseRepository,
-    private readonly enrollmentRepo: EnrollmentRepository,
+    private readonly enrollmentRepo: CourseEnrollmentRepository,
   ) {}
 
   /**

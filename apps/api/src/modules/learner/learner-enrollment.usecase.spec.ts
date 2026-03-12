@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerEnrollmentUseCase } from './learner-enrollment.usecase';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 
 /**
  * STU: LearnerEnrollment UseCase テスト（API-015）
@@ -24,7 +24,7 @@ describe('LearnerEnrollmentUseCase', () => {
     };
 
     useCase = new LearnerEnrollmentUseCase(
-      enrollmentRepo as unknown as EnrollmentRepository,
+      enrollmentRepo as unknown as CourseEnrollmentRepository,
     );
   });
 

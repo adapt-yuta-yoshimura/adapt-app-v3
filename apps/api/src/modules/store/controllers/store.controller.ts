@@ -5,15 +5,19 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Public } from '../../common/guards/public.decorator';
-import { StoreCourseUseCase } from './store-course.usecase';
+import { AuthGuard } from '../../../common/guards/auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Public } from '../../../common/guards/public.decorator';
+import { StoreUseCase } from '../usecases/store.usecase';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
-type CourseListResponse =
+
+// API-009
+type GetStoreCoursesResponse =
   paths['/api/v1/store/courses']['get']['responses']['200']['content']['application/json'];
-type CourseDetailView =
+
+// API-010
+type GetStoreCourseDetailResponse =
   paths['/api/v1/store/courses/{courseId}']['get']['responses']['200']['content']['application/json'];
 
 /**
@@ -27,8 +31,8 @@ type CourseDetailView =
  */
 @Controller('api/v1/store/courses')
 @UseGuards(AuthGuard, RolesGuard)
-export class StoreCourseController {
-  constructor(private readonly usecase: StoreCourseUseCase) {}
+export class StoreController {
+  constructor(private readonly usecase: StoreUseCase) {}
 
   /**
    * API-009: 講座一覧取得（公開）
@@ -37,8 +41,10 @@ export class StoreCourseController {
    */
   @Get()
   @Public()
-  async listPublicCourses(): Promise<CourseListResponse> {
-    return this.usecase.listPublicCourses();
+  async getStoreCourses(): Promise<GetStoreCoursesResponse> {
+    // TODO(TBD): Cursor実装 - StoreUseCase.getStoreCourses
+    // - query パラメータ（style, keyword, category, page, limit）
+    throw new Error('Not implemented');
   }
 
   /**
@@ -48,9 +54,10 @@ export class StoreCourseController {
    */
   @Get(':courseId')
   @Public()
-  async getCourseDetail(
+  async getStoreCourseDetail(
     @Param('courseId') courseId: string,
-  ): Promise<CourseDetailView> {
-    return this.usecase.getCourseDetail(courseId);
+  ): Promise<GetStoreCourseDetailResponse> {
+    // TODO(TBD): Cursor実装 - StoreUseCase.getStoreCourseDetail
+    throw new Error('Not implemented');
   }
 }

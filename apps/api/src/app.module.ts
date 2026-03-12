@@ -12,6 +12,7 @@ import { InstructorOperationsModule } from './modules/instructor-operations/inst
 import { CommunicationModule } from './modules/communication/communication.module';
 import { AuthIdentityModule } from './modules/auth-identity/auth-identity.module';
 import { StoreModule } from './modules/store/store.module';
+import { EnrollmentModule } from './modules/enrollment/enrollment.module';
 import { LearnerModule } from './modules/learner/learner.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { LearnerModule } from './modules/learner/learner.module';
     CommunicationModule,
     AuthIdentityModule,
     StoreModule,
+    EnrollmentModule,
     LearnerModule,
   ],
 })

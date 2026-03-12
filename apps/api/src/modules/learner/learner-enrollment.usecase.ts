@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { paths } from '@adapt/types/openapi-app';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 
 // --- OpenAPI 生成型（SoT: openapi_app.yaml） ---
 type EnrollmentDetailView =
@@ -14,7 +14,7 @@ type EnrollmentDetailView =
 @Injectable()
 export class LearnerEnrollmentUseCase {
   constructor(
-    private readonly enrollmentRepo: EnrollmentRepository,
+    private readonly enrollmentRepo: CourseEnrollmentRepository,
   ) {}
 
   /**

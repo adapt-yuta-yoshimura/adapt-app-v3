@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { StoreModule } from '../store/store.module';
+import { EnrollmentModule } from '../enrollment/enrollment.module';
 import { LearnerCourseController } from './learner-course.controller';
 import { LearnerEnrollmentController } from './learner-enrollment.controller';
 import { LearnerAssignmentController } from './learner-assignment.controller';
@@ -27,10 +27,10 @@ import { SurveyResponseRepository } from './survey-response.repository';
  * - アンケート取得/回答
  *
  * PrismaModule / AuthModule は @Global() のため imports 不要
- * StoreModule: EnrollmentRepository を共用
+ * EnrollmentModule: CourseEnrollmentRepository を共用
  */
 @Module({
-  imports: [StoreModule],
+  imports: [EnrollmentModule],
   controllers: [
     LearnerCourseController,
     LearnerEnrollmentController,

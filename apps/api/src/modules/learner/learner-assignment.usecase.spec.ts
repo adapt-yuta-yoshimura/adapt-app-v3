@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerAssignmentUseCase } from './learner-assignment.usecase';
 import { AssignmentRepository } from './assignment.repository';
 import { SubmissionRepository } from './submission.repository';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 
 /**
  * STU: LearnerAssignment UseCase テスト（API-017〜019）
@@ -44,7 +44,7 @@ describe('LearnerAssignmentUseCase', () => {
     useCase = new LearnerAssignmentUseCase(
       assignmentRepo as unknown as AssignmentRepository,
       submissionRepo as unknown as SubmissionRepository,
-      enrollmentRepo as unknown as EnrollmentRepository,
+      enrollmentRepo as unknown as CourseEnrollmentRepository,
     );
   });
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LearnerCourseUseCase } from './learner-course.usecase';
 import { LearnerCourseRepository } from './learner-course.repository';
-import { EnrollmentRepository } from '../store/enrollment.repository';
+import { CourseEnrollmentRepository } from '../enrollment/repositories/course-enrollment.repository';
 
 /**
  * STU: LearnerCourse UseCase テスト（API-013, 014, 016, 022）
@@ -36,7 +36,7 @@ describe('LearnerCourseUseCase', () => {
 
     useCase = new LearnerCourseUseCase(
       courseRepo as unknown as LearnerCourseRepository,
-      enrollmentRepo as unknown as EnrollmentRepository,
+      enrollmentRepo as unknown as CourseEnrollmentRepository,
     );
   });
 
