@@ -10,6 +10,9 @@ import { AdminDashboardModule } from './modules/admin-dashboard/admin-dashboard.
 import { InstructorCourseModule } from './modules/instructor-course/instructor-course.module';
 import { InstructorOperationsModule } from './modules/instructor-operations/instructor-operations.module';
 import { CommunicationModule } from './modules/communication/communication.module';
+import { AuthIdentityModule } from './modules/auth-identity/auth-identity.module';
+import { StoreModule } from './modules/store/store.module';
+import { LearnerModule } from './modules/learner/learner.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { CommunicationModule } from './modules/communication/communication.modul
     InstructorCourseModule,
     InstructorOperationsModule,
     CommunicationModule,
+    AuthIdentityModule,
+    StoreModule,
+    LearnerModule,
   ],
 })
 export class AppModule {}

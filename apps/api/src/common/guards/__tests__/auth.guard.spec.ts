@@ -1,4 +1,5 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthGuard } from '../auth.guard';
 import type { RequestWithUser } from '../auth.guard';
@@ -25,6 +26,7 @@ function createMockExecutionContext(overrides: {
 
 describe('AuthGuard', () => {
   let guard: AuthGuard;
+  let mockReflector: { getAllAndOverride: ReturnType<typeof vi.fn> };
   let mockJwtTokenService: { verifyToken: ReturnType<typeof vi.fn> };
   let mockUserLookupService: { findUserByOAuthSub: ReturnType<typeof vi.fn> };
 
@@ -54,9 +56,11 @@ describe('AuthGuard', () => {
   };
 
   beforeEach(() => {
+    mockReflector = { getAllAndOverride: vi.fn().mockReturnValue(false) };
     mockJwtTokenService = { verifyToken: vi.fn() };
     mockUserLookupService = { findUserByOAuthSub: vi.fn() };
     guard = new AuthGuard(
+      mockReflector as unknown as Reflector,
       mockJwtTokenService as unknown as JwtTokenService,
       mockUserLookupService as unknown as UserLookupService,
     );
