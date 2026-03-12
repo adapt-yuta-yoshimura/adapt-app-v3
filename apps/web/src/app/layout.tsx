@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Noto_Sans_JP } from 'next/font/google';
 import { QueryProvider } from '@/lib/query-provider';
+import { UserProvider } from '@/lib/user-context';
 import '@/styles/globals.css';
 
 const notoSansJP = Noto_Sans_JP({
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="ja" className={notoSansJP.variable}>
       <body className="font-sans">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <UserProvider>{children}</UserProvider>
+        </QueryProvider>
       </body>
     </html>
   );
