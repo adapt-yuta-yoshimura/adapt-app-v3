@@ -14,6 +14,7 @@ import { AuthIdentityModule } from './modules/auth-identity/auth-identity.module
 import { StoreModule } from './modules/store/store.module';
 import { EnrollmentModule } from './modules/enrollment/enrollment.module';
 import { LearnerModule } from './modules/learner/learner.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { LearnerModule } from './modules/learner/learner.module';
     StoreModule,
     EnrollmentModule,
     LearnerModule,
+    UserModule,
   ],
 })
 export class AppModule {}
