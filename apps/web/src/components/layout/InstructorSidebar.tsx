@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { label: '講座管理一覧', href: '/instructor/courses', icon: BookOpen },
   { label: '受講者管理', href: '/instructor/students', icon: Users },
   { label: '収益管理', href: '/instructor/analytics', icon: BarChart3 },
-  { label: '設定', href: '/instructor/settings', icon: Settings },
+  { label: '設定', href: '/settings', icon: Settings },
 ] as const;
 
 export function InstructorSidebar() {
