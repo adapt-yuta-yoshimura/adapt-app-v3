@@ -1497,6 +1497,29 @@ export interface components {
       sections: components["schemas"]["CourseSection"][];
       channels: components["schemas"]["CourseChannelSummaryView"][];
     };
+    /** @description ストア公開用の講座詳細。未ログインでも閲覧可能。講師情報とシラバス（BC のみ）を含む。syllabus と stats は講座形式や状態により省略可。 */
+    StoreCourseDetailView: {
+      course: components["schemas"]["Course"];
+      instructor: components["schemas"]["UserPublicView"];
+      syllabus?: components["schemas"]["SyllabusView"];
+      stats?: components["schemas"]["CourseStatsView"];
+    };
+    /** @description 学習実績ビュー。修了講座は completedAt が非null。BC の場合 lessonProgress でレッスン単位の進捗を含む。 */
+    LearnerRecordView: {
+      course: components["schemas"]["Course"];
+      enrollment: components["schemas"]["CourseEnrollment"];
+      /** Format: date-time */
+      completedAt?: string | null;
+      lessonProgress?: {
+        total: number;
+        completed: number;
+      };
+    };
+    /** @description 学習実績一覧レスポンス。 */
+    LearnerRecordListResponse: {
+      items: components["schemas"]["LearnerRecordView"][];
+      meta: components["schemas"]["ListMeta"];
+    };
     ThreadSummaryView: {
       threadId: string;
       rootMessage: components["schemas"]["CourseMessageView"];
@@ -1833,7 +1856,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["GenericDetailView"];
+          "application/json": components["schemas"]["StoreCourseDetailView"];
         };
       };
     };
@@ -1894,7 +1917,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["GenericListResponse"];
+          "application/json": components["schemas"]["CourseListResponse"];
         };
       };
     };
@@ -2030,7 +2053,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["GenericListResponse"];
+          "application/json": components["schemas"]["LearnerRecordListResponse"];
         };
       };
     };

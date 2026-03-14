@@ -339,7 +339,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericDetailView'
+                $ref: '#/components/schemas/StoreCourseDetailView'
       security:
       - bearerAuth: []
       parameters:
@@ -428,7 +428,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericListResponse'
+                $ref: '#/components/schemas/CourseListResponse'
       security:
       - bearerAuth: []
   /api/v1/learner/courses/{courseId}:
@@ -615,7 +615,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericListResponse'
+                $ref: '#/components/schemas/LearnerRecordListResponse'
       security:
       - bearerAuth: []
   /api/v1/learner/calendar:
@@ -4474,6 +4474,64 @@ components:
       - sections
       - channels
       description: 受講者向けサイドメニュー。セクション→レッスン階層とチャンネル一覧を含む。Excel 06_API一覧の「階層構造化して取得」に対応。
+    StoreCourseDetailView:
+      type: object
+      properties:
+        course:
+          $ref: '#/components/schemas/Course'
+        instructor:
+          $ref: '#/components/schemas/UserPublicView'
+        syllabus:
+          $ref: '#/components/schemas/SyllabusView'
+        stats:
+          $ref: '#/components/schemas/CourseStatsView'
+      required:
+      - course
+      - instructor
+      additionalProperties: false
+      description: ストア公開用の講座詳細。未ログインでも閲覧可能。講師情報とシラバス（BC のみ）を含む。syllabus と stats は講座形式や状態により省略可。
+    LearnerRecordView:
+      type: object
+      properties:
+        course:
+          $ref: '#/components/schemas/Course'
+        enrollment:
+          $ref: '#/components/schemas/CourseEnrollment'
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lessonProgress:
+          type: object
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            completed:
+              type: integer
+              minimum: 0
+          required:
+          - total
+          - completed
+      required:
+      - course
+      - enrollment
+      additionalProperties: false
+      description: 学習実績ビュー。修了講座は completedAt が非null。BC の場合 lessonProgress でレッスン単位の進捗を含む。
+    LearnerRecordListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LearnerRecordView'
+        meta:
+          $ref: '#/components/schemas/ListMeta'
+      required:
+      - items
+      - meta
+      additionalProperties: false
+      description: 学習実績一覧レスポンス。
     ThreadSummaryView:
       type: object
       properties:
