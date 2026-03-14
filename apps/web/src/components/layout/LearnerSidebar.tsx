@@ -6,6 +6,7 @@ import {
   Home,
   GraduationCap,
   Library,
+  Trophy,
   Settings,
   ChevronsLeft,
 } from 'lucide-react';
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
   { label: 'ホーム', href: '/learner/dashboard', icon: Home },
   { label: '学習進捗', href: '/learner/progress', icon: GraduationCap },
   { label: '受講講座一覧', href: '/learner/courses', icon: Library },
+  { label: '実績・修了履歴', href: '/learner/records', icon: Trophy },
   { label: '設定', href: '/settings', icon: Settings },
 ] as const;
 
